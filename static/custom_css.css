@@ -1,0 +1,31 @@
+.hash-text {
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    display: block;
+    width: 100%;
+    font-size: 0.85rem;
+}
+
+
+.form-control,
+.form-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    color: #fff;
+    border-radius: 10px;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border-color: #4dabf7;
+    box-shadow: none;
+}
+
+.form-select option {
+    background-color: #1e1e1e;
+    color: #212529 important;
+
+}

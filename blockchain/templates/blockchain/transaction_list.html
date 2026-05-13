@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Transactions - MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'blockchain_dashboard' %}" style="color: var(--accent);">Blockchain</a></li>
+<li class="breadcrumb-item active">Transactions</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-currency-exchange"></i> Transactions</h2>
+    <a href="{% url 'transaction_add' %}" class="btn btn-primary"><i class="bi bi-plus"></i> Create Transaction</a>
+</div>
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-list"></i> All Transactions</span>
+            <select class="form-select form-select-sm" id="filterStatus" style="width: 150px;">
+                <option value="">All Status</option>
+                <option value="PENDING">Pending</option>
+                <option value="BATCHED">Batched</option>
+                <option value="CONFIRMED">Confirmed</option>
+            </select>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="txTable">
+                <thead><tr><th>TX Hash</th><th>Type</th><th>Sender</th><th>Data Hash</th><th>Status</th><th>Block</th><th>Time</th></tr></thead>
+                <tbody>
+                    {% for tx in transactions %}
+                    <tr data-status="{{ tx.status }}">
+                        <td><span class="hash-text">{{ tx.tx_hash|truncatechars:16 }}</span></td>
+                        <td><span class="badge bg-secondary">{{ tx.get_tx_type_display }}</span></td>
+                        <td><span class="hash-text">{{ tx.sender|truncatechars:12 }}</span></td>
+                        <td><span class="hash-text">{{ tx.data_hash|truncatechars:10 }}</span></td>
+                        <td>
+                            {% if tx.status == 'PENDING' %}<span class="badge bg-warning">Pending</span>
+                            {% elif tx.status == 'BATCHED' %}<span class="badge bg-info">Batched</span>
+                            {% elif tx.status == 'CONFIRMED' %}<span class="badge bg-success">Confirmed</span>
+                            {% else %}<span class="badge bg-secondary">{{ tx.status }}</span>{% endif %}
+                        </td>
+                        <td>{% if tx.block %}<span class="badge bg-primary">#{{ tx.block.block_number }}</span>{% else %}-{% endif %}</td>
+                        <td>{{ tx.timestamp|date:"H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center text-muted py-5"><i class="bi bi-currency-exchange fs-1 d-block mb-2"></i>No transactions found</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script>
+document.getElementById('filterStatus').addEventListener('change', function() {
+    const status = this.value;
+    document.querySelectorAll('#txTable tbody tr').forEach(row => {
+        row.style.display = !status || row.dataset.status === status ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Cross-Chain - MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">Cross-Chain</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-arrow-left-right"></i> Cross-Chain Relay</h2>
+    <a href="{% url 'crosschain_transfer' %}" class="btn btn-primary"><i class="bi bi-send"></i> New Transfer</a>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3"><div class="stat-card"><div class="stat-value">{{ total_messages|default:"0" }}</div><div class="stat-label"><i class="bi bi-envelope"></i> Total Messages</div></div></div>
+    <div class="col-md-3"><div class="stat-card"><div class="stat-value">{{ relayed|default:"0" }}</div><div class="stat-label"><i class="bi bi-check-circle"></i> Relayed</div></div></div>
+    <div class="col-md-3"><div class="stat-card"><div class="stat-value">{{ pending|default:"0" }}</div><div class="stat-label"><i class="bi bi-hourglass"></i> Pending</div></div></div>
+    <div class="col-md-3"><div class="stat-card"><div class="stat-value">{{ rejected|default:"0" }}</div><div class="stat-label"><i class="bi bi-x-circle"></i> Rejected</div></div></div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-envelope"></i> Cross-Chain Messages</span>
+                <a href="{% url 'crosschain_transfer' %}" class="btn btn-sm btn-primary"><i class="bi bi-plus"></i> New Message</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead><tr><th>Message ID</th><th>Source</th><th>Target</th><th>Data Hash</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            {% for msg in messages %}
+                            <tr>
+                                <td><span class="hash-text">{{ msg.message_id|truncatechars:16 }}</span></td>
+                                <td><span class="badge bg-secondary">{{ msg.source_chain.name }}</span></td>
+                                <td><span class="badge bg-primary">{{ msg.target_chain.name }}</span></td>
+                                <td><span class="hash-text">{{ msg.data_hash|truncatechars:12 }}</span></td>
+                                <td>
+                                    {% if msg.status == 'PENDING' %}<span class="badge bg-warning">Pending</span>
+                                    {% elif msg.status == 'RELAYED' %}<span class="badge bg-success">Relayed</span>
+                                    {% elif msg.status == 'REJECTED' %}<span class="badge bg-danger">Rejected</span>
+                                    {% else %}<span class="badge bg-secondary">{{ msg.status }}</span>{% endif %}
+                                </td>
+                                <td>{{ msg.created_at|date:"Y-m-d H:i" }}</td>
+                                <td><a href="{% url 'crosschain_detail' msg.message_id %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a></td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="7" class="text-center text-muted py-5"><i class="bi bi-arrow-left-right fs-1 d-block mb-2"></i>No cross-chain messages yet</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

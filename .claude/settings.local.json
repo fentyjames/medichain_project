@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python *)",
+      "PowerShell(python manage.py makemigrations)",
+      "PowerShell(python manage.py migrate)",
+      "PowerShell(python manage.py makemigrations blockchain)",
+      "PowerShell(python manage.py migrate blockchain)",
+      "PowerShell(python manage.py migrate blockchain --fake-initial)",
+      "PowerShell(python manage.py migrate --run-syncdb)",
+      "PowerShell(python -c \"import psycopg2; conn = psycopg2.connect\\('dbname=medichain_db user=postgres password=master011 host=localhost port=5433'\\); print\\('Connected successfully'\\)\" 2>&1)",
+      "PowerShell(python manage.py migrate --database blockchain blockchain)",
+      "PowerShell(python manage.py migrate --database blockchain contenttypes auth)",
+      "PowerShell(python manage.py migrate --database blockchain contenttypes)",
+      "PowerShell(python manage.py migrate --database blockchain)"
+    ]
+  }
+}

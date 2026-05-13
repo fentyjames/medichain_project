@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+{% block title %}Healthcare - MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active" aria-current="page">Healthcare</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-hospital"></i> Healthcare Management</h2>
+    <div>
+        <a href="{% url 'patient_add' %}" class="btn btn-primary me-2">
+            <i class="bi bi-person-plus"></i> Add Patient
+        </a>
+        <a href="{% url 'hospital_add' %}" class="btn btn-primary me-2">
+            <i class="bi bi-building-add"></i> Add Hospital
+        </a>
+        <a href="{% url 'record_add' %}" class="btn btn-primary">
+            <i class="bi bi-file-earmark-plus"></i> Add Record
+        </a>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ patient_count|default:"0" }}</div>
+            <div class="stat-label"><i class="bi bi-people"></i> Patients</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ hospital_count|default:"0" }}</div>
+            <div class="stat-label"><i class="bi bi-building"></i> Hospitals</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ record_count|default:"0" }}</div>
+            <div class="stat-label"><i class="bi bi-file-medical"></i> Records</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ permission_count|default:"0" }}</div>
+            <div class="stat-label"><i class="bi bi-shield-check"></i> Permissions</div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-lightning-charge"></i> Quick Actions
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <a href="{% url 'patient_add' %}" class="btn btn-outline-primary w-100 py-3">
+                            <i class="bi bi-person-plus fs-4 d-block mb-2"></i>
+                            Register New Patient
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'hospital_add' %}" class="btn btn-outline-primary w-100 py-3">
+                            <i class="bi bi-building-add fs-4 d-block mb-2"></i>
+                            Register Hospital
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'record_add' %}" class="btn btn-outline-primary w-100 py-3">
+                            <i class="bi bi-file-earmark-medical fs-4 d-block mb-2"></i>
+                            Create Medical Record
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'permission_add' %}" class="btn btn-outline-primary w-100 py-3">
+                            <i class="bi bi-key fs-4 d-block mb-2"></i>
+                            Grant Access
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Patients -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-people"></i> Recent Patients</span>
+                <a href="{% url 'patient_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Blood Type</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for patient in recent_patients %}
+                            <tr>
+                                <td><span class="hash-text">{{ patient.patient_id|truncatechars:16 }}</span></td>
+                                <td><span class="badge bg-info">{{ patient.blood_type|default:"-" }}</span></td>
+                                <td>
+                                    {% if patient.is_active %}
+                                    <span class="status-dot status-active"></span>Active
+                                    {% else %}
+                                    <span class="status-dot status-inactive"></span>Inactive
+                                    {% endif %}
+                                </td>
+                                <td>{{ patient.created_at|date:"Y-m-d" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center text-muted py-3">No patients registered yet</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-file-medical"></i> Recent Records</span>
+                <a href="{% url 'record_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Title</th>
+                                <th>Hospital</th>
+                                <th>Hash</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in recent_records %}
+                            <tr>
+                                <td><span class="badge bg-secondary">{{ record.get_record_type_display }}</span></td>
+                                <td>{{ record.title|truncatechars:25 }}</td>
+                                <td>{{ record.hospital.name|truncatechars:20 }}</td>
+                                <td><span class="hash-text">{{ record.data_hash|truncatechars:12 }}</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center text-muted py-3">No records created yet</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Hospitals -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-building"></i> Registered Hospitals</span>
+                <a href="{% url 'hospital_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>License</th>
+                                <th>Network</th>
+                                <th>Verified</th>
+                                <th>Records</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for hospital in hospitals %}
+                            <tr>
+                                <td><span class="hash-text">{{ hospital.hospital_id|truncatechars:12 }}</span></td>
+                                <td><strong>{{ hospital.name }}</strong></td>
+                                <td>{{ hospital.license_number }}</td>
+                                <td>{{ hospital.blockchain_network.name|default:"-" }}</td>
+                                <td>
+                                    {% if hospital.is_verified %}
+                                    <span class="badge bg-success"><i class="bi bi-check-circle"></i> Verified</span>
+                                    {% else %}
+                                    <span class="badge bg-warning"><i class="bi bi-clock"></i> Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ hospital.medicalrecord_set.count }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="6" class="text-center text-muted py-3">No hospitals registered yet</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}{{ record.title }} - MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}" style="color: var(--accent);">Healthcare</a></li>
+<li class="breadcrumb-item"><a href="{% url 'record_list' %}" style="color: var(--accent);">Records</a></li>
+<li class="breadcrumb-item active">{{ record.record_id|truncatechars:10 }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header text-center">
+                <i class="bi bi-file-medical fs-1"></i>
+                <h5 class="mt-2">{{ record.title }}</h5>
+                <span class="badge bg-secondary">{{ record.get_record_type_display }}</span>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label text-muted">Record ID</label>
+                    <div class="d-flex align-items-center">
+                        <span class="hash-text">{{ record.record_id }}</span>
+                        <button class="btn btn-sm btn-link" onclick="copyToClipboard('{{ record.record_id }}')"><i class="bi bi-clipboard" style="color: var(--text-light);"></i></button>
+                    </div>
+                </div>
+                <div class="mb-3"><label class="form-label text-muted">Patient</label><div><span class="hash-text">{{ record.patient.patient_id|truncatechars:16 }}</span></div></div>
+                <div class="mb-3"><label class="form-label text-muted">Hospital</label><div>{{ record.hospital.name }}</div></div>
+                <div class="mb-3">
+                    <label class="form-label text-muted">Data Hash (SHA-256)</label>
+                    <div class="hash-text">{{ record.data_hash }}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-muted">IPFS Hash</label>
+                    <div class="hash-text">{{ record.ipfs_hash|default:"Not stored off-chain" }}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-muted">Blockchain TX</label>
+                    <div>
+                        {% if record.blockchain_tx %}
+                        <span class="hash-text">{{ record.blockchain_tx.tx_hash|truncatechars:20 }}</span>
+                        <span class="badge bg-success">On-Chain</span>
+                        {% else %}
+                        <span class="badge bg-warning">Pending</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="mb-0"><label class="form-label text-muted">Created</label><div>{{ record.created_at|date:"F d, Y H:i" }}</div></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-file-text"></i> Description</div>
+            <div class="card-body"><p>{{ record.description|default:"No description provided." }}</p></div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-shield-check"></i> Access Permissions</span>
+                <a href="{% url 'permission_add' %}?record={{ record.record_id }}" class="btn btn-sm btn-primary"><i class="bi bi-plus"></i> Grant Access</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead><tr><th>Grantee</th><th>Type</th><th>Permission</th><th>Purpose</th><th>Status</th></tr></thead>
+                        <tbody>
+                            {% for perm in permissions %}
+                            <tr>
+                                <td>{{ perm.grantee|truncatechars:20 }}</td>
+                                <td><span class="badge bg-info">{{ perm.get_grantee_type_display }}</span></td>
+                                <td><span class="badge bg-primary">{{ perm.get_permission_type_display }}</span></td>
+                                <td>{{ perm.purpose|truncatechars:25 }}</td>
+                                <td>{% if perm.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-secondary">Revoked</span>{% endif %}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted py-3">No access permissions granted</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><i class="bi bi-clock-history"></i> Audit Trail</div>
+            <div class="card-body">
+                {% for log in audit_logs %}
+                <div class="timeline-item">
+                    <div class="d-flex justify-content-between">
+                        <strong>{{ log.get_action_display }}</strong>
+                        <small class="text-muted">{{ log.timestamp|date:"Y-m-d H:i" }}</small>
+                    </div>
+                    <div class="text-muted">Actor: {{ log.actor }} ({{ log.get_actor_type_display }})</div>
+                    {% if log.details %}<div class="mt-1" style="font-size: 0.9rem;">{{ log.details }}</div>{% endif %}
+                </div>
+                {% empty %}
+                <p class="text-muted text-center">No audit entries</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

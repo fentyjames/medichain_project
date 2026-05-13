@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Cross-Chain Transfer - MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'crosschain_dashboard' %}" style="color: var(--accent);">Cross-Chain</a></li>
+<li class="breadcrumb-item active">Transfer</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-send"></i> New Cross-Chain Transfer</div>
+            <div class="card-body p-4">
+                <form method="post" action="{% url 'crosschain_transfer' %}">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Source Chain *</label>
+                            <select name="source_chain" class="form-select" required>
+                                <option value="">Select Source</option>
+                                {% for network in networks %}
+                                <option value="{{ network.network_id }}">{{ network.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Target Chain *</label>
+                            <select name="target_chain" class="form-select" required>
+                                <option value="">Select Target</option>
+                                {% for network in networks %}
+                                <option value="{{ network.network_id }}">{{ network.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Data Hash *</label>
+                        <input type="text" name="data_hash" class="form-control" placeholder="SHA-256 hash of data to transfer" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ZK Proof *</label>
+                        <textarea name="proof" class="form-control" rows="3" placeholder="Zero-knowledge proof for data verification" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Sender ID *</label>
+                        <input type="text" name="sender" class="form-control" placeholder="Hospital or entity ID" required>
+                    </div>
+                    <div class="alert" style="background: rgba(0,217,255,0.1); border: 1px solid var(--success);">
+                        <h6 style="color: var(--success);"><i class="bi bi-shield-check"></i> Security Verification</h6>
+                        <ul class="mb-0" style="color: var(--text-light); font-size: 0.9rem;">
+                            <li>Message signature will be verified</li>
+                            <li>ZK proof will be validated</li>
+                            <li>Nonce checked for replay attack prevention</li>
+                            <li>Relay node will verify before forwarding</li>
+                        </ul>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'crosschain_dashboard' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> Initiate Transfer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

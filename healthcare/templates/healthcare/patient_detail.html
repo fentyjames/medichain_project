@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% block title %}Patient Details - MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}" style="color: var(--accent);">Healthcare</a></li>
+<li class="breadcrumb-item"><a href="{% url 'patient_list' %}" style="color: var(--accent);">Patients</a></li>
+<li class="breadcrumb-item active">{{ patient.patient_id|truncatechars:12 }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Patient Info Card -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header text-center">
+                <i class="bi bi-person-circle fs-1"></i>
+                <h5 class="mt-2">Patient Profile</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label text-muted">Patient ID</label>
+                    <div class="d-flex align-items-center">
+                        <span class="hash-text">{{ patient.patient_id }}</span>
+                        <button class="btn btn-sm btn-link" onclick="copyToClipboard('{{ patient.patient_id }}')">
+                            <i class="bi bi-clipboard" style="color: var(--text-light);"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-muted">Public Key</label>
+                    <div class="hash-text">{{ patient.public_key|truncatechars:30 }}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-muted">Blood Type</label>
+                    <div><span class="badge bg-info fs-6">{{ patient.blood_type|default:"Not specified" }}</span></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-muted">Allergies</label>
+                    <div>{{ patient.allergies|default:"None recorded" }}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-muted">Emergency Contact</label>
+                    <div>{{ patient.emergency_contact|default:"Not provided" }}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-muted">Status</label>
+                    <div>
+                        {% if patient.is_active %}
+                        <span class="badge bg-success"><i class="bi bi-check-circle"></i> Active</span>
+                        {% else %}
+                        <span class="badge bg-danger"><i class="bi bi-x-circle"></i> Inactive</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="mb-0">
+                    <label class="form-label text-muted">Registered</label>
+                    <div>{{ patient.created_at|date:"F d, Y H:i" }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="card">
+            <div class="card-header"><i class="bi bi-graph-up"></i> Statistics</div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Total Records</span>
+                    <span class="badge bg-primary">{{ records|length }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Active Permissions</span>
+                    <span class="badge bg-success">{{ permissions|length }}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Last Updated</span>
+                    <span class="text-muted">{{ patient.updated_at|date:"Y-m-d" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Records & Permissions -->
+    <div class="col-md-8">
+        <!-- Medical Records -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-file-medical"></i> Medical Records</span>
+                <a href="{% url 'record_add' %}?patient={{ patient.patient_id }}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus"></i> Add Record
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Title</th>
+                                <th>Hospital</th>
+                                <th>Data Hash</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in records %}
+                            <tr>
+                                <td><span class="badge bg-secondary">{{ record.get_record_type_display }}</span></td>
+                                <td>{{ record.title|truncatechars:25 }}</td>
+                                <td>{{ record.hospital.name }}</td>
+                                <td><span class="hash-text">{{ record.data_hash|truncatechars:12 }}</span></td>
+                                <td>{{ record.created_at|date:"Y-m-d" }}</td>
+                                <td>
+                                    <a href="{% url 'record_detail' record.record_id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="6" class="text-center text-muted py-3">No medical records found</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Access Permissions -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-shield-check"></i> Access Permissions</span>
+                <a href="{% url 'permission_add' %}?patient={{ patient.patient_id }}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus"></i> Grant Access
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Grantee</th>
+                                <th>Type</th>
+                                <th>Permission</th>
+                                <th>Purpose</th>
+                                <th>Valid Until</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for perm in permissions %}
+                            <tr>
+                                <td>{{ perm.grantee|truncatechars:20 }}</td>
+                                <td><span class="badge bg-info">{{ perm.get_grantee_type_display }}</span></td>
+                                <td><span class="badge bg-primary">{{ perm.get_permission_type_display }}</span></td>
+                                <td>{{ perm.purpose|truncatechars:30 }}</td>
+                                <td>{{ perm.valid_until|date:"Y-m-d"|default:"No expiry" }}</td>
+                                <td>
+                                    {% if perm.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Revoked</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="6" class="text-center text-muted py-3">No access permissions granted</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

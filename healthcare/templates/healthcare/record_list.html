@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}Medical Records - MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}" style="color: var(--accent);">Healthcare</a></li>
+<li class="breadcrumb-item active">Records</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-file-medical"></i> Medical Records</h2>
+    <a href="{% url 'record_add' %}" class="btn btn-primary"><i class="bi bi-file-earmark-plus"></i> Create Record</a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-list"></i> All Records</span>
+            <div class="d-flex gap-2">
+                <select class="form-select form-select-sm" id="filterType" style="width: 150px;">
+                    <option value="">All Types</option>
+                    <option value="DIAGNOSIS">Diagnosis</option>
+                    <option value="LAB_RESULT">Lab Result</option>
+                    <option value="PRESCRIPTION">Prescription</option>
+                    <option value="IMAGING">Imaging</option>
+                    <option value="SURGERY">Surgery</option>
+                </select>
+                <input type="text" class="form-control form-control-sm" id="searchRecords" placeholder="Search..." style="width: 200px;">
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="recordsTable">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Title</th>
+                        <th>Patient ID</th>
+                        <th>Hospital</th>
+                        <th>Data Hash</th>
+                        <th>IPFS</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr data-type="{{ record.record_type }}">
+                        <td><span class="badge bg-secondary">{{ record.get_record_type_display }}</span></td>
+                        <td>{{ record.title|truncatechars:25 }}</td>
+                        <td><span class="hash-text">{{ record.patient.patient_id|truncatechars:12 }}</span></td>
+                        <td>{{ record.hospital.name|truncatechars:20 }}</td>
+                        <td><span class="hash-text">{{ record.data_hash|truncatechars:10 }}</span></td>
+                        <td>
+                            {% if record.ipfs_hash %}
+                            <span class="hash-text">{{ record.ipfs_hash|truncatechars:10 }}</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if record.is_active %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Archived</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ record.created_at|date:"Y-m-d" }}</td>
+                        <td>
+                            <a href="{% url 'record_detail' record.record_id %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a>
+                            <a href="{% url 'permission_add' %}?record={{ record.record_id }}" class="btn btn-sm btn-outline-success"><i class="bi bi-key"></i></a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="9" class="text-center text-muted py-5">
+                        <i class="bi bi-file-earmark-x fs-1 d-block mb-2"></i>
+                        No medical records found.<br>
+                        <a href="{% url 'record_add' %}" class="btn btn-primary mt-2">Create First Record</a>
+                    </td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('searchRecords').addEventListener('keyup', function() {
+    const filter = this.value.toLowerCase();
+    document.querySelectorAll('#recordsTable tbody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
+    });
+});
+document.getElementById('filterType').addEventListener('change', function() {
+    const type = this.value;
+    document.querySelectorAll('#recordsTable tbody tr').forEach(row => {
+        if (!type || row.dataset.type === type) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

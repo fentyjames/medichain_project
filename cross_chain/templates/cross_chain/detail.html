@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Message Details - MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'crosschain_dashboard' %}" style="color: var(--accent);">Cross-Chain</a></li>
+<li class="breadcrumb-item active">{{ message.message_id|truncatechars:12 }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-envelope"></i> Cross-Chain Message Details</div>
+            <div class="card-body">
+                <div class="mb-3"><label class="form-label text-muted">Message ID</label><div class="hash-text">{{ message.message_id }}</div></div>
+                <div class="row">
+                    <div class="col-md-6 mb-3"><label class="form-label text-muted">Source Chain</label><div><span class="badge bg-secondary">{{ message.source_chain.name }}</span></div></div>
+                    <div class="col-md-6 mb-3"><label class="form-label text-muted">Target Chain</label><div><span class="badge bg-primary">{{ message.target_chain.name }}</span></div></div>
+                </div>
+                <div class="mb-3"><label class="form-label text-muted">Data Hash</label><div class="hash-text">{{ message.data_hash }}</div></div>
+                <div class="mb-3"><label class="form-label text-muted">Signature</label><div class="hash-text">{{ message.signature|truncatechars:40 }}</div></div>
+                <div class="mb-3"><label class="form-label text-muted">Nonce</label><div class="hash-text">{{ message.nonce|truncatechars:30 }}</div></div>
+                <div class="mb-3">
+                    <label class="form-label text-muted">Status</label>
+                    <div>
+                        {% if message.status == 'RELAYED' %}<span class="badge bg-success fs-6"><i class="bi bi-check-circle"></i> Relayed</span>
+                        {% elif message.status == 'PENDING' %}<span class="badge bg-warning fs-6"><i class="bi bi-hourglass"></i> Pending</span>
+                        {% elif message.status == 'REJECTED' %}<span class="badge bg-danger fs-6"><i class="bi bi-x-circle"></i> Rejected</span>
+                        {% else %}<span class="badge bg-secondary fs-6">{{ message.status }}</span>{% endif %}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3"><label class="form-label text-muted">Created</label><div>{{ message.created_at|date:"F d, Y H:i:s" }}</div></div>
+                    <div class="col-md-6 mb-3"><label class="form-label text-muted">Relayed</label><div>{{ message.relayed_at|date:"F d, Y H:i:s"|default:"Not yet relayed" }}</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

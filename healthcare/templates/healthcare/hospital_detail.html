@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}{{ hospital.name }} - MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}" style="color: var(--accent);">Healthcare</a></li>
+<li class="breadcrumb-item"><a href="{% url 'hospital_list' %}" style="color: var(--accent);">Hospitals</a></li>
+<li class="breadcrumb-item active">{{ hospital.name }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header text-center">
+                <i class="bi bi-building fs-1"></i>
+                <h5 class="mt-2">{{ hospital.name }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label text-muted">Hospital ID</label>
+                    <div class="d-flex align-items-center">
+                        <span class="hash-text">{{ hospital.hospital_id }}</span>
+                        <button class="btn btn-sm btn-link" onclick="copyToClipboard('{{ hospital.hospital_id }}')">
+                            <i class="bi bi-clipboard" style="color: var(--text-light);"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="mb-3"><label class="form-label text-muted">License</label><div>{{ hospital.license_number }}</div></div>
+                <div class="mb-3"><label class="form-label text-muted">Address</label><div>{{ hospital.address|default:"Not provided" }}</div></div>
+                <div class="mb-3">
+                    <label class="form-label text-muted">Verification Status</label>
+                    <div>
+                        {% if hospital.is_verified %}
+                        <span class="badge bg-success fs-6"><i class="bi bi-check-circle"></i> Verified on Blockchain</span>
+                        {% else %}
+                        <span class="badge bg-warning fs-6"><i class="bi bi-clock"></i> Pending Verification</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="mb-0"><label class="form-label text-muted">Registered</label><div>{{ hospital.created_at|date:"F d, Y" }}</div></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-file-medical"></i> Medical Records Created</span>
+                <a href="{% url 'record_add' %}?hospital={{ hospital.hospital_id }}" class="btn btn-sm btn-primary"><i class="bi bi-plus"></i> Add Record</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr><th>Type</th><th>Title</th><th>Patient</th><th>Hash</th><th>Date</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for record in records %}
+                            <tr>
+                                <td><span class="badge bg-secondary">{{ record.get_record_type_display }}</span></td>
+                                <td>{{ record.title|truncatechars:25 }}</td>
+                                <td><span class="hash-text">{{ record.patient.patient_id|truncatechars:12 }}</span></td>
+                                <td><span class="hash-text">{{ record.data_hash|truncatechars:10 }}</span></td>
+                                <td>{{ record.created_at|date:"Y-m-d" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted py-3">No records created by this hospital</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

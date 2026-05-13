@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Range Proof - MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'zk_dashboard' %}" style="color: var(--accent);">ZK Proofs</a></li>
+<li class="breadcrumb-item active">Range Proof</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-activity"></i> Range Proof</div>
+            <div class="card-body p-4">
+                <form method="post" action="{% url 'zk_range' %}">
+                    {% csrf_token %}
+                    <div class="alert" style="background: rgba(233,69,96,0.1); border: 1px solid var(--accent);">
+                        <p class="mb-0" style="color: var(--text-light); font-size: 0.9rem;">
+                            <i class="bi bi-info-circle" style="color: var(--accent);"></i>
+                            Prove that a value (e.g., blood pressure, glucose level) falls within a healthy range without revealing the exact value.
+                        </p>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Value *</label>
+                            <input type="number" name="value" class="form-control" placeholder="e.g., 120" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Min *</label>
+                            <input type="number" name="min" class="form-control" placeholder="e.g., 90" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Max *</label>
+                            <input type="number" name="max" class="form-control" placeholder="e.g., 140" required>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'zk_dashboard' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-activity"></i> Generate Range Proof</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

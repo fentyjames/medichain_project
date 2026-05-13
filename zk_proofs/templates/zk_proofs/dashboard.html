@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}ZK Proofs - MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">ZK Proofs</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-eye-slash"></i> Zero-Knowledge Proofs</h2>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-plus-circle"></i> Generate Proof</div>
+            <div class="card-body">
+                <p class="text-muted">Create a ZK proof to verify data without revealing it.</p>
+                <a href="{% url 'zk_generate' %}" class="btn btn-primary w-100"><i class="bi bi-shield-lock"></i> Generate ZK Proof</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-check-circle"></i> Verify Proof</div>
+            <div class="card-body">
+                <p class="text-muted">Verify an existing ZK proof against public inputs.</p>
+                <a href="{% url 'zk_verify_page' %}" class="btn btn-primary w-100"><i class="bi bi-shield-check"></i> Verify Proof</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-bar-chart"></i> Range Proof</div>
+            <div class="card-body">
+                <p class="text-muted">Prove a value is within a range without revealing it.</p>
+                <a href="{% url 'zk_range' %}" class="btn btn-primary w-100"><i class="bi bi-activity"></i> Range Proof</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><i class="bi bi-info-circle"></i> About Zero-Knowledge Proofs</div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h5 style="color: var(--accent);">zk-SNARKs</h5>
+                <p style="color: var(--text-light);">Zero-Knowledge Succinct Non-Interactive Arguments of Knowledge provide efficient verification with small proof sizes. Used for transaction batch verification in Layer-2 rollups.</p>
+                <ul style="color: var(--text-light);">
+                    <li>Proof size: ~200 bytes</li>
+                    <li>Verification time: ~50ms</li>
+                    <li>Trusted setup required</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h5 style="color: var(--accent);">Use Cases</h5>
+                <ul style="color: var(--text-light);">
+                    <li><strong>Patient Identity:</strong> Verify without revealing personal data</li>
+                    <li><strong>Lab Results:</strong> Confirm thresholds without exact values</li>
+                    <li><strong>Insurance Claims:</strong> Validate without disclosing history</li>
+                    <li><strong>Prescriptions:</strong> Authenticate without diagnosis details</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

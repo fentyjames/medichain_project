@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - MediChain{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 style="color: var(--accent);"><i class="bi bi-shield-lock-fill"></i> MediChain</h1>
+        <p class="text-muted">Scalable Cross-Chain Layer-2 Blockchain Framework for Privacy-Preserving Healthcare Data Exchange</p>
+    </div>
+    <div>
+        <span class="status-dot status-active"></span>
+        <span style="color: var(--success);">System Operational</span>
+    </div>
+</div>
+
+<!-- System Stats -->
+<div class="row mb-4">
+    <div class="col-md-2"><div class="stat-card"><div class="stat-value">{{ stats.networks|default:"0" }}</div><div class="stat-label"><i class="bi bi-hdd-network"></i> Networks</div></div></div>
+    <div class="col-md-2"><div class="stat-card"><div class="stat-value">{{ stats.total_blocks|default:"0" }}</div><div class="stat-label"><i class="bi bi-box"></i> Blocks</div></div></div>
+    <div class="col-md-2"><div class="stat-card"><div class="stat-value">{{ stats.total_transactions|default:"0" }}</div><div class="stat-label"><i class="bi bi-currency-exchange"></i> TXs</div></div></div>
+    <div class="col-md-2"><div class="stat-card"><div class="stat-value">{{ stats.patients|default:"0" }}</div><div class="stat-label"><i class="bi bi-people"></i> Patients</div></div></div>
+    <div class="col-md-2"><div class="stat-card"><div class="stat-value">{{ stats.hospitals|default:"0" }}</div><div class="stat-label"><i class="bi bi-building"></i> Hospitals</div></div></div>
+    <div class="col-md-2"><div class="stat-card"><div class="stat-value">{{ stats.medical_records|default:"0" }}</div><div class="stat-label"><i class="bi bi-file-medical"></i> Records</div></div></div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-lightning-charge"></i> Quick Actions</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <a href="{% url 'patient_add' %}" class="btn btn-outline-primary w-100 py-3">
+                            <i class="bi bi-person-plus fs-3 d-block mb-2"></i> Add Patient
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'hospital_add' %}" class="btn btn-outline-primary w-100 py-3">
+                            <i class="bi bi-building-add fs-3 d-block mb-2"></i> Add Hospital
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'record_add' %}" class="btn btn-outline-primary w-100 py-3">
+                            <i class="bi bi-file-earmark-plus fs-3 d-block mb-2"></i> Create Record
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'rollup_create' %}" class="btn btn-outline-primary w-100 py-3">
+                            <i class="bi bi-layers fs-3 d-block mb-2"></i> Create Rollup
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Activity -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-clock-history"></i> Recent Activity</span>
+            </div>
+            <div class="card-body">
+                {% for log in recent_logs %}
+                <div class="d-flex justify-content-between align-items-center mb-2 p-2" style="background: rgba(255,255,255,0.03); border-radius: 8px;">
+                    <div>
+                        <span class="badge {% if log.action == 'CREATE' %}bg-success{% elif log.action == 'READ' %}bg-info{% elif log.action == 'SHARE' %}bg-primary{% else %}bg-secondary{% endif %}">{{ log.get_action_display }}</span>
+                        <span class="ms-2">{{ log.actor|truncatechars:20 }}</span>
+                    </div>
+                    <small class="text-muted">{{ log.timestamp|date:"H:i" }}</small>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center py-3">No recent activity</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <!-- System Health -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-heart-pulse"></i> System Health</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Blockchain Layer</span>
+                        <span style="color: var(--success);"><i class="bi bi-check-circle"></i> Healthy</span>
+                    </div>
+                    <div class="progress mt-1" style="height: 6px; background: var(--border);">
+                        <div class="progress-bar" style="width: 98%; background: var(--success);"></div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Layer-2 Rollups</span>
+                        <span style="color: var(--success);"><i class="bi bi-check-circle"></i> Active</span>
+                    </div>
+                    <div class="progress mt-1" style="height: 6px; background: var(--border);">
+                        <div class="progress-bar" style="width: 95%; background: var(--success);"></div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>ZK Proof Service</span>
+                        <span style="color: var(--success);"><i class="bi bi-check-circle"></i> Operational</span>
+                    </div>
+                    <div class="progress mt-1" style="height: 6px; background: var(--border);">
+                        <div class="progress-bar" style="width: 100%; background: var(--success);"></div>
+                    </div>
+                </div>
+                <div class="mb-0">
+                    <div class="d-flex justify-content-between">
+                        <span>Cross-Chain Relay</span>
+                        <span style="color: var(--success);"><i class="bi bi-check-circle"></i> Connected</span>
+                    </div>
+                    <div class="progress mt-1" style="height: 6px; background: var(--border);">
+                        <div class="progress-bar" style="width: 92%; background: var(--success);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Architecture Overview -->
+<div class="card">
+    <div class="card-header"><i class="bi bi-diagram-3"></i> Architecture Overview</div>
+    <div class="card-body">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="p-3 text-center" style="background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid var(--border);">
+                    <i class="bi bi-layers fs-1" style="color: var(--accent);"></i>
+                    <h5 class="mt-2">Layer-2 Rollups</h5>
+                    <p class="text-muted" style="font-size: 0.85rem;">Batch 50 transactions off-chain. 75% cost reduction. 10x throughput.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 text-center" style="background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid var(--border);">
+                    <i class="bi bi-eye-slash fs-1" style="color: var(--accent);"></i>
+                    <h5 class="mt-2">Zero-Knowledge Proofs</h5>
+                    <p class="text-muted" style="font-size: 0.85rem;">Verify data without revealing it. HIPAA/GDPR compliant.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 text-center" style="background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid var(--border);">
+                    <i class="bi bi-arrow-left-right fs-1" style="color: var(--accent);"></i>
+                    <h5 class="mt-2">Cross-Chain Relay</h5>
+                    <p class="text-muted" style="font-size: 0.85rem;">Ethereum, Polygon, Hyperledger interoperability.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

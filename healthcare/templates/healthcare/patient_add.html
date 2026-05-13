@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}Add Patient - MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}" style="color: var(--accent);">Healthcare</a></li>
+<li class="breadcrumb-item"><a href="{% url 'patient_list' %}" style="color: var(--accent);">Patients</a></li>
+<li class="breadcrumb-item active">Add Patient</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-person-plus"></i> Register New Patient
+            </div>
+            <div class="card-body p-4">
+                <form method="post" action="{% url 'patient_add' %}">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Public Key</label>
+                            <input type="text" name="public_key" class="form-control" placeholder="Enter patient's public key" required>
+                            <div class="form-text" style="color: var(--text-light);">Cryptographic public key for blockchain identity</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Date of Birth</label>
+                            <input type="date" name="date_of_birth" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Blood Type</label>
+                            <select name="blood_type" class="form-select">
+                                <option value="">Select Blood Type</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Emergency Contact</label>
+                            <input type="text" name="emergency_contact" class="form-control" placeholder="+90-555-123-4567">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Allergies</label>
+                        <textarea name="allergies" class="form-control" rows="2" placeholder="List any known allergies..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Medical History Notes</label>
+                        <textarea name="notes" class="form-control" rows="3" placeholder="Additional medical history notes (stored off-chain)..."></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'patient_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to List
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> Register Patient
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Info Card -->
+        <div class="card mt-3" style="border-left: 4px solid var(--success);">
+            <div class="card-body">
+                <h6 class="card-title" style="color: var(--success);">
+                    <i class="bi bi-info-circle"></i> Privacy Notice
+                </h6>
+                <p class="card-text" style="color: var(--text-light); font-size: 0.9rem;">
+                    Patient data is encrypted using AES-256-GCM before storage. Only cryptographic hashes 
+                    are stored on-chain. The actual medical records are stored off-chain in IPFS with 
+                    patient-controlled encryption keys.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

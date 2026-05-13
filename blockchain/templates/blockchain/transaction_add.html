@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Create Transaction - MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'blockchain_dashboard' %}" style="color: var(--accent);">Blockchain</a></li>
+<li class="breadcrumb-item"><a href="{% url 'transaction_list' %}" style="color: var(--accent);">Transactions</a></li>
+<li class="breadcrumb-item active">Create</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-plus-circle"></i> Create Transaction</div>
+            <div class="card-body p-4">
+                <form method="post" action="{% url 'transaction_add' %}">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Transaction Type *</label>
+                            <select name="tx_type" class="form-select" required>
+                                <option value="CREATE">Record Creation</option>
+                                <option value="UPDATE">Record Update</option>
+                                <option value="SHARE">Record Sharing</option>
+                                <option value="VERIFY">Verification</option>
+                                <option value="ACCESS">Access Request</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Sender ID *</label>
+                            <input type="text" name="sender" class="form-control" placeholder="Hospital/Patient ID" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Receiver ID (optional)</label>
+                            <input type="text" name="receiver" class="form-control" placeholder="Target entity ID">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Data Hash *</label>
+                            <input type="text" name="data_hash" class="form-control" placeholder="SHA-256 hash of data" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Digital Signature *</label>
+                        <textarea name="signature" class="form-control" rows="2" placeholder="ECDSA signature" required></textarea>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'transaction_list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Create Transaction</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

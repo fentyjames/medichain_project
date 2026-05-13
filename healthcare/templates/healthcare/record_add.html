@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Create Record - MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}" style="color: var(--accent);">Healthcare</a></li>
+<li class="breadcrumb-item"><a href="{% url 'record_list' %}" style="color: var(--accent);">Records</a></li>
+<li class="breadcrumb-item active">Create</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-file-earmark-plus"></i> Create Medical Record</div>
+            <div class="card-body p-4">
+                <form method="post" action="{% url 'record_add' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Patient *</label>
+                            <select name="patient_id" class="form-select" required>
+                                <option value="">Select Patient</option>
+                                {% for patient in patients %}
+                                <option value="{{ patient.patient_id }}" {% if selected_patient == patient.patient_id %}selected{% endif %}>
+                                    {{ patient.patient_id|truncatechars:12 }} ({{ patient.blood_type|default:"-" }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Hospital *</label>
+                            <select name="hospital_id" class="form-select" required>
+                                <option value="">Select Hospital</option>
+                                {% for hospital in hospitals %}
+                                <option value="{{ hospital.hospital_id }}" {% if selected_hospital == hospital.hospital_id %}selected{% endif %}>
+                                    {{ hospital.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Record Type *</label>
+                            <select name="record_type" class="form-select" required>
+                                <option value="">Select Type</option>
+                                <option value="DIAGNOSIS">Diagnosis</option>
+                                <option value="LAB_RESULT">Laboratory Result</option>
+                                <option value="PRESCRIPTION">Prescription</option>
+                                <option value="IMAGING">Medical Imaging</option>
+                                <option value="SURGERY">Surgery Report</option>
+                                <option value="DISCHARGE">Discharge Summary</option>
+                                <option value="INSURANCE">Insurance Claim</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Title *</label>
+                            <input type="text" name="title" class="form-control" placeholder="e.g., Annual Health Checkup 2025" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="3" placeholder="Detailed medical description..."></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Medical File</label>
+                            <input type="file" name="medical_file" class="form-control" accept=".pdf,.jpg,.png,.dcm">
+                            <div class="form-text" style="color: var(--text-light);">File will be encrypted and stored off-chain (IPFS)</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">IPFS Hash (if already uploaded)</label>
+                            <input type="text" name="ipfs_hash" class="form-control" placeholder="Qm...">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Digital Signature *</label>
+                        <input type="text" name="signature" class="form-control" placeholder="ECDSA signature of record hash" required>
+                        <div class="form-text" style="color: var(--text-light);">Required for blockchain verification</div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'record_list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Create & Hash Record</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-3" style="border-left: 4px solid var(--success);">
+            <div class="card-body">
+                <h6 style="color: var(--success);"><i class="bi bi-shield-lock"></i> How Record Creation Works</h6>
+                <ol class="mb-0" style="color: var(--text-light); font-size: 0.9rem;">
+                    <li>Record metadata is collected and validated</li>
+                    <li>SHA-256 hash is computed for integrity verification</li>
+                    <li>File is encrypted with AES-256-GCM and uploaded to IPFS</li>
+                    <li>Hash + IPFS CID are submitted as a blockchain transaction</li>
+                    <li>Transaction is batched in Layer-2 rollup with ZK proof</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

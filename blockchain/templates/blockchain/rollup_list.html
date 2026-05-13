@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Rollup Batches - MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'blockchain_dashboard' %}" style="color: var(--accent);">Blockchain</a></li>
+<li class="breadcrumb-item active">Rollups</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-layers"></i> Layer-2 Rollup Batches</h2>
+    <a href="{% url 'rollup_create' %}" class="btn btn-primary"><i class="bi bi-plus"></i> Create Batch</a>
+</div>
+<div class="card">
+    <div class="card-header"><i class="bi bi-list"></i> All Rollup Batches</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead><tr><th>Batch ID</th><th>Merkle Root</th><th>Proof Type</th><th>TX Count</th><th>Network</th><th>Status</th><th>Created</th></tr></thead>
+                <tbody>
+                    {% for batch in rollups %}
+                    <tr>
+                        <td><span class="hash-text">{{ batch.batch_id|truncatechars:16 }}</span></td>
+                        <td><span class="hash-text">{{ batch.merkle_root|truncatechars:12 }}</span></td>
+                        <td><span class="badge bg-info">{{ batch.proof_type }}</span></td>
+                        <td>{{ batch.transactions.count }}</td>
+                        <td>{{ batch.network.name }}</td>
+                        <td>
+                            {% if batch.status == 'PENDING' %}<span class="badge bg-warning">Pending</span>
+                            {% elif batch.status == 'BATCHED' %}<span class="badge bg-info">Batched</span>
+                            {% elif batch.status == 'CONFIRMED' %}<span class="badge bg-success">Confirmed</span>
+                            {% else %}<span class="badge bg-secondary">{{ batch.status }}</span>{% endif %}
+                        </td>
+                        <td>{{ batch.created_at|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center text-muted py-5"><i class="bi bi-layers fs-1 d-block mb-2"></i>No rollup batches found</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

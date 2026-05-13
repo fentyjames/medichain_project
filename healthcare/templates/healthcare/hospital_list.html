@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Hospitals - MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}" style="color: var(--accent);">Healthcare</a></li>
+<li class="breadcrumb-item active">Hospitals</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-building"></i> Hospitals</h2>
+    <a href="{% url 'hospital_add' %}" class="btn btn-primary">
+        <i class="bi bi-building-add"></i> Add New Hospital
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-list"></i> All Hospitals</span>
+            <div class="input-group" style="width: 300px;">
+                <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control border-start-0" id="searchHospitals" placeholder="Search hospitals...">
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="hospitalsTable">
+                <thead>
+                    <tr>
+                        <th>Hospital ID</th>
+                        <th>Name</th>
+                        <th>License</th>
+                        <th>Blockchain Network</th>
+                        <th>Verified</th>
+                        <th>Records</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for hospital in hospitals %}
+                    <tr>
+                        <td><span class="hash-text">{{ hospital.hospital_id|truncatechars:12 }}</span></td>
+                        <td><strong>{{ hospital.name }}</strong></td>
+                        <td>{{ hospital.license_number }}</td>
+                        <td>{{ hospital.blockchain_network.name|default:"Not assigned" }}</td>
+                        <td>
+                            {% if hospital.is_verified %}
+                            <span class="badge bg-success"><i class="bi bi-check-circle"></i> Verified</span>
+                            {% else %}
+                            <span class="badge bg-warning"><i class="bi bi-clock"></i> Pending</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="badge bg-secondary">{{ hospital.medicalrecord_set.count }}</span></td>
+                        <td>{{ hospital.created_at|date:"Y-m-d" }}</td>
+                        <td>
+                            <!-- AFTER (fixed): -->
+
+                            {% if hospital.hospital_id %}
+                                <a href="{% url 'hospital_detail' hospital.hospital_id|default:hospital.pk %}">{{ hospital.name }}
+                                     <i class="bi bi-eye"></i>
+                                </a>
+                            {% else %}                            
+                                <span class="text-muted">{{ hospital.name }} (No ID)</span>
+                            {% endif %}
+
+                            {% comment %} <a href="{% url 'hospital_detail' hospital.hospital_id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a> {% endcomment %}
+                            <a href="{% url 'record_add' %}?hospital={{ hospital.hospital_id }}" class="btn btn-sm btn-outline-success">
+                                <i class="bi bi-file-earmark-plus"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-5">
+                            <i class="bi bi-building fs-1 d-block mb-2"></i>
+                            No hospitals registered yet.<br>
+                            <a href="{% url 'hospital_add' %}" class="btn btn-primary mt-2">Register First Hospital</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('searchHospitals').addEventListener('keyup', function() {
+    const filter = this.value.toLowerCase();
+    document.querySelectorAll('#hospitalsTable tbody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}
