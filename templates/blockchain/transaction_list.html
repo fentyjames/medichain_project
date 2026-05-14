@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Transactions - MediChain{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 style="color: var(--accent);"><i class="bi bi-currency-exchange"></i> Transactions</h2>
+        <p class="text-muted mb-0">{{ transactions|length }} transaction{{ transactions|length|pluralize }} total</p>
+    </div>
+    <a href="{% url 'transaction_add' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> New Transaction
+    </a>
+</div>
+
+<!-- Filter Bar -->
+<div class="card mb-4">
+    <div class="card-body py-3">
+        <form method="get" class="d-flex flex-wrap gap-2 align-items-center">
+            <input type="text" name="q" value="{{ request.GET.q }}" class="form-control"
+                   placeholder="Search sender, receiver, or TX hash…"
+                   style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;max-width:280px;">
+            <select name="type" class="form-select"
+                    style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;max-width:160px;">
+                <option value="">All Types</option>
+                <option value="CREATE"  {% if request.GET.type == 'CREATE'  %}selected{% endif %}>Create</option>
+                <option value="UPDATE"  {% if request.GET.type == 'UPDATE'  %}selected{% endif %}>Update</option>
+                <option value="SHARE"   {% if request.GET.type == 'SHARE'   %}selected{% endif %}>Share</option>
+                <option value="VERIFY"  {% if request.GET.type == 'VERIFY'  %}selected{% endif %}>Verify</option>
+                <option value="ACCESS"  {% if request.GET.type == 'ACCESS'  %}selected{% endif %}>Access</option>
+            </select>
+            <select name="status" class="form-select"
+                    style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;max-width:150px;">
+                <option value="">All Statuses</option>
+                <option value="PENDING"   {% if request.GET.status == 'PENDING'   %}selected{% endif %}>Pending</option>
+                <option value="BATCHED"   {% if request.GET.status == 'BATCHED'   %}selected{% endif %}>Batched</option>
+                <option value="CONFIRMED" {% if request.GET.status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
+                <option value="FAILED"    {% if request.GET.status == 'FAILED'    %}selected{% endif %}>Failed</option>
+            </select>
+            <button type="submit" class="btn btn-outline-primary"><i class="bi bi-search"></i></button>
+            {% if request.GET.q or request.GET.type or request.GET.status %}
+            <a href="{% url 'transaction_list' %}" class="btn btn-outline-secondary"><i class="bi bi-x"></i> Clear</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>TX Hash</th>
+                        <th>Type</th>
+                        <th>Sender</th>
+                        <th>Receiver</th>
+                        <th>Status</th>
+                        <th>Block</th>
+                        <th>Gas</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tx in transactions %}
+                    {% with tt=tx.tx_type ts=tx.status %}
+                    <tr>
+                        <td>
+                            <code class="hash-text" onclick="copyToClipboard('{{ tx.tx_hash }}')"
+                                  style="cursor:pointer;" title="{{ tx.tx_hash }}">
+                                {{ tx.tx_hash|slice:":20" }}…
+                            </code>
+                        </td>
+                        <td>
+                            <span class="badge"
+                                  style="background:{% if tt == 'CREATE' %}#38bdf8{% elif tt == 'UPDATE' %}#facc15{% elif tt == 'SHARE' %}#a78bfa{% elif tt == 'VERIFY' %}#22c55e{% elif tt == 'ACCESS' %}#fb923c{% else %}#94a3b8{% endif %};color:{% if tt == 'UPDATE' %}#000{% else %}#fff{% endif %};">
+                                {{ tx.get_tx_type_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <small class="hash-text" title="{{ tx.sender }}">{{ tx.sender|truncatechars:20 }}</small>
+                        </td>
+                        <td>
+                            <small class="text-muted" title="{{ tx.receiver }}">{{ tx.receiver|default:"-"|truncatechars:20 }}</small>
+                        </td>
+                        <td>
+                            <span class="badge"
+                                  style="background:{% if ts == 'CONFIRMED' %}#22c55e{% elif ts == 'PENDING' %}#facc15;color:#000{% elif ts == 'BATCHED' %}#38bdf8;color:#000{% else %}#f87171{% endif %};">
+                                {{ ts }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if tx.block %}
+                                <span class="badge" style="background:var(--accent);color:#000;">#{{ tx.block.block_number }}</span>
+                            {% else %}
+                                <span class="text-muted small">—</span>
+                            {% endif %}
+                        </td>
+                        <td><small class="text-muted">{{ tx.gas_used|default:"0" }}</small></td>
+                        <td><small class="text-muted">{{ tx.timestamp|date:"d M, H:i" }}</small></td>
+                    </tr>
+                    {% endwith %}
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <i class="bi bi-currency-exchange" style="font-size:2rem;color:var(--text-light);"></i>
+                            <p class="text-muted mt-2">No transactions yet.</p>
+                            <a href="{% url 'transaction_add' %}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-plus-lg"></i> Create First Transaction
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

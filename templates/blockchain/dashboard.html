@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block title %}Blockchain Explorer - MediChain{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 style="color: var(--accent);"><i class="bi bi-link-45deg"></i> Blockchain Explorer</h2>
+        <p class="text-muted mb-0">Layer-2 rollup ledger — blocks, transactions, and validator nodes</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'transaction_add' %}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-plus-lg"></i> New Transaction
+        </a>
+        <a href="{% url 'rollup_create' %}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-layers"></i> Create Rollup
+        </a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row mb-4 g-3">
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ total_blocks }}</div>
+            <div class="stat-label"><i class="bi bi-box"></i> Total Blocks</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ total_txs }}</div>
+            <div class="stat-label"><i class="bi bi-currency-exchange"></i> Transactions</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value {% if pending_txs > 0 %}text-warning{% endif %}">{{ pending_txs }}</div>
+            <div class="stat-label"><i class="bi bi-hourglass-split"></i> Pending TXs</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ validators }}</div>
+            <div class="stat-label"><i class="bi bi-shield-check"></i> Active Validators</div>
+        </div>
+    </div>
+</div>
+
+<!-- Active Networks -->
+{% if networks %}
+<div class="card mb-4">
+    <div class="card-header"><i class="bi bi-hdd-network"></i> Active Networks</div>
+    <div class="card-body">
+        <div class="row g-3">
+            {% for net in networks %}
+            <div class="col-md-4">
+                <div class="p-3 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <strong>{{ net.name }}</strong>
+                        <span class="badge" style="background:#22c55e;font-size:0.7rem;">Active</span>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <small class="text-muted"><i class="bi bi-hash"></i> Chain {{ net.chain_id }}</small>
+                        <small class="text-muted"><i class="bi bi-cpu"></i> {{ net.consensus_type }}</small>
+                    </div>
+                    <small class="text-muted d-block mt-1" style="font-family:monospace;font-size:0.75rem;">
+                        {{ net.rpc_url|truncatechars:40 }}
+                    </small>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Blocks -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-box"></i> Recent Blocks</span>
+        <a href="{% url 'block_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Block</th>
+                        <th>Hash</th>
+                        <th>Merkle Root</th>
+                        <th>TXs</th>
+                        <th>Network</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for block in recent_blocks %}
+                    <tr>
+                        <td>
+                            <span class="badge" style="background:var(--accent);color:#000;font-size:0.85rem;">
+                                #{{ block.block_number }}
+                            </span>
+                        </td>
+                        <td>
+                            <code class="hash-text" onclick="copyToClipboard('{{ block.hash }}')"
+                                  style="cursor:pointer;" title="Click to copy full hash">
+                                {{ block.hash|slice:":20" }}…
+                            </code>
+                        </td>
+                        <td>
+                            <code class="hash-text" style="font-size:0.75rem;">
+                                {{ block.merkle_root|slice:":16" }}…
+                            </code>
+                        </td>
+                        <td>{{ block.transaction_count }}</td>
+                        <td><small class="text-muted">{{ block.network.name }}</small></td>
+                        <td><small class="text-muted">{{ block.timestamp|date:"d M, H:i" }}</small></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted py-4">No blocks yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}Create Rollup Batch - MediChain{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'blockchain_dashboard' %}">Blockchain</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'rollup_list' %}">Rollup Batches</a></li>
+        <li class="breadcrumb-item active">Create Batch</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-md-7 col-lg-6">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-layers"></i> Create Rollup Batch</div>
+            <div class="card-body">
+
+                <div class="p-3 mb-4 rounded" style="background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.25);">
+                    <small style="color:#c4b5fd;">
+                        <i class="bi bi-eye-slash"></i> <strong>How rollups work</strong><br>
+                        Pending transactions are aggregated into a batch. A Merkle tree is computed over
+                        all transaction hashes, and a ZK-SNARK proof is generated to cryptographically
+                        commit the batch to the chosen network without revealing individual records.
+                    </small>
+                </div>
+
+                {% if networks %}
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-4">
+                        <label class="form-label">Target Network <span class="text-danger">*</span></label>
+                        {% for net in networks %}
+                        <div class="mb-2">
+                            <label class="d-flex align-items-center gap-3 p-3 rounded"
+                                   style="background:rgba(255,255,255,0.04);border:1px solid var(--border);cursor:pointer;border-radius:10px!important;">
+                                <input type="radio" name="network_id" value="{{ net.network_id }}"
+                                       {% if forloop.first %}checked{% endif %}
+                                       style="accent-color:var(--accent);">
+                                <div>
+                                    <strong>{{ net.name }}</strong>
+                                    <br>
+                                    <small class="text-muted">
+                                        Chain {{ net.chain_id }} &middot; {{ net.consensus_type }}
+                                        &middot; {{ net.rpc_url|truncatechars:36 }}
+                                    </small>
+                                </div>
+                                <span class="badge ms-auto" style="background:#22c55e;">Active</span>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="p-3 mb-4 rounded" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="small text-muted"><i class="bi bi-hourglass-split"></i> Pending transactions queued</span>
+                            <span id="pendingCount" class="fw-bold" style="color:var(--accent);">—</span>
+                        </div>
+                        <div class="small text-muted mt-1">Up to 50 PENDING transactions will be included in this batch.</div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-layers"></i> Generate Batch &amp; ZK Proof
+                        </button>
+                        <a href="{% url 'rollup_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-hdd-network" style="font-size:2.5rem;color:var(--text-light);"></i>
+                    <p class="text-muted mt-3">No active networks available. Add a blockchain network first.</p>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+// Fetch pending TX count from API
+fetch('/api/blockchain/api/transactions/?format=json', {
+    headers: {'X-Requested-With': 'XMLHttpRequest'}
+})
+.then(r => r.json())
+.then(data => {
+    const results = data.results || data;
+    const pending = Array.isArray(results)
+        ? results.filter(tx => tx.status === 'PENDING').length
+        : '?';
+    const el = document.getElementById('pendingCount');
+    if (el) el.textContent = pending;
+})
+.catch(() => {
+    const el = document.getElementById('pendingCount');
+    if (el) el.textContent = '?';
+});
+{% endblock %}
