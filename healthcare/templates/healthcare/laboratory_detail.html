@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}{{ lab.name }} — MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}" style="color: var(--accent);">Healthcare</a></li>
+<li class="breadcrumb-item"><a href="{% url 'laboratory_list' %}" style="color: var(--accent);">Laboratories</a></li>
+<li class="breadcrumb-item active">{{ lab.name }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-4">
+    <div class="card mb-4">
+      <div class="card-header text-center">
+        <i class="bi bi-eyedropper fs-1"></i>
+        <h5 class="mt-2">{{ lab.name }}</h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label text-muted">Lab ID</label>
+          <div class="d-flex align-items-center">
+            <span class="hash-text">{{ lab.lab_id }}</span>
+            <button class="btn btn-sm btn-link" onclick="copyToClipboard('{{ lab.lab_id }}')">
+              <i class="bi bi-clipboard" style="color: var(--text-light);"></i>
+            </button>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-muted">Accreditation</label>
+          <div>{{ lab.accreditation|default:"Not specified" }}</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-muted">Parent Hospital</label>
+          <div>
+            {% if lab.hospital %}
+            <a href="{% url 'hospital_detail' lab.hospital.hospital_id %}" style="color: var(--accent);">{{ lab.hospital.name }}</a>
+            {% else %}&mdash;{% endif %}
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-muted">Public Key</label>
+          <div class="hash-text">{{ lab.public_key|truncatechars:30 }}</div>
+        </div>
+      </div>
+      <div class="card-footer d-flex gap-2">
+        <a href="{% url 'laboratory_report' lab.lab_id %}" class="btn btn-outline-success btn-sm flex-fill" target="_blank">
+          <i class="bi bi-file-earmark-text"></i> Report
+        </a>
+        <a href="{% url 'laboratory_print_report' lab.lab_id %}" class="btn btn-outline-primary btn-sm flex-fill" target="_blank">
+          <i class="bi bi-printer"></i> Print
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-info-circle me-1"></i> About This Laboratory</div>
+      <div class="card-body">
+        <p class="text-muted">This laboratory is registered under the MediChain platform. Lab result records are stored against the parent hospital and can be viewed in the lab report.</p>
+        <a href="{% url 'laboratory_report' lab.lab_id %}" class="btn btn-outline-success" target="_blank">
+          <i class="bi bi-file-earmark-text me-1"></i> View Full Lab Report
+        </a>
+        {% if lab.hospital %}
+        &nbsp;
+        <a href="{% url 'hospital_detail' lab.hospital.hospital_id %}" class="btn btn-outline-primary">
+          <i class="bi bi-building me-1"></i> View Hospital
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

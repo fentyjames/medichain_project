@@ -104,9 +104,11 @@
                         </td>
                         <td><small class="text-muted">{{ record.created_at|date:"d M Y" }}</small></td>
                         <td>
-                            <a href="{% url 'record_detail' record.record_id %}" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-eye"></i>
-                            </a>
+                            <div class="d-flex gap-1">
+                                <a href="{% url 'record_detail' record.record_id %}" class="btn btn-sm btn-outline-primary" title="View"><i class="bi bi-eye"></i></a>
+                                <a href="{% url 'record_report' record.record_id %}" class="btn btn-sm btn-outline-success" title="Report"><i class="bi bi-file-earmark-text"></i></a>
+                                <a href="{% url 'record_print_report' record.record_id %}" class="btn btn-sm btn-outline-secondary" title="Print" target="_blank"><i class="bi bi-printer"></i></a>
+                            </div>
                         </td>
                     </tr>
                     {% endwith %}

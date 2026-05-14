@@ -23,6 +23,18 @@
                             {% endfor %}
                         </select>
                     </div>
+                    {% if pending_count == 0 %}
+                    <div class="alert alert-warning mb-3">
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        <strong>No pending transactions.</strong> Create transactions first before batching.
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success mb-3">
+                        <i class="bi bi-check-circle me-1"></i>
+                        <strong>{{ pending_count }}</strong> pending transaction{{ pending_count|pluralize }} ready to batch.
+                    </div>
+                    {% endif %}
+
                     <div class="alert" style="background: rgba(0,217,255,0.1); border: 1px solid var(--success);">
                         <h6 style="color: var(--success);"><i class="bi bi-info-circle"></i> How Rollup Batching Works</h6>
                         <ol class="mb-0" style="color: var(--text-light); font-size: 0.9rem;">

@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% block title %}Access Permissions — MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}" style="color:var(--accent);">Healthcare</a></li>
+<li class="breadcrumb-item active">Access Permissions</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .filter-bar { background: var(--secondary); border: 1px solid var(--border); border-radius: 8px; padding: .75rem 1rem; margin-bottom: 1.25rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-key"></i> Access Permissions</h2>
+</div>
+
+<!-- Filters -->
+<div class="filter-bar">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label" style="font-size:.8rem;">Grantee Type</label>
+            <select name="grantee_type" class="form-select form-select-sm">
+                <option value="">All grantee types</option>
+                <option value="HOSPITAL"  {% if selected_grantee_type == 'HOSPITAL'  %}selected{% endif %}>Hospital</option>
+                <option value="LAB"       {% if selected_grantee_type == 'LAB'       %}selected{% endif %}>Laboratory</option>
+                <option value="INSURANCE" {% if selected_grantee_type == 'INSURANCE' %}selected{% endif %}>Insurance</option>
+                <option value="DOCTOR"    {% if selected_grantee_type == 'DOCTOR'    %}selected{% endif %}>Doctor</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label" style="font-size:.8rem;">Status</label>
+            <select name="active" class="form-select form-select-sm">
+                <option value="">All statuses</option>
+                <option value="1" {% if active_only == '1' %}selected{% endif %}>Active only</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-funnel me-1"></i>Apply</button>
+        </div>
+        {% if selected_grantee_type or active_only %}
+        <div class="col-md-3">
+            <a href="{% url 'permission_list' %}" class="btn btn-sm btn-outline-secondary w-100">Clear Filters</a>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <span><i class="bi bi-key"></i> Permissions
+        {% if selected_grantee_type %}<span class="badge bg-secondary ms-1">{{ selected_grantee_type }}</span>{% endif %}
+        {% if active_only == '1' %}<span class="badge bg-success ms-1">Active only</span>{% endif %}
+        </span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" style="font-size:.85rem;">
+                <thead>
+                    <tr>
+                        <th>Permission ID</th>
+                        <th>Patient (Grantor)</th>
+                        <th>Record</th>
+                        <th>Grantee</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Granted</th>
+                        <th>Expires</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for perm in permissions %}
+                    <tr>
+                        <td><span class="hash-text">{{ perm.permission_id|truncatechars:14 }}</span></td>
+                        <td>
+                            {% if perm.grantor.user %}
+                                <a href="{% url 'patient_detail' perm.grantor.patient_id %}" style="color:var(--accent);">
+                                    {{ perm.grantor.user.get_full_name|default:perm.grantor.user.username|truncatechars:20 }}
+                                </a>
+                            {% else %}
+                                <span class="hash-text">{{ perm.grantor.patient_id|truncatechars:14 }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'record_detail' perm.record.record_id %}" style="color:var(--accent);">
+                                <span class="badge bg-secondary" style="font-size:.7rem;">{{ perm.record.get_record_type_display }}</span>
+                            </a>
+                        </td>
+                        <td>{{ perm.grantee|truncatechars:22 }}</td>
+                        <td>
+                            <span class="badge
+                                {% if perm.grantee_type == 'HOSPITAL' %}bg-primary
+                                {% elif perm.grantee_type == 'LAB' %}bg-info
+                                {% elif perm.grantee_type == 'INSURANCE' %}bg-warning text-dark
+                                {% else %}bg-secondary{% endif %}"
+                                style="font-size:.7rem;">{{ perm.grantee_type }}</span>
+                        </td>
+                        <td>
+                            {% if perm.is_active %}
+                                <span class="badge bg-success" style="font-size:.7rem;">Active</span>
+                            {% else %}
+                                <span class="badge bg-danger" style="font-size:.7rem;">Revoked</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size:.78rem;">{{ perm.created_at|date:"Y-m-d" }}</td>
+                        <td style="font-size:.78rem;">{{ perm.valid_until|date:"Y-m-d"|default:"—" }}</td>
+                        <td>
+                            {% if perm.is_active %}
+                            <form method="post" action="{% url 'permission_revoke' perm.permission_id %}" class="d-inline"
+                                  onsubmit="return confirm('Revoke this permission?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Revoke">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="text-muted" style="font-size:.75rem;">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-5">
+                            <i class="bi bi-key fs-1 d-block mb-2"></i>
+                            No permissions found{% if selected_grantee_type or active_only %} for the selected filters{% endif %}.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <small class="text-muted">Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}</small>
+        <nav><ul class="pagination pagination-sm mb-0">
+            {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="{{ query_string }}page={{ page_obj.previous_page_number }}">«</a></li>
+            {% endif %}
+            {% for n in page_obj.paginator.page_range %}
+            <li class="page-item {% if n == page_obj.number %}active{% endif %}">
+                <a class="page-link" href="{{ query_string }}page={{ n }}">{{ n }}</a>
+            </li>
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="{{ query_string }}page={{ page_obj.next_page_number }}">»</a></li>
+            {% endif %}
+        </ul></nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

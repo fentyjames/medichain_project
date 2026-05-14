@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% block title %}System Overview Report — MediChain{% endblock %}
+
+{% block extra_css %}
+<style>
+  .report-header { border-bottom: 2px solid var(--accent); padding-bottom: 1rem; margin-bottom: 1.5rem; }
+  .stat-box { background: var(--secondary); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.25rem; text-align: center; }
+  .stat-box .stat-value { font-size: 1.8rem; font-weight: 700; color: var(--accent); }
+  .stat-box .stat-label { font-size: 0.78rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; }
+  .type-bar-track { background: var(--border); border-radius: 4px; height: 10px; overflow: hidden; }
+  .type-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #00c8ff); border-radius: 4px; transition: width 0.6s ease; }
+  .section-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-light); border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; margin-bottom: 1rem; }
+  .hash-mono { font-family: monospace; font-size: 0.78rem; }
+  .badge-type { font-size: 0.72rem; }
+  .print-btn { position: fixed; bottom: 2rem; right: 2rem; z-index: 1000; }
+  .domain-header { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-light); margin: 1.5rem 0 0.75rem; padding-left: 2px; }
+  @media print {
+    nav.navbar, #sidebarWrapper, footer, .print-btn, .alert, [data-bs-dismiss], .toast-container { display: none !important; }
+    body, html { background: #fff !important; color: #000 !important; }
+    .card { border: 1px solid #ccc !important; background: #fff !important; break-inside: avoid; }
+    .card-header { background: #f0f0f0 !important; color: #000 !important; }
+    .stat-box { background: #f8f8f8 !important; border: 1px solid #ccc !important; }
+    .stat-box .stat-value { color: #003399 !important; }
+    .stat-box .stat-label { color: #444 !important; }
+    .type-bar-track { background: #ddd !important; }
+    .type-bar-fill { background: #003399 !important; }
+    .table { color: #000 !important; }
+    .table thead th { background: #e8e8e8 !important; color: #000 !important; }
+    .badge { border: 1px solid #999 !important; color: #000 !important; background: #eee !important; }
+    .domain-header { color: #666 !important; }
+    .report-print-header { display: block !important; }
+    a[href]:after { content: none !important; }
+    @page { margin: 1.5cm; size: A4 portrait; }
+  }
+</style>
+{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}" style="color: var(--accent);">Healthcare</a></li>
+<li class="breadcrumb-item active">System Overview Report</li>
+{% endblock %}
+
+{% block content %}
+<div class="report-print-header" style="display:none; margin-bottom: 1.5rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div><strong style="font-size: 1.4rem;">MediChain — System Overview Report</strong><br>
+    <span style="font-size: 0.8rem; color: #555;">Department of Artificial Intelligence Technologies, Ankara University</span></div>
+    <div style="text-align: right; font-size: 0.8rem; color: #555;">Generated: {{ generated_at|date:"F d, Y H:i" }}<br>Confidential — For authorized use only</div>
+  </div>
+  <hr style="border: 1px solid #000; margin-top: 0.5rem;">
+</div>
+
+<div class="report-header d-flex justify-content-between align-items-center">
+  <div>
+    <h4 class="mb-0"><i class="bi bi-graph-up me-2"></i>System Overview Report</h4>
+    <small class="text-muted">Generated {{ generated_at|date:"F d, Y H:i" }} &nbsp;|&nbsp; Platform-wide summary</small>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'healthcare_dashboard' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+    <a href="{% url 'system_overview_print_report' %}" target="_blank" class="btn btn-sm btn-primary"><i class="bi bi-printer-fill me-1"></i> Print Document</a>
+  </div>
+</div>
+
+<!-- Healthcare Entity Stats -->
+<p class="domain-header"><i class="bi bi-hospital me-1"></i> Healthcare</p>
+<div class="row g-3 mb-2">
+  <div class="col-6 col-md-2">
+    <div class="stat-box"><div class="stat-value">{{ patient_count }}</div><div class="stat-label">Patients</div></div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="stat-box"><div class="stat-value">{{ hospital_count }}</div><div class="stat-label">Hospitals</div></div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="stat-box"><div class="stat-value">{{ lab_count }}</div><div class="stat-label">Laboratories</div></div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="stat-box"><div class="stat-value">{{ insurance_count }}</div><div class="stat-label">Insurers</div></div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="stat-box"><div class="stat-value">{{ record_count }}</div><div class="stat-label">Records</div></div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="stat-box"><div class="stat-value">{{ active_permissions }}</div><div class="stat-label">Active Perms</div></div>
+  </div>
+</div>
+
+<!-- Blockchain Stats -->
+<p class="domain-header"><i class="bi bi-link-45deg me-1"></i> Blockchain</p>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-box"><div class="stat-value">{{ network_count }}</div><div class="stat-label">Networks</div></div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-box"><div class="stat-value">{{ block_count }}</div><div class="stat-label">Blocks</div></div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-box"><div class="stat-value">{{ tx_count }}</div><div class="stat-label">Transactions</div></div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-box"><div class="stat-value">{{ rollup_count }}</div><div class="stat-label">Rollup Batches</div></div>
+  </div>
+</div>
+
+<!-- Record Type Breakdown -->
+{% if record_breakdown %}
+<div class="card mb-4">
+  <div class="card-header"><i class="bi bi-bar-chart me-1"></i> <span class="section-title mb-0">Record Type Distribution ({{ record_count }} active records)</span></div>
+  <div class="card-body">
+    {% for item in record_breakdown %}
+    <div class="mb-3">
+      <div class="d-flex justify-content-between mb-1" style="font-size:0.85rem;">
+        <span>{{ item.label }}</span>
+        <span class="text-muted">{{ item.count }} ({{ item.pct }}%)</span>
+      </div>
+      <div class="type-bar-track"><div class="type-bar-fill" style="width:{{ item.pct }}%;"></div></div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Recent Activity columns -->
+<div class="row g-4 mb-4">
+  <!-- Recent Records -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-file-medical me-1"></i> <span class="section-title mb-0">Recent Medical Records</span></div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0" style="font-size:0.82rem;">
+          <thead><tr><th>Type</th><th>Patient</th><th>Hospital</th><th>Date</th></tr></thead>
+          <tbody>
+            {% for record in recent_records %}
+            <tr>
+              <td><span class="badge bg-secondary badge-type">{{ record.get_record_type_display }}</span></td>
+              <td class="hash-mono">
+                {% if record.patient.user %}{{ record.patient.user.get_full_name|truncatechars:14|default:record.patient.user.username }}{% else %}{{ record.patient.patient_id|truncatechars:12 }}{% endif %}
+              </td>
+              <td>{{ record.hospital.name|truncatechars:16 }}</td>
+              <td>{{ record.created_at|date:"Y-m-d" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted py-3">No records</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <!-- Recent Audit Events -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-journal-text me-1"></i> <span class="section-title mb-0">Recent Audit Events</span></div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0" style="font-size:0.82rem;">
+          <thead><tr><th>Time</th><th>Action</th><th>Actor</th><th>Type</th></tr></thead>
+          <tbody>
+            {% for log in recent_logs %}
+            <tr>
+              <td>{{ log.timestamp|date:"m-d H:i" }}</td>
+              <td>
+                {% if log.action == 'CREATE' %}<span class="badge bg-success badge-type">Create</span>
+                {% elif log.action == 'UPDATE' %}<span class="badge bg-warning text-dark badge-type">Update</span>
+                {% elif log.action == 'READ' %}<span class="badge bg-info badge-type">Read</span>
+                {% elif log.action == 'SHARE' %}<span class="badge bg-primary badge-type">Share</span>
+                {% elif log.action == 'DELETE' %}<span class="badge bg-danger badge-type">Archive</span>
+                {% elif log.action == 'ACCESS_DENIED' %}<span class="badge bg-danger badge-type">Denied</span>
+                {% else %}<span class="badge bg-secondary badge-type">{{ log.action }}</span>{% endif %}
+              </td>
+              <td class="hash-mono">{{ log.actor|truncatechars:16 }}</td>
+              <td><span class="badge bg-secondary badge-type">{{ log.actor_type }}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted py-3">No audit events</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Transactions -->
+<div class="card mb-5">
+  <div class="card-header"><i class="bi bi-currency-exchange me-1"></i> <span class="section-title mb-0">Recent Blockchain Transactions</span></div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0" style="font-size:0.82rem;">
+        <thead><tr><th>TX Hash</th><th>Type</th><th>Sender</th><th>Status</th><th>Timestamp</th></tr></thead>
+        <tbody>
+          {% for tx in recent_txs %}
+          <tr>
+            <td class="hash-mono">{{ tx.tx_hash|truncatechars:18 }}</td>
+            <td><span class="badge bg-secondary badge-type">{{ tx.tx_type }}</span></td>
+            <td class="hash-mono">{{ tx.sender|truncatechars:18 }}</td>
+            <td>
+              {% if tx.status == 'CONFIRMED' %}<span class="badge bg-success badge-type">Confirmed</span>
+              {% elif tx.status == 'PENDING' %}<span class="badge bg-warning text-dark badge-type">Pending</span>
+              {% elif tx.status == 'FAILED' %}<span class="badge bg-danger badge-type">Failed</span>
+              {% else %}<span class="badge bg-secondary badge-type">{{ tx.status }}</span>{% endif %}
+            </td>
+            <td>{{ tx.timestamp|date:"Y-m-d H:i" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-center text-muted py-3">No transactions</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Audit summary stat -->
+<div class="row g-3 mb-5">
+  <div class="col-12">
+    <div class="stat-box" style="text-align: left; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <div style="font-size:0.78rem; color: var(--text-light); text-transform:uppercase; letter-spacing:0.05em;">Total Audit Events (all time)</div>
+        <div style="font-size:1.6rem; font-weight:700; color: var(--accent);">{{ audit_count }}</div>
+      </div>
+      <a href="{% url 'audit_compliance_report' %}" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-journal-check me-1"></i> Full Compliance Report
+      </a>
+    </div>
+  </div>
+</div>
+
+<div style="display:none;" class="report-print-header">
+  <hr style="border: 1px solid #ccc;">
+  <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #666;">
+    <span>MediChain Healthcare Blockchain Platform — Confidential</span>
+    <span>System Overview Report</span>
+    <span>Report Date: {{ generated_at|date:"Y-m-d" }}</span>
+  </div>
+</div>
+
+<button class="btn btn-primary btn-lg shadow print-btn" onclick="window.print()">
+  <i class="bi bi-printer-fill me-1"></i> Print / Save as PDF
+</button>
+{% endblock %}
+
+{% block extra_js %}
+document.querySelectorAll('.type-bar-fill').forEach(function(bar) {
+  const w = bar.style.width; bar.style.width = '0%';
+  requestAnimationFrame(function() { bar.style.width = w; });
+});
+{% endblock %}

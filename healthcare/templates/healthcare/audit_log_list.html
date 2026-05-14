@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}Audit Log — MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}" style="color:var(--accent);">Healthcare</a></li>
+<li class="breadcrumb-item active">Audit Log</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .filter-bar { background: var(--secondary); border: 1px solid var(--border); border-radius: 8px; padding: .75rem 1rem; margin-bottom: 1.25rem; }
+  .log-row-denied { background: rgba(220,53,69,.05); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-journal-text"></i> Audit Log</h2>
+    <a href="{% url 'audit_compliance_report' %}" class="btn btn-outline-primary">
+        <i class="bi bi-journal-check me-1"></i> Compliance Report
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="filter-bar">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label" style="font-size:.8rem;">Action</label>
+            <select name="action" class="form-select form-select-sm">
+                <option value="">All actions</option>
+                <option value="CREATE"        {% if selected_action == 'CREATE'        %}selected{% endif %}>Create</option>
+                <option value="READ"          {% if selected_action == 'READ'          %}selected{% endif %}>Read</option>
+                <option value="UPDATE"        {% if selected_action == 'UPDATE'        %}selected{% endif %}>Update</option>
+                <option value="SHARE"         {% if selected_action == 'SHARE'         %}selected{% endif %}>Share</option>
+                <option value="DELETE"        {% if selected_action == 'DELETE'        %}selected{% endif %}>Archive</option>
+                <option value="ACCESS_DENIED" {% if selected_action == 'ACCESS_DENIED' %}selected{% endif %}>Access Denied</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label" style="font-size:.8rem;">Actor Type</label>
+            <select name="actor_type" class="form-select form-select-sm">
+                <option value="">All actor types</option>
+                <option value="HOSPITAL"  {% if selected_actor_type == 'HOSPITAL'  %}selected{% endif %}>Hospital</option>
+                <option value="PATIENT"   {% if selected_actor_type == 'PATIENT'   %}selected{% endif %}>Patient</option>
+                <option value="DOCTOR"    {% if selected_actor_type == 'DOCTOR'    %}selected{% endif %}>Doctor</option>
+                <option value="LAB"       {% if selected_actor_type == 'LAB'       %}selected{% endif %}>Laboratory</option>
+                <option value="INSURANCE" {% if selected_actor_type == 'INSURANCE' %}selected{% endif %}>Insurance</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-funnel me-1"></i>Apply</button>
+        </div>
+        {% if selected_action or selected_actor_type %}
+        <div class="col-md-3">
+            <a href="{% url 'audit_log_list' %}" class="btn btn-sm btn-outline-secondary w-100">Clear Filters</a>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <span><i class="bi bi-journal-text"></i> Events
+        {% if selected_action %}<span class="badge bg-secondary ms-1">{{ selected_action }}</span>{% endif %}
+        {% if selected_actor_type %}<span class="badge bg-secondary ms-1">{{ selected_actor_type }}</span>{% endif %}
+        </span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" style="font-size:.84rem;">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Action</th>
+                        <th>Actor</th>
+                        <th>Actor Type</th>
+                        <th>Record</th>
+                        <th>IP Address</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr {% if log.action == 'ACCESS_DENIED' %}class="log-row-denied"{% endif %}>
+                        <td style="white-space:nowrap;">{{ log.timestamp|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            {% if log.action == 'CREATE' %}<span class="badge bg-success" style="font-size:.7rem;">Create</span>
+                            {% elif log.action == 'UPDATE' %}<span class="badge bg-warning text-dark" style="font-size:.7rem;">Update</span>
+                            {% elif log.action == 'READ' %}<span class="badge bg-info" style="font-size:.7rem;">Read</span>
+                            {% elif log.action == 'SHARE' %}<span class="badge bg-primary" style="font-size:.7rem;">Share</span>
+                            {% elif log.action == 'DELETE' %}<span class="badge bg-danger" style="font-size:.7rem;">Archive</span>
+                            {% elif log.action == 'ACCESS_DENIED' %}<span class="badge bg-danger" style="font-size:.7rem;">⚠ Denied</span>
+                            {% else %}<span class="badge bg-secondary" style="font-size:.7rem;">{{ log.action }}</span>{% endif %}
+                        </td>
+                        <td class="hash-text">{{ log.actor|truncatechars:20 }}</td>
+                        <td><span class="badge bg-secondary" style="font-size:.7rem;">{{ log.actor_type }}</span></td>
+                        <td>
+                            <a href="{% url 'record_detail' log.record.record_id %}" style="color:var(--accent);">
+                                <span class="hash-text">{{ log.record.record_id|truncatechars:14 }}</span>
+                            </a>
+                        </td>
+                        <td style="font-size:.78rem; font-family: monospace;">{{ log.ip_address|default:"—" }}</td>
+                        <td style="font-size:.75rem; color:var(--text-light); max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                            {% for k, v in log.details.items %}{{ k }}: {{ v }}{% if not forloop.last %}; {% endif %}{% endfor %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-5">
+                            <i class="bi bi-journal-text fs-1 d-block mb-2"></i>
+                            No audit events found{% if selected_action or selected_actor_type %} for the selected filters{% endif %}.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <small class="text-muted">Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}</small>
+        <nav><ul class="pagination pagination-sm mb-0">
+            {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="{{ query_string }}page={{ page_obj.previous_page_number }}">«</a></li>
+            {% endif %}
+            {% for n in page_obj.paginator.page_range %}
+            <li class="page-item {% if n == page_obj.number %}active{% endif %}">
+                <a class="page-link" href="{{ query_string }}page={{ n }}">{{ n }}</a>
+            </li>
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="{{ query_string }}page={{ page_obj.next_page_number }}">»</a></li>
+            {% endif %}
+        </ul></nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

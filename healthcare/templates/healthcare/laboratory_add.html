@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Register Laboratory — MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}" style="color:var(--accent);">Healthcare</a></li>
+<li class="breadcrumb-item"><a href="{% url 'laboratory_list' %}" style="color:var(--accent);">Laboratories</a></li>
+<li class="breadcrumb-item active">Register Laboratory</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-eyedropper"></i> Register Laboratory</h2>
+    <a href="{% url 'laboratory_list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-plus-circle me-1"></i> New Laboratory Registration</div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Laboratory Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g. Central Diagnostics Lab" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Accreditation Number</label>
+                        <input type="text" name="accreditation" class="form-control" placeholder="e.g. CAP-2024-001">
+                        <div class="form-text">ISO/CAP accreditation number if available.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Parent Hospital</label>
+                        <select name="hospital_id" class="form-select">
+                            <option value="">— Independent / Not assigned —</option>
+                            {% for h in hospitals %}
+                            <option value="{{ h.hospital_id }}">{{ h.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Select the hospital this laboratory belongs to, if any.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Public Key</label>
+                        <textarea name="public_key" class="form-control font-monospace" rows="3" placeholder="MIIBIjANBgkqhkiG9w0B..."></textarea>
+                        <div class="form-text">RSA/Ed25519 public key for blockchain identity (optional).</div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{% url 'laboratory_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i> Register Laboratory</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

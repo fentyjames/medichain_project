@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}Insurance Providers — MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}" style="color:var(--accent);">Healthcare</a></li>
+<li class="breadcrumb-item active">Insurance Providers</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-shield-check"></i> Insurance Providers</h2>
+    <a href="{% url 'insurance_add' %}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Add Provider</a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <form method="get" class="d-flex justify-content-between align-items-center gap-2">
+            <span><i class="bi bi-list"></i> All Providers</span>
+            <div class="d-flex gap-2">
+                <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Search name or license..." style="width:280px;">
+                <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-search"></i></button>
+                {% if q %}<a href="{% url 'insurance_list' %}" class="btn btn-sm btn-outline-secondary">Clear</a>{% endif %}
+            </div>
+        </form>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Provider ID</th>
+                        <th>Name</th>
+                        <th>License Number</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for provider in providers %}
+                    <tr>
+                        <td><span class="hash-text">{{ provider.provider_id|truncatechars:16 }}</span></td>
+                        <td><strong>{{ provider.name }}</strong></td>
+                        <td>{{ provider.license_number|default:"—" }}</td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a href="{% url 'insurance_detail' provider.provider_id %}" class="btn btn-sm btn-outline-primary" title="View"><i class="bi bi-eye"></i></a>
+                                <a href="{% url 'insurance_report' provider.provider_id %}" class="btn btn-sm btn-outline-success" title="Report" target="_blank"><i class="bi bi-file-earmark-text"></i></a>
+                                <a href="{% url 'insurance_print_report' provider.provider_id %}" class="btn btn-sm btn-outline-secondary" title="Print" target="_blank"><i class="bi bi-printer"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-5">
+                            <i class="bi bi-shield-check fs-1 d-block mb-2"></i>
+                            No insurance providers registered yet.<br>
+                            <a href="{% url 'insurance_add' %}" class="btn btn-primary mt-2">Add First Provider</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <small class="text-muted">Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}</small>
+        <nav><ul class="pagination pagination-sm mb-0">
+            {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="{{ query_string }}page={{ page_obj.previous_page_number }}">«</a></li>
+            {% endif %}
+            {% for n in page_obj.paginator.page_range %}
+            <li class="page-item {% if n == page_obj.number %}active{% endif %}">
+                <a class="page-link" href="{{ query_string }}page={{ n }}">{{ n }}</a>
+            </li>
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="{{ query_string }}page={{ page_obj.next_page_number }}">»</a></li>
+            {% endif %}
+        </ul></nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

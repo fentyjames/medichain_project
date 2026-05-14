@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}TX {{ tx.tx_hash|slice:":16" }}… - MediChain{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'blockchain_dashboard' %}">Blockchain</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'transaction_list' %}">Transactions</a></li>
+        <li class="breadcrumb-item active">{{ tx.tx_hash|slice:":16" }}…</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge"
+                  style="font-size:0.85rem;padding:5px 12px;background:{% if tx.tx_type == 'CREATE' %}#22c55e{% elif tx.tx_type == 'UPDATE' %}#facc15;color:#000{% elif tx.tx_type == 'SHARE' %}#a78bfa{% elif tx.tx_type == 'VERIFY' %}#38bdf8;color:#000{% else %}#94a3b8{% endif %};">
+                {{ tx.tx_type }}
+            </span>
+            <span class="badge"
+                  style="font-size:0.85rem;padding:5px 12px;background:{% if tx.status == 'CONFIRMED' %}#22c55e{% elif tx.status == 'PENDING' %}#facc15;color:#000{% elif tx.status == 'BATCHED' %}#38bdf8;color:#000{% else %}#f87171{% endif %};">
+                {{ tx.status }}
+            </span>
+        </div>
+        <h2 style="color:var(--accent);">Transaction</h2>
+        <small class="text-muted"><i class="bi bi-calendar3"></i> {{ tx.timestamp|date:"d M Y, H:i:s" }}</small>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <!-- Hashes -->
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-shield-lock"></i> Cryptographic Data</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label text-muted small mb-1">Transaction Hash</label>
+                    <div class="p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);">
+                        <code class="hash-text" onclick="copyToClipboard('{{ tx.tx_hash }}')"
+                              style="cursor:pointer;word-break:break-all;" title="Click to copy">
+                            {{ tx.tx_hash }}
+                        </code>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-muted small mb-1">Data Hash</label>
+                    <div class="p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);">
+                        <code class="hash-text" style="word-break:break-all;">{{ tx.data_hash }}</code>
+                    </div>
+                </div>
+                {% if tx.signature %}
+                <div class="mb-0">
+                    <label class="form-label text-muted small mb-1">Signature</label>
+                    <div class="p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);">
+                        <code style="font-size:0.72rem;word-break:break-all;color:#94a3b8;">
+                            {{ tx.signature|truncatechars:160 }}
+                        </code>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Block Info -->
+        {% if tx.block %}
+        <div class="card">
+            <div class="card-header"><i class="bi bi-box"></i> Included in Block</div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge" style="background:var(--accent);color:#000;font-size:1rem;padding:6px 14px;">
+                            #{{ tx.block.block_number }}
+                        </span>
+                        <small class="text-muted ms-3">{{ tx.block.network.name }}</small>
+                    </div>
+                    <a href="{% url 'block_detail' tx.block.block_number %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-box"></i> View Block
+                    </a>
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">Block hash: </small>
+                    <code class="hash-text" style="font-size:0.75rem;">{{ tx.block.hash|slice:":32" }}…</code>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="card">
+            <div class="card-body text-muted text-center py-3">
+                <i class="bi bi-hourglass-split"></i> Not yet included in a block
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-info-circle"></i> Transaction Details</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-5 text-muted">Type</dt>
+                    <dd class="col-7">{{ tx.get_tx_type_display }}</dd>
+
+                    <dt class="col-5 text-muted">Status</dt>
+                    <dd class="col-7">{{ tx.status }}</dd>
+
+                    <dt class="col-5 text-muted">Sender</dt>
+                    <dd class="col-7">
+                        <small style="word-break:break-all;">{{ tx.sender|truncatechars:40 }}</small>
+                    </dd>
+
+                    {% if tx.receiver %}
+                    <dt class="col-5 text-muted">Receiver</dt>
+                    <dd class="col-7">
+                        <small style="word-break:break-all;">{{ tx.receiver|truncatechars:40 }}</small>
+                    </dd>
+                    {% endif %}
+
+                    <dt class="col-5 text-muted">Nonce</dt>
+                    <dd class="col-7">
+                        <code style="font-size:0.72rem;">{{ tx.nonce|slice:":16" }}…</code>
+                    </dd>
+
+                    <dt class="col-5 text-muted">Gas Used</dt>
+                    <dd class="col-7">{{ tx.gas_used }}</dd>
+
+                    <dt class="col-5 text-muted">Timestamp</dt>
+                    <dd class="col-7"><small>{{ tx.timestamp|date:"d M Y, H:i" }}</small></dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

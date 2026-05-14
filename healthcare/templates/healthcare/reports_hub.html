@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% block title %}Reports — MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}" style="color:var(--accent);">Healthcare</a></li>
+<li class="breadcrumb-item active">Reports</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .report-card {
+    background: var(--secondary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    transition: border-color .2s, box-shadow .2s;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .report-card:hover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .report-card .rc-icon { font-size: 2rem; color: var(--accent); margin-bottom: .6rem; }
+  .report-card .rc-title { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
+  .report-card .rc-desc { font-size: .82rem; color: var(--text-light); flex: 1; margin-bottom: 1rem; }
+  .report-card .rc-count { font-size: .75rem; color: var(--text-light); margin-bottom: .75rem; }
+  .report-card .rc-count strong { color: var(--accent); font-size: .95rem; }
+  .section-label {
+    font-size: .65rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--text-light);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: .4rem;
+    margin: 2rem 0 1rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="bi bi-graph-up"></i> Reports</h2>
+        <p class="text-muted mb-0" style="font-size:.85rem;">Generate, view, and print reports for patients, hospitals, and platform compliance.</p>
+    </div>
+</div>
+
+<!-- Platform-level reports -->
+<p class="section-label"><i class="bi bi-globe me-1"></i> Platform Reports</p>
+<div class="row g-3 mb-2">
+    <div class="col-md-4">
+        <div class="report-card">
+            <div class="rc-icon"><i class="bi bi-graph-up-arrow"></i></div>
+            <div class="rc-title">System Overview</div>
+            <div class="rc-desc">Platform-wide statistics across all entities — patients, hospitals, records, blockchain activity, and recent transactions.</div>
+            <div class="rc-count">
+                <strong>{{ patient_count }}</strong> patients &nbsp;·&nbsp;
+                <strong>{{ hospital_count }}</strong> hospitals &nbsp;·&nbsp;
+                <strong>{{ record_count }}</strong> records
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'system_overview_report' %}" class="btn btn-sm btn-outline-primary flex-fill">
+                    <i class="bi bi-eye me-1"></i> View
+                </a>
+                <a href="{% url 'system_overview_print_report' %}" class="btn btn-sm btn-outline-secondary flex-fill" target="_blank">
+                    <i class="bi bi-printer me-1"></i> Print
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="report-card">
+            <div class="rc-icon"><i class="bi bi-journal-check"></i></div>
+            <div class="rc-title">Audit &amp; Compliance</div>
+            <div class="rc-desc">Full audit event log with action and actor breakdowns. Supports date range and actor type filtering for compliance review.</div>
+            <div class="rc-count">
+                <strong>{{ audit_count }}</strong> total audit events recorded
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'audit_compliance_report' %}" class="btn btn-sm btn-outline-primary flex-fill">
+                    <i class="bi bi-eye me-1"></i> View
+                </a>
+                <a href="{% url 'audit_compliance_print_report' %}" class="btn btn-sm btn-outline-secondary flex-fill" target="_blank">
+                    <i class="bi bi-printer me-1"></i> Print
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Entity-level reports -->
+<p class="section-label"><i class="bi bi-hospital me-1"></i> Entity Reports</p>
+<div class="row g-3 mb-2">
+
+    <div class="col-md-3">
+        <div class="report-card">
+            <div class="rc-icon"><i class="bi bi-person-lines-fill"></i></div>
+            <div class="rc-title">Patient Report</div>
+            <div class="rc-desc">Medical history, record type breakdown, active permissions, and audit trail for a single patient.</div>
+            <div class="rc-count"><strong>{{ patient_count }}</strong> active patients</div>
+            <a href="{% url 'patient_list' %}" class="btn btn-sm btn-outline-primary w-100">
+                <i class="bi bi-search me-1"></i> Select Patient
+            </a>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="report-card">
+            <div class="rc-icon"><i class="bi bi-building"></i></div>
+            <div class="rc-title">Hospital Report</div>
+            <div class="rc-desc">Activity summary, associated laboratories, record and permission counts, and audit entries for a hospital.</div>
+            <div class="rc-count"><strong>{{ hospital_count }}</strong> hospitals</div>
+            <a href="{% url 'hospital_list' %}" class="btn btn-sm btn-outline-primary w-100">
+                <i class="bi bi-search me-1"></i> Select Hospital
+            </a>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="report-card">
+            <div class="rc-icon"><i class="bi bi-eyedropper"></i></div>
+            <div class="rc-title">Laboratory Report</div>
+            <div class="rc-desc">Lab result records, parent hospital link, accreditation, and blockchain activity summary.</div>
+            <div class="rc-count"><strong>{{ lab_count }}</strong> laboratories</div>
+            <a href="{% url 'laboratory_list' %}" class="btn btn-sm btn-outline-primary w-100">
+                <i class="bi bi-search me-1"></i> Select Laboratory
+            </a>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="report-card">
+            <div class="rc-icon"><i class="bi bi-shield-check"></i></div>
+            <div class="rc-title">Insurance Report</div>
+            <div class="rc-desc">Access permissions granted to the provider, insurance claim records, and coverage activity summary.</div>
+            <div class="rc-count"><strong>{{ insurance_count }}</strong> providers</div>
+            <a href="{% url 'insurance_list' %}" class="btn btn-sm btn-outline-primary w-100">
+                <i class="bi bi-search me-1"></i> Select Provider
+            </a>
+        </div>
+    </div>
+
+</div>
+
+<!-- Quick nav to audit/permission lists -->
+<p class="section-label"><i class="bi bi-list-check me-1"></i> Related Views</p>
+<div class="row g-3">
+    <div class="col-md-4">
+        <a href="{% url 'audit_log_list' %}" class="text-decoration-none">
+            <div class="report-card" style="flex-direction:row; align-items:center; gap:1rem; padding:.9rem 1.25rem;">
+                <i class="bi bi-journal-text" style="font-size:1.5rem; color:var(--accent);"></i>
+                <div>
+                    <div style="font-weight:700; font-size:.9rem;">Audit Log</div>
+                    <div style="font-size:.78rem; color:var(--text-light);">Browse and filter all audit events</div>
+                </div>
+                <i class="bi bi-chevron-right ms-auto" style="color:var(--text-light);"></i>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{% url 'permission_list' %}" class="text-decoration-none">
+            <div class="report-card" style="flex-direction:row; align-items:center; gap:1rem; padding:.9rem 1.25rem;">
+                <i class="bi bi-key" style="font-size:1.5rem; color:var(--accent);"></i>
+                <div>
+                    <div style="font-weight:700; font-size:.9rem;">Access Permissions</div>
+                    <div style="font-size:.78rem; color:var(--text-light);">Manage and revoke data access grants</div>
+                </div>
+                <i class="bi bi-chevron-right ms-auto" style="color:var(--text-light);"></i>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{% url 'record_list' %}" class="text-decoration-none">
+            <div class="report-card" style="flex-direction:row; align-items:center; gap:1rem; padding:.9rem 1.25rem;">
+                <i class="bi bi-file-medical" style="font-size:1.5rem; color:var(--accent);"></i>
+                <div>
+                    <div style="font-weight:700; font-size:.9rem;">Medical Records</div>
+                    <div style="font-size:.78rem; color:var(--text-light);">Search and view all {{ record_count }} active records</div>
+                </div>
+                <i class="bi bi-chevron-right ms-auto" style="color:var(--text-light);"></i>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}

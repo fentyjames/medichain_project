@@ -25,4 +25,7 @@ template_urlpatterns = [
     path('transactions/add/', views.transaction_add, name='transaction_add'),
     path('rollups/', views.rollup_list, name='rollup_list'),
     path('rollups/create/', views.rollup_create, name='rollup_create'),
+    path('blocks/<int:block_number>/', views.block_detail, name='block_detail'),
+    path('transactions/<str:tx_hash>/', views.transaction_detail, name='transaction_detail'),
+    path('rollups/<str:batch_id>/', views.rollup_detail, name='rollup_detail'),
 ]

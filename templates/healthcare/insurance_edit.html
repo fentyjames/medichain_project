@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}{% if confirm_delete %}Delete Provider{% else %}Edit Provider{% endif %} - MediChain{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'insurance_list' %}">Insurance Providers</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'insurance_detail' provider.provider_id %}">{{ provider.name }}</a></li>
+        <li class="breadcrumb-item active">{% if confirm_delete %}Delete{% else %}Edit{% endif %}</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+
+        {% if confirm_delete %}
+        <div class="card border-danger">
+            <div class="card-header" style="background:rgba(248,113,113,0.15);border-bottom:1px solid rgba(248,113,113,0.3);">
+                <i class="bi bi-exclamation-triangle-fill" style="color:#f87171;"></i>
+                <strong style="color:#f87171;"> Delete Insurance Provider</strong>
+            </div>
+            <div class="card-body text-center py-5">
+                <i class="bi bi-shield-x" style="font-size:3rem;color:#f87171;"></i>
+                <h5 class="mt-3">Delete "{{ provider.name }}"?</h5>
+                <p class="text-muted">License: {{ provider.license_number|default:"—" }}</p>
+                <p class="text-danger small">This will permanently remove the insurance provider record.</p>
+                <div class="d-flex gap-2 justify-content-center mt-4">
+                    <form method="post" action="{% url 'insurance_delete' provider.provider_id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger px-4">
+                            <i class="bi bi-trash3"></i> Yes, Delete
+                        </button>
+                    </form>
+                    <a href="{% url 'insurance_detail' provider.provider_id %}" class="btn btn-outline-secondary px-4">Cancel</a>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-shield-check"></i> Edit Insurance Provider</span>
+                <a href="{% url 'insurance_delete' provider.provider_id %}" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash3"></i> Delete
+                </a>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Provider Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" required value="{{ provider.name }}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">License Number</label>
+                            <input type="text" name="license_number" class="form-control"
+                                   value="{{ provider.license_number }}" placeholder="e.g. INS-2024-001">
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-check-lg"></i> Save Changes
+                        </button>
+                        <a href="{% url 'insurance_detail' provider.provider_id %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

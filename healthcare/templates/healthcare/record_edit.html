@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}{% if confirm_archive %}Archive Record{% else %}Edit Record{% endif %} — MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}" style="color:var(--accent);">Healthcare</a></li>
+<li class="breadcrumb-item"><a href="{% url 'record_list' %}" style="color:var(--accent);">Records</a></li>
+<li class="breadcrumb-item"><a href="{% url 'record_detail' record.record_id %}" style="color:var(--accent);">
+    {{ record.title|truncatechars:24 }}
+</a></li>
+<li class="breadcrumb-item active">{% if confirm_archive %}Archive{% else %}Edit{% endif %}</li>
+{% endblock %}
+
+{% block content %}
+
+{% if confirm_archive %}
+<!-- ======== ARCHIVE CONFIRMATION ======== -->
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-6">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <i class="bi bi-archive-fill me-2"></i>Confirm Record Archival
+            </div>
+            <div class="card-body">
+                <p class="mb-1">You are about to archive:</p>
+                <h5 class="mb-1">{{ record.title }}</h5>
+                <p class="text-muted mb-3" style="font-size:.85rem;">
+                    <span class="badge bg-secondary">{{ record.get_record_type_display }}</span>
+                    &nbsp;{{ record.record_id|truncatechars:20 }}
+                </p>
+                <div class="alert alert-warning">
+                    <strong>Note:</strong> Archiving marks this record as inactive. The record and its audit trail are preserved; it will no longer appear in active record lists.
+                </div>
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <a href="{% url 'record_detail' record.record_id %}" class="btn btn-outline-secondary">Cancel</a>
+                    <form method="post" action="{% url 'record_archive' record.record_id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning text-dark"><i class="bi bi-archive me-1"></i> Archive Record</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- ======== EDIT FORM ======== -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-file-medical"></i> Edit Medical Record</h2>
+    <div class="d-flex gap-2">
+        <a href="{% url 'record_detail' record.record_id %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+        <a href="{% url 'record_archive' record.record_id %}" class="btn btn-outline-warning"><i class="bi bi-archive"></i> Archive</a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-file-medical me-1"></i>
+                <span class="badge bg-secondary me-1">{{ record.get_record_type_display }}</span>
+                {{ record.title|truncatechars:40 }}
+            </div>
+            <div class="card-body">
+
+                <!-- Read-only info strip -->
+                <div class="row g-2 mb-3" style="font-size:.82rem;">
+                    <div class="col-6">
+                        <span class="text-muted">Patient:</span>
+                        <a href="{% url 'patient_detail' record.patient.patient_id %}" style="color:var(--accent);">
+                            {{ record.patient.user.get_full_name|default:record.patient.patient_id|truncatechars:20 }}
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <span class="text-muted">Hospital:</span>
+                        <a href="{% url 'hospital_detail' record.hospital.hospital_id %}" style="color:var(--accent);">
+                            {{ record.hospital.name|truncatechars:20 }}
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <span class="text-muted">Record ID:</span>
+                        <span class="hash-text">{{ record.record_id|truncatechars:20 }}</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="text-muted">Created:</span>
+                        {{ record.created_at|date:"Y-m-d H:i" }}
+                    </div>
+                </div>
+                <hr>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" name="title" class="form-control" value="{{ record.title }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Record Type</label>
+                        <select name="record_type" class="form-select">
+                            <option value="DIAGNOSIS"    {% if record.record_type == 'DIAGNOSIS'    %}selected{% endif %}>Diagnosis</option>
+                            <option value="LAB_RESULT"   {% if record.record_type == 'LAB_RESULT'   %}selected{% endif %}>Laboratory Result</option>
+                            <option value="PRESCRIPTION" {% if record.record_type == 'PRESCRIPTION' %}selected{% endif %}>Prescription</option>
+                            <option value="IMAGING"      {% if record.record_type == 'IMAGING'      %}selected{% endif %}>Medical Imaging</option>
+                            <option value="SURGERY"      {% if record.record_type == 'SURGERY'      %}selected{% endif %}>Surgery Report</option>
+                            <option value="DISCHARGE"    {% if record.record_type == 'DISCHARGE'    %}selected{% endif %}>Discharge Summary</option>
+                            <option value="INSURANCE"    {% if record.record_type == 'INSURANCE'    %}selected{% endif %}>Insurance Claim</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="5">{{ record.description }}</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">IPFS Hash</label>
+                        <input type="text" name="ipfs_hash" class="form-control font-monospace"
+                               value="{{ record.ipfs_hash }}"
+                               placeholder="Qm... (IPFS content identifier)">
+                        <div class="form-text">Content-addressed storage reference for off-chain data.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{% url 'record_detail' record.record_id %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i> Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

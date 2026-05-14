@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}Block #{{ block.block_number }} - MediChain{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'blockchain_dashboard' %}">Blockchain</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'block_list' %}">Blocks</a></li>
+        <li class="breadcrumb-item active">Block #{{ block.block_number }}</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h2 style="color:var(--accent);">
+            <i class="bi bi-box"></i> Block <span style="font-family:monospace;">#{{ block.block_number }}</span>
+        </h2>
+        <small class="text-muted">
+            <i class="bi bi-link-45deg"></i> {{ block.network.name }}
+            &nbsp;&middot;&nbsp;
+            <i class="bi bi-calendar3"></i> {{ block.timestamp|date:"d M Y, H:i" }}
+        </small>
+    </div>
+    <span class="badge" style="background:var(--accent);color:#000;font-size:1rem;padding:8px 16px;">
+        {{ block.transaction_count }} TX{{ block.transaction_count|pluralize }}
+    </span>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-7">
+        <!-- Block Hashes -->
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-shield-lock"></i> Cryptographic Data</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label text-muted small mb-1">Block Hash</label>
+                    <div class="p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);">
+                        <code class="hash-text" onclick="copyToClipboard('{{ block.hash }}')"
+                              style="cursor:pointer;word-break:break-all;" title="Click to copy">
+                            {{ block.hash }}
+                        </code>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-muted small mb-1">Previous Hash</label>
+                    <div class="p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);">
+                        <code class="hash-text" style="word-break:break-all;">{{ block.previous_hash }}</code>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-muted small mb-1">Merkle Root</label>
+                    <div class="p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);">
+                        <code class="hash-text" style="word-break:break-all;">{{ block.merkle_root }}</code>
+                    </div>
+                </div>
+                {% if block.rollup_proof %}
+                <div class="mb-0">
+                    <label class="form-label text-muted small mb-1">Rollup Proof</label>
+                    <div class="p-2 rounded" style="background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.2);">
+                        <code style="font-size:0.72rem;color:#c4b5fd;word-break:break-all;">
+                            {{ block.rollup_proof|truncatechars:200 }}
+                        </code>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Transactions in Block -->
+        <div class="card">
+            <div class="card-header"><i class="bi bi-currency-exchange"></i> Transactions ({{ transactions|length }})</div>
+            <div class="card-body p-0">
+                {% for tx in transactions %}
+                <div class="p-3 {% if not forloop.last %}border-bottom{% endif %}" style="border-color:var(--border)!important;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <code class="hash-text" onclick="copyToClipboard('{{ tx.tx_hash }}')"
+                                  style="cursor:pointer;" title="{{ tx.tx_hash }}">
+                                {{ tx.tx_hash|slice:":24" }}…
+                            </code>
+                            <br>
+                            <span class="badge me-1"
+                                  style="font-size:0.7rem;background:{% if tx.tx_type == 'CREATE' %}#22c55e{% elif tx.tx_type == 'UPDATE' %}#facc15;color:#000{% elif tx.tx_type == 'SHARE' %}#a78bfa{% elif tx.tx_type == 'VERIFY' %}#38bdf8;color:#000{% else %}#94a3b8{% endif %};">
+                                {{ tx.tx_type }}
+                            </span>
+                            <small class="text-muted">{{ tx.sender|truncatechars:30 }}</small>
+                        </div>
+                        <div class="d-flex flex-column align-items-end gap-1">
+                            <span class="badge"
+                                  style="font-size:0.65rem;background:{% if tx.status == 'CONFIRMED' %}#22c55e{% elif tx.status == 'PENDING' %}#facc15;color:#000{% elif tx.status == 'BATCHED' %}#38bdf8;color:#000{% else %}#f87171{% endif %};">
+                                {{ tx.status }}
+                            </span>
+                            <a href="{% url 'transaction_detail' tx.tx_hash %}" class="btn btn-sm btn-outline-primary" style="padding:1px 6px;font-size:0.72rem;">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-currency-exchange" style="font-size:1.5rem;"></i>
+                    <p class="mt-2 mb-0 small">No transactions in this block.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-info-circle"></i> Block Metadata</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-5 text-muted">Block #</dt>
+                    <dd class="col-7 fw-bold" style="color:var(--accent);">{{ block.block_number }}</dd>
+
+                    <dt class="col-5 text-muted">Network</dt>
+                    <dd class="col-7">{{ block.network.name }}</dd>
+
+                    <dt class="col-5 text-muted">Chain ID</dt>
+                    <dd class="col-7"><code>{{ block.network.chain_id }}</code></dd>
+
+                    <dt class="col-5 text-muted">Nonce</dt>
+                    <dd class="col-7"><code>{{ block.nonce }}</code></dd>
+
+                    <dt class="col-5 text-muted">TX Count</dt>
+                    <dd class="col-7">{{ block.transaction_count }}</dd>
+
+                    <dt class="col-5 text-muted">Timestamp</dt>
+                    <dd class="col-7"><small>{{ block.timestamp|date:"d M Y, H:i:s" }}</small></dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

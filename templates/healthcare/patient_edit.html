@@ -71,9 +71,14 @@
                             <label class="form-label">Blood Type</label>
                             <select name="blood_type" class="form-select">
                                 <option value="">Unknown</option>
-                                {% for bt in "A+ A- B+ B- AB+ AB- O+ O-"|split:" " %}
-                                <option value="{{ bt }}" {% if patient.blood_type == bt %}selected{% endif %}>{{ bt }}</option>
-                                {% endfor %}
+                                <option value="A+"  {% if patient.blood_type == "A+"  %}selected{% endif %}>A+</option>
+                                <option value="A-"  {% if patient.blood_type == "A-"  %}selected{% endif %}>A−</option>
+                                <option value="B+"  {% if patient.blood_type == "B+"  %}selected{% endif %}>B+</option>
+                                <option value="B-"  {% if patient.blood_type == "B-"  %}selected{% endif %}>B−</option>
+                                <option value="AB+" {% if patient.blood_type == "AB+" %}selected{% endif %}>AB+</option>
+                                <option value="AB-" {% if patient.blood_type == "AB-" %}selected{% endif %}>AB−</option>
+                                <option value="O+"  {% if patient.blood_type == "O+"  %}selected{% endif %}>O+</option>
+                                <option value="O-"  {% if patient.blood_type == "O-"  %}selected{% endif %}>O−</option>
                             </select>
                         </div>
                         <div class="col-12">

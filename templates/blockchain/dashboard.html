@@ -90,6 +90,7 @@
                         <th>TXs</th>
                         <th>Network</th>
                         <th>Time</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -114,9 +115,14 @@
                         <td>{{ block.transaction_count }}</td>
                         <td><small class="text-muted">{{ block.network.name }}</small></td>
                         <td><small class="text-muted">{{ block.timestamp|date:"d M, H:i" }}</small></td>
+                        <td>
+                            <a href="{% url 'block_detail' block.block_number %}" class="btn btn-sm btn-outline-primary" title="View">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="6" class="text-center text-muted py-4">No blocks yet.</td></tr>
+                    <tr><td colspan="7" class="text-center text-muted py-4">No blocks yet.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

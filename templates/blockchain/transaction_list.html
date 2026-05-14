@@ -58,6 +58,7 @@
                         <th>Block</th>
                         <th>Gas</th>
                         <th>Time</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -97,11 +98,16 @@
                         </td>
                         <td><small class="text-muted">{{ tx.gas_used|default:"0" }}</small></td>
                         <td><small class="text-muted">{{ tx.timestamp|date:"d M, H:i" }}</small></td>
+                        <td>
+                            <a href="{% url 'transaction_detail' tx.tx_hash %}" class="btn btn-sm btn-outline-primary" title="View">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
                     </tr>
                     {% endwith %}
                     {% empty %}
                     <tr>
-                        <td colspan="8" class="text-center py-5">
+                        <td colspan="9" class="text-center py-5">
                             <i class="bi bi-currency-exchange" style="font-size:2rem;color:var(--text-light);"></i>
                             <p class="text-muted mt-2">No transactions yet.</p>
                             <a href="{% url 'transaction_add' %}" class="btn btn-outline-primary btn-sm">

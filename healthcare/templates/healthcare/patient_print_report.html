@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Medical Report — {{ patient.patient_id|truncatechars:12 }} — MediChain</title>
+  <style>
+    /* ── Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 11pt;
+      color: #1a1a1a;
+      background: #f0f2f5;
+      padding: 2rem;
+    }
+
+    /* ── Page wrapper (A4 card on screen) ── */
+    .page {
+      background: #ffffff;
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 20mm 18mm 16mm;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+      border-radius: 4px;
+      position: relative;
+    }
+
+    /* ── Screen toolbar ── */
+    .toolbar {
+      max-width: 210mm;
+      margin: 0 auto 1rem;
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+    }
+    .btn {
+      padding: 0.5rem 1.2rem;
+      border-radius: 6px;
+      font-size: 10pt;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      text-decoration: none;
+    }
+    .btn-print { background: #0056b3; color: #fff; }
+    .btn-print:hover { background: #003d80; }
+    .btn-close-report { background: #fff; color: #555; border: 1px solid #ccc; }
+    .btn-close-report:hover { background: #f5f5f5; }
+
+    /* ── Document header ── */
+    .doc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 3px solid #0056b3;
+      padding-bottom: 12pt;
+      margin-bottom: 14pt;
+    }
+    .doc-logo { font-size: 18pt; font-weight: 700; color: #0056b3; letter-spacing: -0.5px; }
+    .doc-logo span { color: #00aaff; }
+    .doc-subtitle { font-size: 8pt; color: #666; margin-top: 2px; }
+    .doc-meta { text-align: right; font-size: 8pt; color: #555; line-height: 1.6; }
+    .doc-meta strong { color: #1a1a1a; font-size: 9pt; }
+
+    /* ── Report title ── */
+    .report-title {
+      text-align: center;
+      margin-bottom: 16pt;
+      padding-bottom: 10pt;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .report-title h1 { font-size: 14pt; color: #0056b3; font-weight: 700; letter-spacing: 0.5px; }
+    .report-title p { font-size: 8.5pt; color: #777; margin-top: 3px; }
+
+    /* ── Patient identity box ── */
+    .patient-identity {
+      background: #f0f6ff;
+      border: 1px solid #c5d9f7;
+      border-left: 4px solid #0056b3;
+      border-radius: 4px;
+      padding: 10pt 14pt;
+      margin-bottom: 14pt;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 10pt;
+    }
+    .identity-field label {
+      font-size: 7pt;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #0056b3;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .identity-field .value {
+      font-size: 10pt;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+    .identity-field .value.mono {
+      font-family: 'Courier New', monospace;
+      font-size: 8.5pt;
+      font-weight: 400;
+      color: #333;
+      word-break: break-all;
+    }
+    .status-active { color: #1a7a3c; font-weight: 700; }
+    .status-inactive { color: #c0392b; font-weight: 700; }
+    .blood-badge {
+      display: inline-block;
+      background: #e8f4fd;
+      border: 1px solid #a8d4f5;
+      color: #0056b3;
+      padding: 1px 8px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 10pt;
+    }
+
+    /* ── Stats strip ── */
+    .stats-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8pt;
+      margin-bottom: 16pt;
+    }
+    .stat-cell {
+      text-align: center;
+      border: 1px solid #dde3ec;
+      border-radius: 4px;
+      padding: 8pt 4pt;
+      background: #fafbfc;
+    }
+    .stat-cell .num { font-size: 18pt; font-weight: 700; color: #0056b3; line-height: 1; }
+    .stat-cell .lbl { font-size: 7pt; text-transform: uppercase; letter-spacing: 0.07em; color: #777; margin-top: 3px; }
+
+    /* ── Section header ── */
+    .section-hdr {
+      font-size: 9pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #0056b3;
+      border-bottom: 1.5px solid #0056b3;
+      padding-bottom: 4pt;
+      margin: 16pt 0 8pt;
+    }
+    .section-hdr.minor { color: #555; border-color: #ccc; border-bottom-width: 1px; }
+
+    /* ── Bar chart ── */
+    .bar-row { display: flex; align-items: center; gap: 8pt; margin-bottom: 5pt; font-size: 9pt; }
+    .bar-label { width: 130pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #333; }
+    .bar-track { flex: 1; background: #e8ecf0; border-radius: 3px; height: 8pt; overflow: hidden; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg, #0056b3, #00aaff); border-radius: 3px; }
+    .bar-count { width: 70pt; text-align: right; color: #555; font-size: 8.5pt; white-space: nowrap; }
+
+    /* ── Tables ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8.5pt;
+      margin-bottom: 4pt;
+    }
+    thead tr { background: #0056b3; color: #fff; }
+    thead th { padding: 5pt 7pt; text-align: left; font-weight: 600; font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+    tbody tr { border-bottom: 1px solid #eaecef; }
+    tbody tr:nth-child(even) { background: #f7f9fc; }
+    tbody tr:last-child { border-bottom: none; }
+    td { padding: 4.5pt 7pt; vertical-align: top; color: #2a2a2a; }
+    .td-mono { font-family: 'Courier New', monospace; font-size: 7.5pt; color: #444; }
+    .td-type {
+      display: inline-block;
+      padding: 1.5px 7px;
+      border-radius: 10px;
+      font-size: 7pt;
+      font-weight: 700;
+      background: #e4ecf7;
+      color: #0056b3;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+    .td-type.green { background: #e6f7ec; color: #1a7a3c; }
+    .td-type.orange { background: #fff3e0; color: #b25000; }
+    .td-type.red { background: #fde8e8; color: #c0392b; }
+    .td-type.grey { background: #efefef; color: #555; }
+    .empty-row td { text-align: center; color: #aaa; padding: 12pt; font-style: italic; }
+
+    /* ── Signature block ── */
+    .sig-block {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20pt;
+      margin-top: 24pt;
+      padding-top: 12pt;
+      border-top: 1px solid #e0e0e0;
+    }
+    .sig-line { border-bottom: 1px solid #aaa; margin-bottom: 4pt; height: 24pt; }
+    .sig-label { font-size: 8pt; color: #777; }
+
+    /* ── Watermark ── */
+    .confidential-watermark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-35deg);
+      font-size: 72pt;
+      font-weight: 900;
+      color: rgba(0, 86, 179, 0.04);
+      white-space: nowrap;
+      pointer-events: none;
+      user-select: none;
+      z-index: 0;
+    }
+    .page > *:not(.confidential-watermark) { position: relative; z-index: 1; }
+
+    /* ── Footer ── */
+    .doc-footer {
+      margin-top: 20pt;
+      padding-top: 8pt;
+      border-top: 2px solid #0056b3;
+      display: flex;
+      justify-content: space-between;
+      font-size: 7.5pt;
+      color: #888;
+    }
+    .doc-footer strong { color: #0056b3; }
+
+    /* ── Print overrides ── */
+    @media print {
+      body { background: #fff; padding: 0; }
+      .page { box-shadow: none; border-radius: 0; max-width: none; padding: 12mm 14mm 10mm; }
+      .toolbar { display: none; }
+      .confidential-watermark { color: rgba(0,0,0,0.04); }
+      @page { size: A4 portrait; margin: 0; }
+      .page-break { page-break-before: always; }
+      thead { display: table-header-group; }
+    }
+
+    /* ── Screen extras ── */
+    @media screen {
+      .page-break { margin-top: 2rem; padding-top: 2rem; border-top: 2px dashed #ccd; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Screen toolbar -->
+<div class="toolbar">
+  <button class="btn btn-close-report" onclick="window.close()">&#x2715; Close</button>
+  <button class="btn btn-print" onclick="window.print()">&#128438; Print / Save as PDF</button>
+</div>
+
+<div class="page">
+
+  <!-- Watermark -->
+  <div class="confidential-watermark">CONFIDENTIAL</div>
+
+  <!-- Document Header -->
+  <div class="doc-header">
+    <div>
+      <div class="doc-logo">Medi<span>Chain</span></div>
+      <div class="doc-subtitle">Healthcare Blockchain Platform &nbsp;&bull;&nbsp; Dept. of AI Technologies, Ankara University</div>
+    </div>
+    <div class="doc-meta">
+      <strong>PATIENT MEDICAL REPORT</strong><br>
+      Generated: {{ generated_at|date:"F d, Y" }}<br>
+      Time: {{ generated_at|date:"H:i" }} UTC<br>
+      Prepared by: {{ generated_by }}
+    </div>
+  </div>
+
+  <!-- Report Title -->
+  <div class="report-title">
+    <h1>Individual Patient Health Summary</h1>
+    <p>This report is confidential and intended for authorized healthcare personnel only.</p>
+  </div>
+
+  <!-- Patient Identity -->
+  <div class="patient-identity">
+    <div class="identity-field">
+      <label>Full Name</label>
+      <div class="value">{% if patient.user %}{{ patient.user.get_full_name|default:patient.user.username }}{% else %}—{% endif %}</div>
+    </div>
+    <div class="identity-field">
+      <label>Date of Birth</label>
+      <div class="value">{{ patient.date_of_birth|date:"F d, Y"|default:"Not provided" }}</div>
+    </div>
+    <div class="identity-field">
+      <label>Blood Type</label>
+      <div class="value">{% if patient.blood_type %}<span class="blood-badge">{{ patient.blood_type }}</span>{% else %}—{% endif %}</div>
+    </div>
+    <div class="identity-field">
+      <label>Status</label>
+      <div class="value">{% if patient.is_active %}<span class="status-active">&#10003; Active</span>{% else %}<span class="status-inactive">&#10005; Inactive</span>{% endif %}</div>
+    </div>
+    <div class="identity-field" style="grid-column: span 2;">
+      <label>Patient ID (Blockchain Hash)</label>
+      <div class="value mono">{{ patient.patient_id }}</div>
+    </div>
+    <div class="identity-field">
+      <label>Allergies</label>
+      <div class="value">{{ patient.allergies|default:"None recorded" }}</div>
+    </div>
+    <div class="identity-field">
+      <label>Emergency Contact</label>
+      <div class="value">{{ patient.emergency_contact|default:"Not provided" }}</div>
+    </div>
+  </div>
+
+  <!-- Stats Strip -->
+  <div class="stats-strip">
+    <div class="stat-cell">
+      <div class="num">{{ total_records }}</div>
+      <div class="lbl">Total Records</div>
+    </div>
+    <div class="stat-cell">
+      <div class="num">{{ active_permissions }}</div>
+      <div class="lbl">Active Permissions</div>
+    </div>
+    <div class="stat-cell">
+      <div class="num">{{ audit_logs|length }}</div>
+      <div class="lbl">Audit Events</div>
+    </div>
+    <div class="stat-cell">
+      <div class="num">{{ record_breakdown|length }}</div>
+      <div class="lbl">Record Types</div>
+    </div>
+  </div>
+
+  <!-- Record Type Breakdown -->
+  {% if record_breakdown %}
+  <div class="section-hdr">Record Type Breakdown</div>
+  {% for item in record_breakdown %}
+  <div class="bar-row">
+    <div class="bar-label">{{ item.label }}</div>
+    <div class="bar-track"><div class="bar-fill" style="width: {{ item.pct }}%;"></div></div>
+    <div class="bar-count">{{ item.count }} ({{ item.pct }}%)</div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <!-- Medical Records Table -->
+  <div class="section-hdr page-break">Medical Records &nbsp;<span style="font-weight:400; color:#555;">({{ total_records }} total)</span></div>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Record Type</th>
+        <th>Title</th>
+        <th>Hospital</th>
+        <th>Data Hash</th>
+        <th>TX Hash</th>
+        <th>Date</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for record in records %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td><span class="td-type">{{ record.get_record_type_display }}</span></td>
+        <td>{{ record.title|truncatechars:35 }}</td>
+        <td>{{ record.hospital.name|truncatechars:20 }}</td>
+        <td class="td-mono">{{ record.data_hash|truncatechars:12 }}</td>
+        <td class="td-mono">{% if record.blockchain_tx %}{{ record.blockchain_tx.tx_hash|truncatechars:12 }}{% else %}—{% endif %}</td>
+        <td>{{ record.created_at|date:"Y-m-d" }}</td>
+        <td>{% if record.is_active %}<span class="td-type green">Active</span>{% else %}<span class="td-type grey">Archived</span>{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr class="empty-row"><td colspan="8">No medical records on file for this patient.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Access Permissions -->
+  <div class="section-hdr">Access Permissions &nbsp;<span style="font-weight:400; color:#555;">({{ permissions|length }} total)</span></div>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Grantee</th>
+        <th>Grantee Type</th>
+        <th>Permission</th>
+        <th>Purpose</th>
+        <th>Valid From</th>
+        <th>Valid Until</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for perm in permissions %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ perm.grantee|truncatechars:22 }}</td>
+        <td><span class="td-type">{{ perm.get_grantee_type_display }}</span></td>
+        <td><span class="td-type">{{ perm.get_permission_type_display }}</span></td>
+        <td>{{ perm.purpose|truncatechars:30 }}</td>
+        <td>{{ perm.valid_from|date:"Y-m-d" }}</td>
+        <td>{{ perm.valid_until|date:"Y-m-d"|default:"No expiry" }}</td>
+        <td>{% if perm.is_active %}<span class="td-type green">Active</span>{% else %}<span class="td-type grey">Revoked</span>{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr class="empty-row"><td colspan="8">No access permissions have been granted.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Audit Trail -->
+  <div class="section-hdr page-break">Audit Trail &nbsp;<span style="font-weight:400; color:#555;">(last {{ audit_logs|length }} events)</span></div>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Timestamp</th>
+        <th>Action</th>
+        <th>Actor</th>
+        <th>Actor Type</th>
+        <th>Record Ref.</th>
+        <th>Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in audit_logs %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ log.timestamp|date:"Y-m-d H:i" }}</td>
+        <td>
+          {% if log.action == 'CREATE' %}<span class="td-type green">Create</span>
+          {% elif log.action == 'UPDATE' %}<span class="td-type orange">Update</span>
+          {% elif log.action == 'READ' %}<span class="td-type">Read</span>
+          {% elif log.action == 'SHARE' %}<span class="td-type">Share</span>
+          {% elif log.action == 'DELETE' %}<span class="td-type red">Archive</span>
+          {% elif log.action == 'ACCESS_DENIED' %}<span class="td-type red">Denied</span>
+          {% else %}<span class="td-type grey">{{ log.action }}</span>{% endif %}
+        </td>
+        <td class="td-mono">{{ log.actor|truncatechars:16 }}</td>
+        <td>{{ log.actor_type }}</td>
+        <td class="td-mono">{{ log.record.record_id|truncatechars:12 }}</td>
+        <td style="font-size:7pt; color:#666;">
+          {% for k, v in log.details.items %}{{ k }}: {{ v }}{% if not forloop.last %}; {% endif %}{% endfor %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr class="empty-row"><td colspan="7">No audit events recorded for this patient.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Signature Block -->
+  <div class="sig-block">
+    <div>
+      <div class="sig-line"></div>
+      <div class="sig-label">Authorizing Physician / Healthcare Provider</div>
+    </div>
+    <div>
+      <div class="sig-line"></div>
+      <div class="sig-label">Report Prepared by: {{ generated_by }} &nbsp;&bull;&nbsp; {{ generated_at|date:"F d, Y" }}</div>
+    </div>
+  </div>
+
+  <!-- Document Footer -->
+  <div class="doc-footer">
+    <div><strong>MediChain</strong> &bull; Healthcare Blockchain Platform &bull; Ankara University</div>
+    <div>Patient: <strong>{{ patient.patient_id|truncatechars:16 }}</strong></div>
+    <div>Generated: {{ generated_at|date:"Y-m-d H:i" }}</div>
+  </div>
+
+</div><!-- /.page -->
+
+<script>
+  // Auto-print on load; close after print if opened as popup
+  window.addEventListener('load', function() {
+    window.print();
+  });
+  window.addEventListener('afterprint', function() {
+    if (window.opener) window.close();
+  });
+</script>
+</body>
+</html>

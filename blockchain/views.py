@@ -167,6 +167,32 @@ def rollup_create(request):
     })
 
 
+# ==================== DETAIL VIEWS ====================
+
+@login_required(login_url='/accounts/login/')
+def block_detail(request, block_number):
+    block = get_object_or_404(Block.objects.select_related('network'), block_number=block_number)
+    transactions = Transaction.objects.filter(block=block).order_by('-timestamp')
+    return render(request, 'blockchain/block_detail.html', {
+        'block': block, 'transactions': transactions,
+    })
+
+
+@login_required(login_url='/accounts/login/')
+def transaction_detail(request, tx_hash):
+    tx = get_object_or_404(Transaction.objects.select_related('block__network'), tx_hash=tx_hash)
+    return render(request, 'blockchain/transaction_detail.html', {'tx': tx})
+
+
+@login_required(login_url='/accounts/login/')
+def rollup_detail(request, batch_id):
+    batch = get_object_or_404(RollupBatch.objects.select_related('network'), batch_id=batch_id)
+    transactions = batch.transactions.all().order_by('-timestamp')
+    return render(request, 'blockchain/rollup_detail.html', {
+        'batch': batch, 'transactions': transactions,
+    })
+
+
 # ==================== API VIEWSETS ====================
 
 class BlockchainNetworkViewSet(viewsets.ModelViewSet):

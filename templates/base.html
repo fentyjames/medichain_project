@@ -161,8 +161,12 @@
                     <a class="nav-link {% if '/healthcare/permissions' in request.path %}active{% endif %}" href="{% url 'permission_list' %}">
                         <i class="bi bi-key"></i> <span class="sidebar-text">Permissions</span>
                     </a>
-                    <a class="nav-link {% if '/healthcare/audit' in request.path %}active{% endif %}" href="{% url 'audit_log_list' %}">
+                    <a class="nav-link {% if '/healthcare/audit' in request.path and 'report' not in request.path %}active{% endif %}" href="{% url 'audit_log_list' %}">
                         <i class="bi bi-journal-text"></i> <span class="sidebar-text">Audit Log</span>
+                    </a>
+                    <hr class="my-2" style="border-color: var(--border);">
+                    <a class="nav-link {% if '/reports' in request.path %}active{% endif %}" href="{% url 'reports_hub' %}">
+                        <i class="bi bi-graph-up"></i> <span class="sidebar-text">Reports</span>
                     </a>
                     <a class="nav-link {% if '/blockchain/transactions' in request.path %}active{% endif %}" href="{% url 'transaction_list' %}">
                         <i class="bi bi-currency-exchange"></i> <span class="sidebar-text">Transactions</span>

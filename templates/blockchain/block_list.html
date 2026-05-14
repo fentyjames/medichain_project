@@ -26,6 +26,7 @@
                         <th>Nonce</th>
                         <th>Network</th>
                         <th>Timestamp</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -56,6 +57,11 @@
                         <td><small class="text-muted">{{ block.nonce }}</small></td>
                         <td><small class="text-muted">{{ block.network.name }}</small></td>
                         <td><small class="text-muted">{{ block.timestamp|date:"d M Y, H:i" }}</small></td>
+                        <td>
+                            <a href="{% url 'block_detail' block.block_number %}" class="btn btn-sm btn-outline-primary" title="View">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
                     </tr>
                     {% empty %}
                     <tr>

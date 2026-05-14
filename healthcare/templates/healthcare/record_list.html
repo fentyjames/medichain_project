@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
-{% block title %}Medical Records - MediChain{% endblock %}
+{% block title %}Medical Records — MediChain{% endblock %}
 {% block breadcrumb_items %}
-<li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}" style="color: var(--accent);">Healthcare</a></li>
+<li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}" style="color:var(--accent);">Healthcare</a></li>
 <li class="breadcrumb-item active">Records</li>
 {% endblock %}
 
@@ -13,32 +13,35 @@
 
 <div class="card">
     <div class="card-header">
-        <div class="d-flex justify-content-between align-items-center">
+        <form method="get" class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
             <span><i class="bi bi-list"></i> All Records</span>
-            <div class="d-flex gap-2">
-                <select class="form-select form-select-sm" id="filterType" style="width: 150px;">
+            <div class="d-flex gap-2 flex-wrap">
+                <select name="type" class="form-select form-select-sm" style="width:160px;">
                     <option value="">All Types</option>
-                    <option value="DIAGNOSIS">Diagnosis</option>
-                    <option value="LAB_RESULT">Lab Result</option>
-                    <option value="PRESCRIPTION">Prescription</option>
-                    <option value="IMAGING">Imaging</option>
-                    <option value="SURGERY">Surgery</option>
+                    <option value="DIAGNOSIS"    {% if selected_type == 'DIAGNOSIS'    %}selected{% endif %}>Diagnosis</option>
+                    <option value="LAB_RESULT"   {% if selected_type == 'LAB_RESULT'   %}selected{% endif %}>Lab Result</option>
+                    <option value="PRESCRIPTION" {% if selected_type == 'PRESCRIPTION' %}selected{% endif %}>Prescription</option>
+                    <option value="IMAGING"      {% if selected_type == 'IMAGING'      %}selected{% endif %}>Imaging</option>
+                    <option value="SURGERY"      {% if selected_type == 'SURGERY'      %}selected{% endif %}>Surgery</option>
+                    <option value="DISCHARGE"    {% if selected_type == 'DISCHARGE'    %}selected{% endif %}>Discharge</option>
+                    <option value="INSURANCE"    {% if selected_type == 'INSURANCE'    %}selected{% endif %}>Insurance</option>
                 </select>
-                <input type="text" class="form-control form-control-sm" id="searchRecords" placeholder="Search..." style="width: 200px;">
+                <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Search title, patient, hospital..." style="width:240px;">
+                <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-search"></i></button>
+                {% if q or selected_type %}<a href="{% url 'record_list' %}" class="btn btn-sm btn-outline-secondary">Clear</a>{% endif %}
             </div>
-        </div>
+        </form>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover mb-0" id="recordsTable">
+            <table class="table table-hover mb-0">
                 <thead>
                     <tr>
                         <th>Type</th>
                         <th>Title</th>
-                        <th>Patient ID</th>
+                        <th>Patient</th>
                         <th>Hospital</th>
                         <th>Data Hash</th>
-                        <th>IPFS</th>
                         <th>Status</th>
                         <th>Date</th>
                         <th>Actions</th>
@@ -46,61 +49,71 @@
                 </thead>
                 <tbody>
                     {% for record in records %}
-                    <tr data-type="{{ record.record_type }}">
-                        <td><span class="badge bg-secondary">{{ record.get_record_type_display }}</span></td>
-                        <td>{{ record.title|truncatechars:25 }}</td>
-                        <td><span class="hash-text">{{ record.patient.patient_id|truncatechars:12 }}</span></td>
-                        <td>{{ record.hospital.name|truncatechars:20 }}</td>
+                    <tr>
+                        <td><span class="badge bg-secondary" style="font-size:.72rem;">{{ record.get_record_type_display }}</span></td>
+                        <td>{{ record.title|truncatechars:28 }}</td>
+                        <td>
+                            {% if record.patient.user %}
+                                <a href="{% url 'patient_detail' record.patient.patient_id %}" style="color:var(--accent);">
+                                    {{ record.patient.user.get_full_name|default:record.patient.user.username|truncatechars:18 }}
+                                </a>
+                            {% else %}
+                                <span class="hash-text">{{ record.patient.patient_id|truncatechars:12 }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'hospital_detail' record.hospital.hospital_id %}" style="color:var(--accent);">
+                                {{ record.hospital.name|truncatechars:18 }}
+                            </a>
+                        </td>
                         <td><span class="hash-text">{{ record.data_hash|truncatechars:10 }}</span></td>
                         <td>
-                            {% if record.ipfs_hash %}
-                            <span class="hash-text">{{ record.ipfs_hash|truncatechars:10 }}</span>
-                            {% else %}
-                            <span class="text-muted">-</span>
-                            {% endif %}
-                        </td>
-                        <td>
                             {% if record.is_active %}
-                            <span class="badge bg-success">Active</span>
+                                <span class="badge bg-success" style="font-size:.7rem;">Active</span>
                             {% else %}
-                            <span class="badge bg-secondary">Archived</span>
+                                <span class="badge bg-secondary" style="font-size:.7rem;">Archived</span>
                             {% endif %}
                         </td>
-                        <td>{{ record.created_at|date:"Y-m-d" }}</td>
+                        <td style="font-size:.85rem;">{{ record.created_at|date:"Y-m-d" }}</td>
                         <td>
-                            <a href="{% url 'record_detail' record.record_id %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a>
-                            <a href="{% url 'permission_add' %}?record={{ record.record_id }}" class="btn btn-sm btn-outline-success"><i class="bi bi-key"></i></a>
+                            <div class="d-flex gap-1">
+                                <a href="{% url 'record_detail' record.record_id %}" class="btn btn-sm btn-outline-primary" title="View"><i class="bi bi-eye"></i></a>
+                                <a href="{% url 'record_edit' record.record_id %}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
+                                <a href="{% url 'record_report' record.record_id %}" class="btn btn-sm btn-outline-success" title="Report"><i class="bi bi-file-earmark-text"></i></a>
+                                <a href="{% url 'record_print_report' record.record_id %}" class="btn btn-sm btn-outline-secondary" title="Print" target="_blank"><i class="bi bi-printer"></i></a>
+                            </div>
                         </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="9" class="text-center text-muted py-5">
-                        <i class="bi bi-file-earmark-x fs-1 d-block mb-2"></i>
-                        No medical records found.<br>
-                        <a href="{% url 'record_add' %}" class="btn btn-primary mt-2">Create First Record</a>
-                    </td></tr>
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-5">
+                            <i class="bi bi-file-earmark-x fs-1 d-block mb-2"></i>
+                            No records found{% if q or selected_type %} for the current filters{% endif %}.<br>
+                            <a href="{% url 'record_add' %}" class="btn btn-primary mt-2">Create First Record</a>
+                        </td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <small class="text-muted">Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}</small>
+        <nav><ul class="pagination pagination-sm mb-0">
+            {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="{{ query_string }}page={{ page_obj.previous_page_number }}">«</a></li>
+            {% endif %}
+            {% for n in page_obj.paginator.page_range %}
+            <li class="page-item {% if n == page_obj.number %}active{% endif %}">
+                <a class="page-link" href="{{ query_string }}page={{ n }}">{{ n }}</a>
+            </li>
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="{{ query_string }}page={{ page_obj.next_page_number }}">»</a></li>
+            {% endif %}
+        </ul></nav>
+    </div>
+    {% endif %}
 </div>
-
-<script>
-document.getElementById('searchRecords').addEventListener('keyup', function() {
-    const filter = this.value.toLowerCase();
-    document.querySelectorAll('#recordsTable tbody tr').forEach(row => {
-        row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
-    });
-});
-document.getElementById('filterType').addEventListener('change', function() {
-    const type = this.value;
-    document.querySelectorAll('#recordsTable tbody tr').forEach(row => {
-        if (!type || row.dataset.type === type) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-});
-</script>
 {% endblock %}

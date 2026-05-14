@@ -19,7 +19,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.serializers import HospitalSerializer, MedicalRecordSerializer, PatientSerializer
-from blockchain.models import BlockchainNetwork, Transaction
+from blockchain.models import Block, BlockchainNetwork, RollupBatch, Transaction
 from zk_proofs.zk_service import ZKProofService
 
 from .models import AccessPermission, AuditLog, Hospital, InsuranceProvider, Laboratory, MedicalRecord, Patient
@@ -258,6 +258,9 @@ def permission_add(request):
             },
         )
         messages.success(request, 'Access permission granted successfully')
+        record_id = request.POST.get('record_id')
+        if record_id:
+            return redirect('record_detail', record_id=record_id)
         return redirect('healthcare_dashboard')
     context = {
         'records': MedicalRecord.objects.filter(is_active=True).select_related('patient__user'),
@@ -266,6 +269,171 @@ def permission_add(request):
         'selected_patient': request.GET.get('patient', ''),
     }
     return render(request, 'healthcare/permission_add.html', context)
+
+
+# ==================== PATIENT REPORT ====================
+
+@login_required(login_url='/accounts/login/')
+def patient_report(request, patient_id):
+    """Printable patient report — full medical summary for a single patient."""
+    patient = get_object_or_404(Patient.objects.select_related('user'), patient_id=patient_id)
+    records = MedicalRecord.objects.filter(patient=patient).select_related(
+        'hospital', 'blockchain_tx'
+    ).order_by('-created_at')
+    permissions = AccessPermission.objects.filter(grantor=patient).select_related('record').order_by('-created_at')
+    audit_logs = AuditLog.objects.filter(record__patient=patient).order_by('-timestamp')[:50]
+
+    total_records = records.count()
+    active_permissions = permissions.filter(is_active=True).count()
+
+    # Build record-type breakdown with percentages for the bar chart
+    type_counts = {}
+    for r in records:
+        label = r.get_record_type_display()
+        type_counts[label] = type_counts.get(label, 0) + 1
+    record_breakdown = [
+        {'label': label, 'count': count, 'pct': round(count / total_records * 100) if total_records else 0}
+        for label, count in sorted(type_counts.items(), key=lambda x: -x[1])
+    ]
+
+    return render(request, 'healthcare/patient_report.html', {
+        'patient': patient,
+        'records': records,
+        'permissions': permissions,
+        'audit_logs': audit_logs,
+        'record_breakdown': record_breakdown,
+        'total_records': total_records,
+        'active_permissions': active_permissions,
+        'generated_at': timezone.now(),
+    })
+
+
+# ==================== PATIENT PRINT REPORT ====================
+
+@login_required(login_url='/accounts/login/')
+def patient_print_report(request, patient_id):
+    """Standalone printable medical report for a single patient — no site chrome."""
+    patient = get_object_or_404(Patient.objects.select_related('user'), patient_id=patient_id)
+    records = MedicalRecord.objects.filter(patient=patient).select_related(
+        'hospital', 'blockchain_tx'
+    ).order_by('-created_at')
+    permissions = AccessPermission.objects.filter(grantor=patient).select_related('record').order_by('-created_at')
+    audit_logs = AuditLog.objects.filter(record__patient=patient).order_by('-timestamp')[:30]
+
+    total_records = records.count()
+    active_permissions = permissions.filter(is_active=True).count()
+
+    type_counts = {}
+    for r in records:
+        label = r.get_record_type_display()
+        type_counts[label] = type_counts.get(label, 0) + 1
+    record_breakdown = [
+        {'label': label, 'count': count, 'pct': round(count / total_records * 100) if total_records else 0}
+        for label, count in sorted(type_counts.items(), key=lambda x: -x[1])
+    ]
+
+    return render(request, 'healthcare/patient_print_report.html', {
+        'patient': patient,
+        'records': records,
+        'permissions': permissions,
+        'audit_logs': audit_logs,
+        'record_breakdown': record_breakdown,
+        'total_records': total_records,
+        'active_permissions': active_permissions,
+        'generated_at': timezone.now(),
+        'generated_by': request.user.get_full_name() or request.user.username,
+    })
+
+
+# ==================== HOSPITAL PRINT REPORT ====================
+
+@login_required(login_url='/accounts/login/')
+def hospital_print_report(request, hospital_id):
+    """Standalone printable report for a single hospital."""
+    hospital = get_object_or_404(Hospital, hospital_id=hospital_id)
+    records = MedicalRecord.objects.filter(hospital=hospital).select_related(
+        'patient__user', 'blockchain_tx'
+    ).order_by('-created_at')
+    labs = Laboratory.objects.filter(hospital=hospital).order_by('name')
+    audit_logs = AuditLog.objects.filter(record__hospital=hospital).order_by('-timestamp')[:30]
+
+    total_records = records.count()
+    unique_patients = records.values('patient').distinct().count()
+
+    type_counts = {}
+    for r in records:
+        label = r.get_record_type_display()
+        type_counts[label] = type_counts.get(label, 0) + 1
+    record_breakdown = [
+        {'label': label, 'count': count, 'pct': round(count / total_records * 100) if total_records else 0}
+        for label, count in sorted(type_counts.items(), key=lambda x: -x[1])
+    ]
+
+    return render(request, 'healthcare/hospital_print_report.html', {
+        'hospital': hospital,
+        'records': records,
+        'labs': labs,
+        'audit_logs': audit_logs,
+        'record_breakdown': record_breakdown,
+        'total_records': total_records,
+        'unique_patients': unique_patients,
+        'generated_at': timezone.now(),
+        'generated_by': request.user.get_full_name() or request.user.username,
+    })
+
+
+# ==================== LABORATORY PRINT REPORT ====================
+
+@login_required(login_url='/accounts/login/')
+def laboratory_print_report(request, lab_id):
+    """Standalone printable report for a single laboratory."""
+    lab = get_object_or_404(Laboratory.objects.select_related('hospital'), lab_id=lab_id)
+
+    lab_records = MedicalRecord.objects.none()
+    hospital_records = MedicalRecord.objects.none()
+    if lab.hospital:
+        hospital_records = MedicalRecord.objects.filter(hospital=lab.hospital).select_related('patient__user').order_by('-created_at')
+        lab_records = hospital_records.filter(record_type='LAB_RESULT')
+
+    permissions = AccessPermission.objects.filter(
+        grantee_type='LAB', grantee__icontains=lab.name
+    ).select_related('record', 'grantor__user').order_by('-created_at')
+
+    return render(request, 'healthcare/laboratory_print_report.html', {
+        'lab': lab,
+        'lab_records': lab_records[:100],
+        'permissions': permissions,
+        'total_lab_results': lab_records.count(),
+        'total_hospital_records': hospital_records.count(),
+        'generated_at': timezone.now(),
+        'generated_by': request.user.get_full_name() or request.user.username,
+    })
+
+
+# ==================== INSURANCE PRINT REPORT ====================
+
+@login_required(login_url='/accounts/login/')
+def insurance_print_report(request, provider_id):
+    """Standalone printable report for a single insurance provider."""
+    provider = get_object_or_404(InsuranceProvider, provider_id=provider_id)
+
+    permissions = AccessPermission.objects.filter(
+        grantee_type='INSURANCE', grantee__icontains=provider.name
+    ).select_related('record__patient__user', 'grantor__user').order_by('-created_at')
+
+    claims = MedicalRecord.objects.filter(
+        record_type='INSURANCE', is_active=True
+    ).select_related('patient__user', 'hospital').order_by('-created_at')
+
+    return render(request, 'healthcare/insurance_print_report.html', {
+        'provider': provider,
+        'permissions': permissions,
+        'claims': claims,
+        'total_permissions': permissions.count(),
+        'active_permissions': permissions.filter(is_active=True).count(),
+        'generated_at': timezone.now(),
+        'generated_by': request.user.get_full_name() or request.user.username,
+    })
 
 
 # ==================== PATIENT EDIT / DELETE ====================
@@ -371,6 +539,65 @@ def record_archive(request, record_id):
         messages.success(request, 'Record archived.')
         return redirect('record_list')
     return render(request, 'healthcare/record_edit.html', {'record': record, 'confirm_archive': True})
+
+
+# ==================== LABORATORY EDIT / DELETE ====================
+
+@login_required(login_url='/accounts/login/')
+def laboratory_edit(request, lab_id):
+    lab = get_object_or_404(Laboratory, lab_id=lab_id)
+    if request.method == 'POST':
+        lab.name = request.POST.get('name', lab.name)
+        lab.accreditation = request.POST.get('accreditation', lab.accreditation)
+        hospital_id = request.POST.get('hospital_id', '')
+        if hospital_id:
+            lab.hospital = Hospital.objects.filter(hospital_id=hospital_id).first()
+        elif 'clear_hospital' in request.POST:
+            lab.hospital = None
+        lab.save()
+        messages.success(request, f'Laboratory "{lab.name}" updated.')
+        return redirect('laboratory_detail', lab_id=lab_id)
+    hospitals = Hospital.objects.order_by('name')
+    return render(request, 'healthcare/laboratory_edit.html', {'lab': lab, 'hospitals': hospitals})
+
+
+@login_required(login_url='/accounts/login/')
+def laboratory_delete(request, lab_id):
+    lab = get_object_or_404(Laboratory, lab_id=lab_id)
+    if request.method == 'POST':
+        name = lab.name
+        lab.delete()
+        messages.success(request, f'Laboratory "{name}" deleted.')
+        return redirect('laboratory_list')
+    hospitals = Hospital.objects.order_by('name')
+    return render(request, 'healthcare/laboratory_edit.html', {
+        'lab': lab, 'hospitals': hospitals, 'confirm_delete': True,
+    })
+
+
+# ==================== INSURANCE PROVIDER EDIT / DELETE ====================
+
+@login_required(login_url='/accounts/login/')
+def insurance_edit(request, provider_id):
+    provider = get_object_or_404(InsuranceProvider, provider_id=provider_id)
+    if request.method == 'POST':
+        provider.name = request.POST.get('name', provider.name)
+        provider.license_number = request.POST.get('license_number', provider.license_number)
+        provider.save()
+        messages.success(request, f'Insurance provider "{provider.name}" updated.')
+        return redirect('insurance_detail', provider_id=provider_id)
+    return render(request, 'healthcare/insurance_edit.html', {'provider': provider})
+
+
+@login_required(login_url='/accounts/login/')
+def insurance_delete(request, provider_id):
+    provider = get_object_or_404(InsuranceProvider, provider_id=provider_id)
+    if request.method == 'POST':
+        name = provider.name
+        provider.delete()
+        messages.success(request, f'Insurance provider "{name}" deleted.')
+        return redirect('insurance_list')
+    return render(request, 'healthcare/insurance_edit.html', {'provider': provider, 'confirm_delete': True})
 
 
 # ==================== LABORATORY ====================
@@ -499,6 +726,376 @@ def audit_log_list(request):
     return render(request, 'healthcare/audit_log_list.html', {
         'logs': page_obj, 'page_obj': page_obj, 'query_string': qs_str,
         'selected_action': action_filter, 'selected_actor_type': actor_type_filter,
+    })
+
+
+# ==================== RECORD REPORT ====================
+
+@login_required(login_url='/accounts/login/')
+def record_report(request, record_id):
+    """Summary report for a single medical record."""
+    record = get_object_or_404(
+        MedicalRecord.objects.select_related('patient__user', 'hospital', 'blockchain_tx'),
+        record_id=record_id,
+    )
+    permissions = AccessPermission.objects.filter(record=record).order_by('-created_at')
+    audit_logs = AuditLog.objects.filter(record=record).order_by('-timestamp')
+    return render(request, 'healthcare/record_report.html', {
+        'record': record,
+        'permissions': permissions,
+        'audit_logs': audit_logs,
+        'active_permissions': permissions.filter(is_active=True).count(),
+        'generated_at': timezone.now(),
+        'generated_by': request.user.get_full_name() or request.user.username,
+    })
+
+
+@login_required(login_url='/accounts/login/')
+def record_print_report(request, record_id):
+    """Standalone printable document for a medical record."""
+    record = get_object_or_404(
+        MedicalRecord.objects.select_related('patient__user', 'hospital', 'blockchain_tx'),
+        record_id=record_id,
+    )
+    permissions = AccessPermission.objects.filter(record=record).order_by('-created_at')
+    audit_logs = AuditLog.objects.filter(record=record).order_by('-timestamp')[:30]
+    return render(request, 'healthcare/record_print_report.html', {
+        'record': record,
+        'permissions': permissions,
+        'audit_logs': audit_logs,
+        'active_permissions': permissions.filter(is_active=True).count(),
+        'generated_at': timezone.now(),
+        'generated_by': request.user.get_full_name() or request.user.username,
+    })
+
+
+# ==================== HOSPITAL REPORT ====================
+
+@login_required(login_url='/accounts/login/')
+def hospital_report(request, hospital_id):
+    """Printable hospital report — activity, records, labs, and compliance summary."""
+    hospital = get_object_or_404(Hospital, hospital_id=hospital_id)
+    records = MedicalRecord.objects.filter(hospital=hospital).select_related(
+        'patient__user', 'blockchain_tx'
+    ).order_by('-created_at')
+    labs = Laboratory.objects.filter(hospital=hospital).order_by('name')
+    audit_logs = AuditLog.objects.filter(record__hospital=hospital).order_by('-timestamp')[:50]
+
+    total_records = records.count()
+    unique_patients = records.values('patient').distinct().count()
+
+    type_counts = {}
+    for r in records:
+        label = r.get_record_type_display()
+        type_counts[label] = type_counts.get(label, 0) + 1
+    record_breakdown = [
+        {'label': label, 'count': count, 'pct': round(count / total_records * 100) if total_records else 0}
+        for label, count in sorted(type_counts.items(), key=lambda x: -x[1])
+    ]
+
+    return render(request, 'healthcare/hospital_report.html', {
+        'hospital': hospital,
+        'records': records,
+        'labs': labs,
+        'audit_logs': audit_logs,
+        'record_breakdown': record_breakdown,
+        'total_records': total_records,
+        'unique_patients': unique_patients,
+        'generated_at': timezone.now(),
+    })
+
+
+# ==================== LABORATORY REPORT ====================
+
+@login_required(login_url='/accounts/login/')
+def laboratory_report(request, lab_id):
+    """Printable lab report — lab result records from the parent hospital, permissions."""
+    lab = get_object_or_404(Laboratory.objects.select_related('hospital'), lab_id=lab_id)
+
+    # Lab results are records of type LAB_RESULT from this lab's hospital
+    lab_records = MedicalRecord.objects.none()
+    hospital_records = MedicalRecord.objects.none()
+    if lab.hospital:
+        hospital_records = MedicalRecord.objects.filter(
+            hospital=lab.hospital
+        ).select_related('patient__user').order_by('-created_at')
+        lab_records = hospital_records.filter(record_type='LAB_RESULT')
+
+    # Permissions where a lab grantee name contains this lab's name (approximate match)
+    permissions = AccessPermission.objects.filter(
+        grantee_type='LAB', grantee__icontains=lab.name
+    ).select_related('record', 'grantor__user').order_by('-created_at')
+
+    total_lab_results = lab_records.count()
+    total_hospital_records = hospital_records.count()
+
+    return render(request, 'healthcare/laboratory_report.html', {
+        'lab': lab,
+        'lab_records': lab_records[:100],
+        'permissions': permissions,
+        'total_lab_results': total_lab_results,
+        'total_hospital_records': total_hospital_records,
+        'generated_at': timezone.now(),
+    })
+
+
+# ==================== INSURANCE REPORT ====================
+
+@login_required(login_url='/accounts/login/')
+def insurance_report(request, provider_id):
+    """Printable insurance provider report — claims, permissions, access history."""
+    provider = get_object_or_404(InsuranceProvider, provider_id=provider_id)
+
+    # Permissions granted to this insurance provider (name match)
+    permissions = AccessPermission.objects.filter(
+        grantee_type='INSURANCE', grantee__icontains=provider.name
+    ).select_related('record__patient__user', 'grantor__user').order_by('-created_at')
+
+    # Insurance-type medical records (claims)
+    claims = MedicalRecord.objects.filter(
+        record_type='INSURANCE', is_active=True
+    ).select_related('patient__user', 'hospital').order_by('-created_at')
+
+    total_permissions = permissions.count()
+    active_permissions = permissions.filter(is_active=True).count()
+
+    return render(request, 'healthcare/insurance_report.html', {
+        'provider': provider,
+        'permissions': permissions,
+        'claims': claims,
+        'total_permissions': total_permissions,
+        'active_permissions': active_permissions,
+        'generated_at': timezone.now(),
+    })
+
+
+# ==================== AUDIT / COMPLIANCE REPORT ====================
+
+@login_required(login_url='/accounts/login/')
+def audit_compliance_report(request):
+    """System-wide audit and compliance report with optional date-range filter."""
+    date_from = request.GET.get('date_from', '').strip()
+    date_to = request.GET.get('date_to', '').strip()
+    actor_type_filter = request.GET.get('actor_type', '').strip()
+
+    qs = AuditLog.objects.select_related('record__patient__user', 'record__hospital').order_by('-timestamp')
+    if date_from:
+        qs = qs.filter(timestamp__date__gte=date_from)
+    if date_to:
+        qs = qs.filter(timestamp__date__lte=date_to)
+    if actor_type_filter:
+        qs = qs.filter(actor_type=actor_type_filter)
+
+    logs = qs[:200]
+
+    action_counts = {}
+    actor_type_counts = {}
+    for log in logs:
+        action_counts[log.action] = action_counts.get(log.action, 0) + 1
+        actor_type_counts[log.actor_type] = actor_type_counts.get(log.actor_type, 0) + 1
+
+    total_logs = len(logs)
+    denied_count = action_counts.get('ACCESS_DENIED', 0)
+
+    action_breakdown = [
+        {'label': label, 'count': count, 'pct': round(count / total_logs * 100) if total_logs else 0}
+        for label, count in sorted(action_counts.items(), key=lambda x: -x[1])
+    ]
+    actor_breakdown = [
+        {'label': label, 'count': count, 'pct': round(count / total_logs * 100) if total_logs else 0}
+        for label, count in sorted(actor_type_counts.items(), key=lambda x: -x[1])
+    ]
+
+    return render(request, 'healthcare/audit_compliance_report.html', {
+        'logs': logs,
+        'action_breakdown': action_breakdown,
+        'actor_breakdown': actor_breakdown,
+        'total_logs': total_logs,
+        'denied_count': denied_count,
+        'date_from': date_from,
+        'date_to': date_to,
+        'actor_type_filter': actor_type_filter,
+        'generated_at': timezone.now(),
+    })
+
+
+# ==================== SYSTEM OVERVIEW REPORT ====================
+
+@login_required(login_url='/accounts/login/')
+def system_overview_report(request):
+    """Platform-wide summary report — entity counts, blockchain stats, activity."""
+    # Healthcare counts
+    patient_count = Patient.objects.filter(is_active=True).count()
+    hospital_count = Hospital.objects.count()
+    lab_count = Laboratory.objects.count()
+    insurance_count = InsuranceProvider.objects.count()
+    record_count = MedicalRecord.objects.filter(is_active=True).count()
+    active_permissions = AccessPermission.objects.filter(is_active=True).count()
+    audit_count = AuditLog.objects.count()
+
+    # Blockchain counts
+    network_count = BlockchainNetwork.objects.filter(is_active=True).count()
+    block_count = Block.objects.count()
+    tx_count = Transaction.objects.count()
+    rollup_count = RollupBatch.objects.count()
+
+    # Record type breakdown
+    all_records = MedicalRecord.objects.filter(is_active=True)
+    type_counts = {}
+    for r in all_records:
+        label = r.get_record_type_display()
+        type_counts[label] = type_counts.get(label, 0) + 1
+    record_breakdown = [
+        {'label': label, 'count': count, 'pct': round(count / record_count * 100) if record_count else 0}
+        for label, count in sorted(type_counts.items(), key=lambda x: -x[1])
+    ]
+
+    # Recent activity
+    recent_records = MedicalRecord.objects.select_related('patient__user', 'hospital').order_by('-created_at')[:10]
+    recent_logs = AuditLog.objects.select_related('record').order_by('-timestamp')[:10]
+    recent_txs = Transaction.objects.order_by('-timestamp')[:10]
+
+    return render(request, 'healthcare/system_overview_report.html', {
+        'patient_count': patient_count,
+        'hospital_count': hospital_count,
+        'lab_count': lab_count,
+        'insurance_count': insurance_count,
+        'record_count': record_count,
+        'active_permissions': active_permissions,
+        'audit_count': audit_count,
+        'network_count': network_count,
+        'block_count': block_count,
+        'tx_count': tx_count,
+        'rollup_count': rollup_count,
+        'record_breakdown': record_breakdown,
+        'recent_records': recent_records,
+        'recent_logs': recent_logs,
+        'recent_txs': recent_txs,
+        'generated_at': timezone.now(),
+    })
+
+
+# ==================== AUDIT COMPLIANCE PRINT REPORT ====================
+
+@login_required(login_url='/accounts/login/')
+def audit_compliance_print_report(request):
+    """Standalone printable audit & compliance report."""
+    date_from = request.GET.get('date_from', '').strip()
+    date_to = request.GET.get('date_to', '').strip()
+    actor_type_filter = request.GET.get('actor_type', '').strip()
+
+    qs = AuditLog.objects.select_related('record__patient__user', 'record__hospital').order_by('-timestamp')
+    if date_from:
+        qs = qs.filter(timestamp__date__gte=date_from)
+    if date_to:
+        qs = qs.filter(timestamp__date__lte=date_to)
+    if actor_type_filter:
+        qs = qs.filter(actor_type=actor_type_filter)
+
+    logs = qs[:500]
+    total_logs = len(logs)
+
+    action_counts = {}
+    actor_type_counts = {}
+    for log in logs:
+        action_counts[log.action] = action_counts.get(log.action, 0) + 1
+        actor_type_counts[log.actor_type] = actor_type_counts.get(log.actor_type, 0) + 1
+
+    denied_count = action_counts.get('ACCESS_DENIED', 0)
+    action_breakdown = [
+        {'label': label, 'count': count, 'pct': round(count / total_logs * 100) if total_logs else 0}
+        for label, count in sorted(action_counts.items(), key=lambda x: -x[1])
+    ]
+    actor_breakdown = [
+        {'label': label, 'count': count, 'pct': round(count / total_logs * 100) if total_logs else 0}
+        for label, count in sorted(actor_type_counts.items(), key=lambda x: -x[1])
+    ]
+
+    return render(request, 'healthcare/audit_compliance_print_report.html', {
+        'logs': logs,
+        'action_breakdown': action_breakdown,
+        'actor_breakdown': actor_breakdown,
+        'total_logs': total_logs,
+        'denied_count': denied_count,
+        'date_from': date_from,
+        'date_to': date_to,
+        'actor_type_filter': actor_type_filter,
+        'generated_at': timezone.now(),
+        'generated_by': request.user.get_full_name() or request.user.username,
+    })
+
+
+# ==================== SYSTEM OVERVIEW PRINT REPORT ====================
+
+@login_required(login_url='/accounts/login/')
+def system_overview_print_report(request):
+    """Standalone printable platform-wide summary report."""
+    patient_count = Patient.objects.filter(is_active=True).count()
+    hospital_count = Hospital.objects.count()
+    lab_count = Laboratory.objects.count()
+    insurance_count = InsuranceProvider.objects.count()
+    record_count = MedicalRecord.objects.filter(is_active=True).count()
+    active_permissions = AccessPermission.objects.filter(is_active=True).count()
+    audit_count = AuditLog.objects.count()
+
+    network_count = BlockchainNetwork.objects.filter(is_active=True).count()
+    block_count = Block.objects.count()
+    tx_count = Transaction.objects.count()
+    rollup_count = RollupBatch.objects.count()
+
+    all_records = MedicalRecord.objects.filter(is_active=True)
+    type_counts = {}
+    for r in all_records:
+        label = r.get_record_type_display()
+        type_counts[label] = type_counts.get(label, 0) + 1
+    record_breakdown = [
+        {'label': label, 'count': count, 'pct': round(count / record_count * 100) if record_count else 0}
+        for label, count in sorted(type_counts.items(), key=lambda x: -x[1])
+    ]
+
+    recent_records = MedicalRecord.objects.select_related('patient__user', 'hospital').order_by('-created_at')[:15]
+    recent_logs = AuditLog.objects.select_related('record').order_by('-timestamp')[:15]
+    recent_txs = Transaction.objects.order_by('-timestamp')[:15]
+
+    return render(request, 'healthcare/system_overview_print_report.html', {
+        'patient_count': patient_count,
+        'hospital_count': hospital_count,
+        'lab_count': lab_count,
+        'insurance_count': insurance_count,
+        'record_count': record_count,
+        'active_permissions': active_permissions,
+        'audit_count': audit_count,
+        'network_count': network_count,
+        'block_count': block_count,
+        'tx_count': tx_count,
+        'rollup_count': rollup_count,
+        'record_breakdown': record_breakdown,
+        'recent_records': recent_records,
+        'recent_logs': recent_logs,
+        'recent_txs': recent_txs,
+        'generated_at': timezone.now(),
+        'generated_by': request.user.get_full_name() or request.user.username,
+    })
+
+
+# ==================== REPORTS HUB ====================
+
+@login_required(login_url='/accounts/login/')
+def reports_hub(request):
+    """Central hub listing all available reports."""
+    patient_count = Patient.objects.filter(is_active=True).count()
+    hospital_count = Hospital.objects.count()
+    lab_count = Laboratory.objects.count()
+    insurance_count = InsuranceProvider.objects.count()
+    record_count = MedicalRecord.objects.filter(is_active=True).count()
+    audit_count = AuditLog.objects.count()
+    return render(request, 'healthcare/reports_hub.html', {
+        'patient_count': patient_count,
+        'hospital_count': hospital_count,
+        'lab_count': lab_count,
+        'insurance_count': insurance_count,
+        'record_count': record_count,
+        'audit_count': audit_count,
     })
 
 

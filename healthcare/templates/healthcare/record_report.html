@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% block title %}{{ record.title }} — Report — MediChain{% endblock %}
+
+{% block extra_css %}
+<style>
+  .report-header { border-bottom: 2px solid var(--accent); padding-bottom: 1rem; margin-bottom: 1.5rem; }
+  .stat-box { background: var(--secondary); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.25rem; text-align: center; }
+  .stat-box .stat-value { font-size: 1.8rem; font-weight: 700; color: var(--accent); }
+  .stat-box .stat-label { font-size: 0.78rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; }
+  .section-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-light); border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; margin-bottom: 1rem; }
+  .hash-mono { font-family: monospace; font-size: 0.78rem; }
+  .badge-type { font-size: 0.72rem; }
+  .print-btn { position: fixed; bottom: 2rem; right: 2rem; z-index: 1000; }
+  @media print {
+    nav.navbar, #sidebarWrapper, footer, .print-btn, .alert, [data-bs-dismiss], .toast-container { display: none !important; }
+    body, html { background: #fff !important; color: #000 !important; }
+    .card { border: 1px solid #ccc !important; background: #fff !important; break-inside: avoid; }
+    .card-header { background: #f0f0f0 !important; color: #000 !important; }
+    .stat-box { background: #f8f8f8 !important; }
+    .stat-box .stat-value { color: #003399 !important; }
+    .table { color: #000 !important; }
+    .table thead th { background: #e8e8e8 !important; color: #000 !important; }
+    .badge { border: 1px solid #999 !important; color: #000 !important; background: #eee !important; }
+    .report-print-header { display: block !important; }
+    a[href]:after { content: none !important; }
+    @page { margin: 1.5cm; size: A4 portrait; }
+  }
+</style>
+{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}" style="color:var(--accent);">Healthcare</a></li>
+<li class="breadcrumb-item"><a href="{% url 'record_list' %}" style="color:var(--accent);">Records</a></li>
+<li class="breadcrumb-item"><a href="{% url 'record_detail' record.record_id %}" style="color:var(--accent);">{{ record.title|truncatechars:24 }}</a></li>
+<li class="breadcrumb-item active">Report</li>
+{% endblock %}
+
+{% block content %}
+<div class="report-print-header" style="display:none; margin-bottom: 1.5rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div><strong style="font-size: 1.4rem;">MediChain — Medical Record Report</strong><br>
+    <span style="font-size: 0.8rem; color: #555;">Dept. of AI Technologies, Ankara University</span></div>
+    <div style="text-align: right; font-size: 0.8rem; color: #555;">Generated: {{ generated_at|date:"F d, Y H:i" }}<br>Confidential</div>
+  </div>
+  <hr style="border: 1px solid #000; margin-top: 0.5rem;">
+</div>
+
+<div class="report-header d-flex justify-content-between align-items-center">
+  <div>
+    <h4 class="mb-0">
+        <span class="badge bg-secondary me-2">{{ record.get_record_type_display }}</span>
+        {{ record.title }}
+    </h4>
+    <small class="text-muted">Generated {{ generated_at|date:"F d, Y H:i" }} &nbsp;|&nbsp; Record {{ record.record_id|truncatechars:20 }}</small>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'record_detail' record.record_id %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+    <a href="{% url 'record_print_report' record.record_id %}" target="_blank" class="btn btn-sm btn-primary"><i class="bi bi-printer-fill me-1"></i> Print Document</a>
+  </div>
+</div>
+
+<!-- Record identity -->
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-file-medical me-1"></i> <span class="section-title mb-0">Record Identity</span></div>
+      <div class="card-body" style="font-size:.88rem;">
+        <div class="row g-2">
+          <div class="col-5 text-muted">Record ID</div>
+          <div class="col-7 hash-mono">{{ record.record_id|truncatechars:32 }}</div>
+          <div class="col-5 text-muted">Type</div>
+          <div class="col-7"><span class="badge bg-secondary badge-type">{{ record.get_record_type_display }}</span></div>
+          <div class="col-5 text-muted">Status</div>
+          <div class="col-7">
+            {% if record.is_active %}<span class="badge bg-success badge-type">Active</span>
+            {% else %}<span class="badge bg-secondary badge-type">Archived</span>{% endif %}
+          </div>
+          <div class="col-5 text-muted">Created</div>
+          <div class="col-7">{{ record.created_at|date:"F d, Y H:i" }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-person me-1"></i> <span class="section-title mb-0">Patient &amp; Hospital</span></div>
+      <div class="card-body" style="font-size:.88rem;">
+        <div class="row g-2">
+          <div class="col-5 text-muted">Patient</div>
+          <div class="col-7">
+            <a href="{% url 'patient_detail' record.patient.patient_id %}" style="color:var(--accent);">
+              {% if record.patient.user %}{{ record.patient.user.get_full_name|default:record.patient.user.username }}{% else %}{{ record.patient.patient_id|truncatechars:16 }}{% endif %}
+            </a>
+          </div>
+          <div class="col-5 text-muted">Hospital</div>
+          <div class="col-7">
+            <a href="{% url 'hospital_detail' record.hospital.hospital_id %}" style="color:var(--accent);">{{ record.hospital.name }}</a>
+          </div>
+          <div class="col-5 text-muted">Data Hash</div>
+          <div class="col-7 hash-mono">{{ record.data_hash|truncatechars:24 }}</div>
+          <div class="col-5 text-muted">IPFS Hash</div>
+          <div class="col-7 hash-mono">{{ record.ipfs_hash|default:"—"|truncatechars:24 }}</div>
+          <div class="col-5 text-muted">Blockchain TX</div>
+          <div class="col-7">
+            {% if record.blockchain_tx %}
+              <span class="hash-mono">{{ record.blockchain_tx.tx_hash|truncatechars:18 }}</span>
+              <span class="badge bg-success badge-type">On-Chain</span>
+            {% else %}<span class="badge bg-warning text-dark badge-type">Pending</span>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-box"><div class="stat-value">{{ permissions.count }}</div><div class="stat-label">Total Permissions</div></div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-box"><div class="stat-value">{{ active_permissions }}</div><div class="stat-label">Active Permissions</div></div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-box"><div class="stat-value">{{ audit_logs.count }}</div><div class="stat-label">Audit Events</div></div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-box"><div class="stat-value">{{ record.file_size|filesizeformat|default:"—" }}</div><div class="stat-label">File Size</div></div>
+  </div>
+</div>
+
+<!-- Description -->
+{% if record.description %}
+<div class="card mb-4">
+  <div class="card-header"><i class="bi bi-file-text me-1"></i> <span class="section-title mb-0">Description</span></div>
+  <div class="card-body" style="font-size:.9rem;">{{ record.description }}</div>
+</div>
+{% endif %}
+
+<!-- Access permissions -->
+<div class="card mb-4">
+  <div class="card-header"><i class="bi bi-key me-1"></i> <span class="section-title mb-0">Access Permissions ({{ permissions.count }})</span></div>
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0" style="font-size:.82rem;">
+      <thead><tr><th>Grantee</th><th>Type</th><th>Permission</th><th>Purpose</th><th>Status</th><th>Granted</th><th>Expires</th></tr></thead>
+      <tbody>
+        {% for perm in permissions %}
+        <tr>
+          <td>{{ perm.grantee|truncatechars:22 }}</td>
+          <td><span class="badge bg-secondary badge-type">{{ perm.get_grantee_type_display }}</span></td>
+          <td><span class="badge bg-primary badge-type">{{ perm.get_permission_type_display }}</span></td>
+          <td style="max-width:160px;">{{ perm.purpose|truncatechars:30 }}</td>
+          <td>{% if perm.is_active %}<span class="badge bg-success badge-type">Active</span>{% else %}<span class="badge bg-secondary badge-type">Revoked</span>{% endif %}</td>
+          <td>{{ perm.created_at|date:"Y-m-d" }}</td>
+          <td>{{ perm.valid_until|date:"Y-m-d"|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-3">No permissions granted</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Audit trail -->
+<div class="card mb-5">
+  <div class="card-header"><i class="bi bi-journal-text me-1"></i> <span class="section-title mb-0">Audit Trail ({{ audit_logs.count }} events)</span></div>
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0" style="font-size:.82rem;">
+      <thead><tr><th>Timestamp</th><th>Action</th><th>Actor</th><th>Actor Type</th><th>IP</th><th>Details</th></tr></thead>
+      <tbody>
+        {% for log in audit_logs %}
+        <tr {% if log.action == 'ACCESS_DENIED' %}style="background:rgba(220,53,69,.05);"{% endif %}>
+          <td>{{ log.timestamp|date:"Y-m-d H:i" }}</td>
+          <td>
+            {% if log.action == 'CREATE' %}<span class="badge bg-success badge-type">Create</span>
+            {% elif log.action == 'UPDATE' %}<span class="badge bg-warning text-dark badge-type">Update</span>
+            {% elif log.action == 'READ' %}<span class="badge bg-info badge-type">Read</span>
+            {% elif log.action == 'SHARE' %}<span class="badge bg-primary badge-type">Share</span>
+            {% elif log.action == 'DELETE' %}<span class="badge bg-danger badge-type">Archive</span>
+            {% elif log.action == 'ACCESS_DENIED' %}<span class="badge bg-danger badge-type">Denied</span>
+            {% else %}<span class="badge bg-secondary badge-type">{{ log.action }}</span>{% endif %}
+          </td>
+          <td class="hash-mono">{{ log.actor|truncatechars:18 }}</td>
+          <td><span class="badge bg-secondary badge-type">{{ log.actor_type }}</span></td>
+          <td style="font-size:.75rem;">{{ log.ip_address|default:"—" }}</td>
+          <td style="font-size:.75rem; color:var(--text-light);">{% for k,v in log.details.items %}{{ k }}: {{ v }}{% if not forloop.last %}; {% endif %}{% endfor %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-3">No audit events</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<button class="btn btn-primary btn-lg shadow print-btn" onclick="window.print()">
+  <i class="bi bi-printer-fill me-1"></i> Print / Save as PDF
+</button>
+{% endblock %}

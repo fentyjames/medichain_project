@@ -61,7 +61,7 @@
                 </dl>
 
                 <!-- ZK Proof Preview -->
-                <div class="p-2 rounded" style="background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.2);">
+                <div class="p-2 rounded mb-3" style="background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.2);">
                     <small style="color:#c4b5fd;font-size:0.72rem;">
                         <i class="bi bi-eye-slash"></i> <strong>ZK Proof</strong>
                         &nbsp;—&nbsp;
@@ -75,6 +75,9 @@
                         {% endif %}
                     </small>
                 </div>
+                <a href="{% url 'rollup_detail' rollup.batch_id %}" class="btn btn-sm btn-outline-primary w-100">
+                    <i class="bi bi-eye"></i> View Details
+                </a>
             </div>
         </div>
     </div>

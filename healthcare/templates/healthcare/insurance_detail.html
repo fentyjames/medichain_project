@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}{{ provider.name }} — MediChain{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}" style="color: var(--accent);">Healthcare</a></li>
+<li class="breadcrumb-item"><a href="{% url 'insurance_list' %}" style="color: var(--accent);">Insurance</a></li>
+<li class="breadcrumb-item active">{{ provider.name }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-4">
+    <div class="card mb-4">
+      <div class="card-header text-center">
+        <i class="bi bi-shield-check fs-1"></i>
+        <h5 class="mt-2">{{ provider.name }}</h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label text-muted">Provider ID</label>
+          <div class="d-flex align-items-center">
+            <span class="hash-text">{{ provider.provider_id }}</span>
+            <button class="btn btn-sm btn-link" onclick="copyToClipboard('{{ provider.provider_id }}')">
+              <i class="bi bi-clipboard" style="color: var(--text-light);"></i>
+            </button>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-muted">License Number</label>
+          <div>{{ provider.license_number|default:"Not specified" }}</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-muted">Public Key</label>
+          <div class="hash-text">{{ provider.public_key|truncatechars:30 }}</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <a href="{% url 'insurance_report' provider.provider_id %}" class="btn btn-outline-success btn-sm w-100 mb-2" target="_blank">
+          <i class="bi bi-file-earmark-text"></i> Provider Report
+        </a>
+        <a href="{% url 'insurance_print_report' provider.provider_id %}" class="btn btn-outline-primary btn-sm w-100" target="_blank">
+          <i class="bi bi-printer"></i> Print Report
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-info-circle me-1"></i> About This Provider</div>
+      <div class="card-body">
+        <p class="text-muted">This insurance provider is registered under the MediChain platform. Access permissions granted to this provider and insurance claim records can be reviewed in the full report.</p>
+        <a href="{% url 'insurance_report' provider.provider_id %}" class="btn btn-outline-success" target="_blank">
+          <i class="bi bi-file-earmark-text me-1"></i> View Full Insurance Report
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

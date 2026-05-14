@@ -84,9 +84,17 @@
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-file-medical"></i> Medical Records</span>
+                <div class="d-flex gap-2">
+                <a href="{% url 'patient_report' patient.patient_id %}" class="btn btn-sm btn-outline-success" target="_blank">
+                    <i class="bi bi-file-earmark-text"></i> Report
+                </a>
+                <a href="{% url 'patient_print_report' patient.patient_id %}" class="btn btn-sm btn-outline-primary" target="_blank">
+                    <i class="bi bi-printer"></i> Print
+                </a>
                 <a href="{% url 'record_add' %}?patient={{ patient.patient_id }}" class="btn btn-sm btn-primary">
                     <i class="bi bi-plus"></i> Add Record
                 </a>
+                </div>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">

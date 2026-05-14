@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+{% block title %}Hospital Report — {{ hospital.name }} — MediChain{% endblock %}
+
+{% block extra_css %}
+<style>
+  .report-header { border-bottom: 2px solid var(--accent); padding-bottom: 1rem; margin-bottom: 1.5rem; }
+  .stat-box { background: var(--secondary); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.25rem; text-align: center; }
+  .stat-box .stat-value { font-size: 2rem; font-weight: 700; color: var(--accent); }
+  .stat-box .stat-label { font-size: 0.8rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; }
+  .type-bar-track { background: var(--border); border-radius: 4px; height: 10px; overflow: hidden; }
+  .type-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #00c8ff); border-radius: 4px; transition: width 0.6s ease; }
+  .section-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-light); border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; margin-bottom: 1rem; }
+  .hash-mono { font-family: monospace; font-size: 0.78rem; }
+  .badge-type { font-size: 0.72rem; }
+  .print-btn { position: fixed; bottom: 2rem; right: 2rem; z-index: 1000; }
+  @media print {
+    nav.navbar, #sidebarWrapper, footer, .print-btn, .alert, [data-bs-dismiss], .toast-container { display: none !important; }
+    body, html { background: #fff !important; color: #000 !important; }
+    .container-fluid { padding: 0 !important; }
+    #mainContent { padding: 0 !important; }
+    .card { border: 1px solid #ccc !important; background: #fff !important; break-inside: avoid; }
+    .card-header { background: #f0f0f0 !important; color: #000 !important; }
+    .stat-box { background: #f8f8f8 !important; border: 1px solid #ccc !important; }
+    .stat-box .stat-value { color: #003399 !important; }
+    .stat-box .stat-label { color: #444 !important; }
+    .type-bar-track { background: #ddd !important; }
+    .type-bar-fill { background: #003399 !important; }
+    .table { color: #000 !important; }
+    .table thead th { background: #e8e8e8 !important; color: #000 !important; }
+    .badge { border: 1px solid #999 !important; color: #000 !important; background: #eee !important; }
+    .report-print-header { display: block !important; }
+    a[href]:after { content: none !important; }
+    @page { margin: 1.5cm; size: A4 portrait; }
+  }
+</style>
+{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}" style="color: var(--accent);">Healthcare</a></li>
+<li class="breadcrumb-item"><a href="{% url 'hospital_list' %}" style="color: var(--accent);">Hospitals</a></li>
+<li class="breadcrumb-item"><a href="{% url 'hospital_detail' hospital.hospital_id %}" style="color: var(--accent);">{{ hospital.name }}</a></li>
+<li class="breadcrumb-item active">Report</li>
+{% endblock %}
+
+{% block content %}
+<div class="report-print-header" style="display:none; margin-bottom: 1.5rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div><strong style="font-size: 1.4rem;">MediChain — Hospital Activity Report</strong><br>
+    <span style="font-size: 0.8rem; color: #555;">Department of Artificial Intelligence Technologies, Ankara University</span></div>
+    <div style="text-align: right; font-size: 0.8rem; color: #555;">Generated: {{ generated_at|date:"F d, Y H:i" }}<br>Confidential</div>
+  </div>
+  <hr style="border: 1px solid #000; margin-top: 0.5rem;">
+</div>
+
+<div class="report-header d-flex justify-content-between align-items-center">
+  <div>
+    <h4 class="mb-0"><i class="bi bi-building me-2"></i>Hospital Activity Report</h4>
+    <small class="text-muted">Generated {{ generated_at|date:"F d, Y H:i" }} &nbsp;|&nbsp; Confidential</small>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'hospital_detail' hospital.hospital_id %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+    <a href="{% url 'hospital_print_report' hospital.hospital_id %}" target="_blank" class="btn btn-sm btn-primary"><i class="bi bi-printer-fill me-1"></i> Print Document</a>
+  </div>
+</div>
+
+<!-- Hospital Profile -->
+<div class="card mb-4">
+  <div class="card-header"><i class="bi bi-building me-1"></i> <span class="section-title mb-0">Hospital Profile</span></div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="mb-1 text-muted" style="font-size:0.78rem;">Name</div>
+        <div class="fw-semibold fs-5">{{ hospital.name }}</div>
+      </div>
+      <div class="col-md-4">
+        <div class="mb-1 text-muted" style="font-size:0.78rem;">License Number</div>
+        <div>{{ hospital.license_number }}</div>
+      </div>
+      <div class="col-md-4">
+        <div class="mb-1 text-muted" style="font-size:0.78rem;">Verification Status</div>
+        <div>{% if hospital.is_verified %}<span class="badge bg-success">Verified on Blockchain</span>{% else %}<span class="badge bg-warning text-dark">Pending Verification</span>{% endif %}</div>
+      </div>
+      <div class="col-md-4">
+        <div class="mb-1 text-muted" style="font-size:0.78rem;">Address</div>
+        <div>{{ hospital.address|default:"Not provided" }}</div>
+      </div>
+      <div class="col-md-4">
+        <div class="mb-1 text-muted" style="font-size:0.78rem;">Blockchain Network</div>
+        <div>{{ hospital.blockchain_network.name|default:"Not connected" }}</div>
+      </div>
+      <div class="col-md-4">
+        <div class="mb-1 text-muted" style="font-size:0.78rem;">Registered</div>
+        <div>{{ hospital.created_at|date:"F d, Y" }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Summary Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-box"><div class="stat-value">{{ total_records }}</div><div class="stat-label">Total Records</div></div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-box"><div class="stat-value">{{ unique_patients }}</div><div class="stat-label">Unique Patients</div></div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-box"><div class="stat-value">{{ labs|length }}</div><div class="stat-label">Laboratories</div></div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-box"><div class="stat-value">{{ audit_logs|length }}</div><div class="stat-label">Audit Events</div></div>
+  </div>
+</div>
+
+<!-- Record Type Breakdown -->
+{% if record_breakdown %}
+<div class="card mb-4">
+  <div class="card-header"><i class="bi bi-bar-chart me-1"></i> <span class="section-title mb-0">Record Type Breakdown</span></div>
+  <div class="card-body">
+    {% for item in record_breakdown %}
+    <div class="mb-3">
+      <div class="d-flex justify-content-between mb-1" style="font-size:0.85rem;">
+        <span>{{ item.label }}</span>
+        <span class="text-muted">{{ item.count }} record{{ item.count|pluralize }} — {{ item.pct }}%</span>
+      </div>
+      <div class="type-bar-track"><div class="type-bar-fill" style="width:{{ item.pct }}%;"></div></div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Associated Labs -->
+<div class="card mb-4">
+  <div class="card-header"><i class="bi bi-eyedropper me-1"></i> <span class="section-title mb-0">Associated Laboratories ({{ labs|length }})</span></div>
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0" style="font-size:0.85rem;">
+      <thead><tr><th>Name</th><th>Lab ID</th><th>Accreditation</th></tr></thead>
+      <tbody>
+        {% for lab in labs %}
+        <tr>
+          <td>{{ lab.name }}</td>
+          <td class="hash-mono">{{ lab.lab_id|truncatechars:18 }}</td>
+          <td>{{ lab.accreditation|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="text-center text-muted py-3">No laboratories registered under this hospital</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Recent Medical Records -->
+<div class="card mb-4">
+  <div class="card-header"><i class="bi bi-file-medical me-1"></i> <span class="section-title mb-0">Medical Records ({{ total_records }})</span></div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0" style="font-size:0.85rem;">
+        <thead><tr><th>Type</th><th>Title</th><th>Patient</th><th>Data Hash</th><th>Date</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for record in records %}
+          <tr>
+            <td><span class="badge bg-secondary badge-type">{{ record.get_record_type_display }}</span></td>
+            <td>{{ record.title|truncatechars:35 }}</td>
+            <td class="hash-mono">
+              {% if record.patient.user %}{{ record.patient.user.get_full_name|truncatechars:18|default:record.patient.user.username }}{% else %}{{ record.patient.patient_id|truncatechars:14 }}{% endif %}
+            </td>
+            <td class="hash-mono">{{ record.data_hash|truncatechars:14 }}</td>
+            <td>{{ record.created_at|date:"Y-m-d" }}</td>
+            <td>{% if record.is_active %}<span class="badge bg-success badge-type">Active</span>{% else %}<span class="badge bg-secondary badge-type">Archived</span>{% endif %}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="text-center text-muted py-3">No records found</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Audit Trail -->
+<div class="card mb-5">
+  <div class="card-header"><i class="bi bi-journal-text me-1"></i> <span class="section-title mb-0">Audit Trail (last {{ audit_logs|length }} events)</span></div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0" style="font-size:0.85rem;">
+        <thead><tr><th>Timestamp</th><th>Action</th><th>Actor</th><th>Actor Type</th><th>Record</th></tr></thead>
+        <tbody>
+          {% for log in audit_logs %}
+          <tr>
+            <td>{{ log.timestamp|date:"Y-m-d H:i" }}</td>
+            <td>
+              {% if log.action == 'CREATE' %}<span class="badge bg-success badge-type">Create</span>
+              {% elif log.action == 'UPDATE' %}<span class="badge bg-warning text-dark badge-type">Update</span>
+              {% elif log.action == 'READ' %}<span class="badge bg-info badge-type">Read</span>
+              {% elif log.action == 'SHARE' %}<span class="badge bg-primary badge-type">Share</span>
+              {% elif log.action == 'DELETE' %}<span class="badge bg-danger badge-type">Archive</span>
+              {% elif log.action == 'ACCESS_DENIED' %}<span class="badge bg-danger badge-type">Denied</span>
+              {% else %}<span class="badge bg-secondary badge-type">{{ log.action }}</span>{% endif %}
+            </td>
+            <td class="hash-mono">{{ log.actor|truncatechars:20 }}</td>
+            <td>{{ log.actor_type }}</td>
+            <td class="hash-mono">{{ log.record.record_id|truncatechars:14 }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-center text-muted py-3">No audit events</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div style="display:none;" class="report-print-header">
+  <hr style="border: 1px solid #ccc;">
+  <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #666;">
+    <span>MediChain Healthcare Blockchain Platform — Confidential</span>
+    <span>Hospital: {{ hospital.name }}</span>
+    <span>Report Date: {{ generated_at|date:"Y-m-d" }}</span>
+  </div>
+</div>
+
+<button class="btn btn-primary btn-lg shadow print-btn" onclick="window.print()">
+  <i class="bi bi-printer-fill me-1"></i> Print / Save as PDF
+</button>
+{% endblock %}
+
+{% block extra_js %}
+document.querySelectorAll('.type-bar-fill').forEach(function(bar) {
+  const w = bar.style.width; bar.style.width = '0%';
+  requestAnimationFrame(function() { bar.style.width = w; });
+});
+{% endblock %}

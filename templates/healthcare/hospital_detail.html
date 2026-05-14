@@ -38,6 +38,12 @@
         <a href="{% url 'hospital_edit' hospital.hospital_id %}" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-pencil"></i> Edit
         </a>
+        <a href="{% url 'hospital_report' hospital.hospital_id %}" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-file-earmark-text"></i> Report
+        </a>
+        <a href="{% url 'hospital_print_report' hospital.hospital_id %}" class="btn btn-outline-secondary btn-sm" target="_blank">
+            <i class="bi bi-printer"></i> Print
+        </a>
     </div>
 </div>
 

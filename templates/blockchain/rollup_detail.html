@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% block title %}Rollup {{ batch.batch_id|slice:":16" }}… - MediChain{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'blockchain_dashboard' %}">Blockchain</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'rollup_list' %}">Rollup Batches</a></li>
+        <li class="breadcrumb-item active">{{ batch.batch_id|slice:":16" }}…</li>
+    </ol>
+</nav>
+
+{% with rs=batch.status %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge"
+                  style="font-size:0.85rem;padding:5px 12px;background:{% if batch.proof_type == 'zk_snark' %}#a78bfa{% else %}#38bdf8{% endif %};">
+                {{ batch.proof_type|upper }}
+            </span>
+            <span class="badge"
+                  style="font-size:0.85rem;padding:5px 12px;background:{% if rs == 'CONFIRMED' %}#22c55e{% elif rs == 'PENDING' %}#facc15;color:#000{% elif rs == 'BATCHED' %}#38bdf8;color:#000{% else %}#f87171{% endif %};">
+                {{ rs }}
+            </span>
+        </div>
+        <h2 style="color:var(--accent);"><i class="bi bi-layers"></i> Rollup Batch</h2>
+        <small class="text-muted">
+            <i class="bi bi-link-45deg"></i> {{ batch.network.name }}
+            &nbsp;&middot;&nbsp;
+            <i class="bi bi-calendar3"></i> {{ batch.created_at|date:"d M Y, H:i" }}
+        </small>
+    </div>
+    <span class="badge" style="background:var(--accent);color:#000;font-size:1rem;padding:8px 16px;">
+        {{ transactions|length }} TX{{ transactions|length|pluralize }}
+    </span>
+</div>
+{% endwith %}
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <!-- ZK Proof & Merkle Root -->
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-eye-slash"></i> Zero-Knowledge Proof</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label text-muted small mb-1">Batch ID</label>
+                    <div class="p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);">
+                        <code class="hash-text" onclick="copyToClipboard('{{ batch.batch_id }}')"
+                              style="cursor:pointer;word-break:break-all;" title="Click to copy">
+                            {{ batch.batch_id }}
+                        </code>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-muted small mb-1">Merkle Root</label>
+                    <div class="p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);">
+                        <code class="hash-text" onclick="copyToClipboard('{{ batch.merkle_root }}')"
+                              style="cursor:pointer;word-break:break-all;">
+                            {{ batch.merkle_root }}
+                        </code>
+                    </div>
+                </div>
+                {% if batch.zk_proof %}
+                <div>
+                    <label class="form-label text-muted small mb-1">ZK Proof Payload</label>
+                    <div class="p-2 rounded" style="background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.2);">
+                        <code style="font-size:0.72rem;color:#c4b5fd;word-break:break-all;">
+                            {{ batch.zk_proof|truncatechars:400 }}
+                        </code>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Batched Transactions -->
+        <div class="card">
+            <div class="card-header"><i class="bi bi-currency-exchange"></i> Batched Transactions ({{ transactions|length }})</div>
+            <div class="card-body p-0">
+                {% for tx in transactions %}
+                <div class="p-3 {% if not forloop.last %}border-bottom{% endif %}" style="border-color:var(--border)!important;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <code class="hash-text" onclick="copyToClipboard('{{ tx.tx_hash }}')"
+                                  style="cursor:pointer;" title="{{ tx.tx_hash }}">
+                                {{ tx.tx_hash|slice:":24" }}…
+                            </code>
+                            <br>
+                            <span class="badge me-1"
+                                  style="font-size:0.7rem;background:{% if tx.tx_type == 'CREATE' %}#22c55e{% elif tx.tx_type == 'UPDATE' %}#facc15;color:#000{% elif tx.tx_type == 'SHARE' %}#a78bfa{% elif tx.tx_type == 'VERIFY' %}#38bdf8;color:#000{% else %}#94a3b8{% endif %};">
+                                {{ tx.tx_type }}
+                            </span>
+                            <small class="text-muted">{{ tx.sender|truncatechars:30 }}</small>
+                        </div>
+                        <a href="{% url 'transaction_detail' tx.tx_hash %}" class="btn btn-sm btn-outline-primary" style="padding:2px 8px;font-size:0.75rem;">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-4">
+                    <p class="mb-0 small">No transactions in this batch.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-info-circle"></i> Batch Metadata</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-5 text-muted">Status</dt>
+                    <dd class="col-7">{{ batch.status }}</dd>
+
+                    <dt class="col-5 text-muted">Proof Type</dt>
+                    <dd class="col-7">{{ batch.proof_type|upper }}</dd>
+
+                    <dt class="col-5 text-muted">Network</dt>
+                    <dd class="col-7">{{ batch.network.name }}</dd>
+
+                    <dt class="col-5 text-muted">Transactions</dt>
+                    <dd class="col-7 fw-bold">{{ transactions|length }}</dd>
+
+                    <dt class="col-5 text-muted">Created</dt>
+                    <dd class="col-7"><small>{{ batch.created_at|date:"d M Y, H:i" }}</small></dd>
+
+                    {% if batch.submitted_at %}
+                    <dt class="col-5 text-muted">Submitted</dt>
+                    <dd class="col-7"><small>{{ batch.submitted_at|date:"d M Y, H:i" }}</small></dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
