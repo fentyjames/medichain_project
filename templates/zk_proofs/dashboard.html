@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}ZK Proofs - MediChain{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 style="color: var(--accent);"><i class="bi bi-eye-slash"></i> Zero-Knowledge Proofs</h2>
+        <p class="text-muted mb-0">Privacy-preserving proof generation and verification for healthcare data</p>
+    </div>
+    <a href="{% url 'zk_generate' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Generate Proof
+    </a>
+</div>
+
+<!-- Explainer Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card h-100 text-center">
+            <div class="card-body py-4">
+                <div class="mb-3">
+                    <i class="bi bi-eye-slash-fill" style="font-size:2.5rem;color:var(--accent);"></i>
+                </div>
+                <h5>ZK-SNARK</h5>
+                <p class="text-muted small">
+                    Succinct Non-Interactive Arguments of Knowledge. Prove you know a secret
+                    without revealing it. Constant-size proofs, fast verification.
+                </p>
+                <a href="{% url 'zk_generate' %}?type=zk_snark" class="btn btn-outline-primary btn-sm">
+                    Generate SNARK
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 text-center">
+            <div class="card-body py-4">
+                <div class="mb-3">
+                    <i class="bi bi-shield-check" style="font-size:2.5rem;color:#a78bfa;"></i>
+                </div>
+                <h5>ZK-STARK</h5>
+                <p class="text-muted small">
+                    Scalable Transparent Arguments of Knowledge. No trusted setup required.
+                    Post-quantum secure, larger proofs but transparent.
+                </p>
+                <a href="{% url 'zk_generate' %}?type=zk_stark" class="btn btn-sm" style="border:1px solid #a78bfa;color:#a78bfa;">
+                    Generate STARK
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 text-center">
+            <div class="card-body py-4">
+                <div class="mb-3">
+                    <i class="bi bi-sliders" style="font-size:2.5rem;color:#22c55e;"></i>
+                </div>
+                <h5>Range Proofs</h5>
+                <p class="text-muted small">
+                    Prove a private value lies within a range without revealing the value itself.
+                    Used for age verification, dosage limits, insurance thresholds.
+                </p>
+                <a href="{% url 'zk_range' %}" class="btn btn-sm" style="border:1px solid #22c55e;color:#22c55e;">
+                    Create Range Proof
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions -->
+<div class="card mb-4">
+    <div class="card-header"><i class="bi bi-lightning-charge"></i> Operations</div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <a href="{% url 'zk_generate' %}" class="btn btn-outline-primary w-100 py-3">
+                    <i class="bi bi-plus-circle fs-3 d-block mb-1"></i>Generate Proof
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="{% url 'zk_verify_page' %}" class="btn btn-outline-primary w-100 py-3">
+                    <i class="bi bi-patch-check fs-3 d-block mb-1"></i>Verify Proof
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="{% url 'zk_range' %}" class="btn btn-outline-primary w-100 py-3">
+                    <i class="bi bi-sliders fs-3 d-block mb-1"></i>Range Proof
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- How ZK Works in MediChain -->
+<div class="card">
+    <div class="card-header"><i class="bi bi-info-circle"></i> ZK Proofs in MediChain</div>
+    <div class="card-body">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <h6 style="color:var(--accent);">What gets proven?</h6>
+                <ul class="small text-muted">
+                    <li>A patient's record was created by an authorised hospital — without revealing the record's contents</li>
+                    <li>A diagnosis hash matches the expected value — without exposing the diagnosis</li>
+                    <li>A patient's age is above a threshold — without disclosing the date of birth</li>
+                    <li>An insurance claim hash is included in a rollup batch — without revealing other claims</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h6 style="color:var(--accent);">Simulation note</h6>
+                <p class="small text-muted">
+                    MediChain's ZK proofs are a <strong>simulation</strong> — proofs are structured
+                    JSON objects of hashed inputs rather than real zk-SNARK/STARK cryptographic proofs.
+                    They demonstrate the data flow and verification logic of a production ZK system
+                    without requiring heavyweight cryptographic libraries.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

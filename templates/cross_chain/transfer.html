@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}Cross-Chain Transfer - MediChain{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'crosschain_dashboard' %}">Cross-Chain</a></li>
+        <li class="breadcrumb-item active">New Transfer</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-send"></i> New Cross-Chain Message</div>
+            <div class="card-body">
+
+                <div class="p-3 mb-4 rounded" style="background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.25);">
+                    <small style="color:#7dd3fc;">
+                        <i class="bi bi-info-circle"></i>
+                        The relay service will verify your ZK proof before forwarding the message to the target chain.
+                        Messages that fail ZK verification are rejected and not forwarded.
+                    </small>
+                </div>
+
+                {% if networks %}
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-5">
+                            <label class="form-label">Source Chain <span class="text-danger">*</span></label>
+                            <select name="source_chain" class="form-select" required id="sourceChain"
+                                    style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+                                <option value="">-- Select --</option>
+                                {% for net in networks %}
+                                <option value="{{ net.network_id }}">{{ net.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end justify-content-center pb-1">
+                            <i class="bi bi-arrow-right" style="font-size:1.5rem;color:var(--accent);"></i>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">Target Chain <span class="text-danger">*</span></label>
+                            <select name="target_chain" class="form-select" required id="targetChain"
+                                    style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+                                <option value="">-- Select --</option>
+                                {% for net in networks %}
+                                <option value="{{ net.network_id }}">{{ net.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Sender Identifier <span class="text-danger">*</span></label>
+                        <input type="text" name="sender" class="form-control" required
+                               placeholder="0x… address or node identifier"
+                               style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;font-family:monospace;font-size:0.85rem;">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Data Hash <span class="text-danger">*</span></label>
+                        <input type="text" name="data_hash" class="form-control" required
+                               placeholder="SHA-256 hash of the data payload (64 hex chars)"
+                               style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;font-family:monospace;font-size:0.85rem;">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">ZK Proof <span class="text-danger">*</span></label>
+                        <textarea name="proof" class="form-control" rows="4" required
+                                  placeholder='{"type":"zk_snark","proof":"…","public_inputs":[…]}'
+                                  style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;font-family:monospace;font-size:0.8rem;"></textarea>
+                        <div class="form-text">JSON-encoded ZK proof. Generate one at
+                            <a href="{% url 'zk_generate' %}" style="color:var(--accent);">ZK Proofs → Generate</a>.
+                        </div>
+                    </div>
+
+                    <div id="sameChainWarning" class="alert alert-warning d-none" role="alert">
+                        <i class="bi bi-exclamation-triangle"></i> Source and target chains must be different.
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1" id="submitBtn">
+                            <i class="bi bi-send"></i> Relay Message
+                        </button>
+                        <a href="{% url 'crosschain_dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-hdd-network" style="font-size:2.5rem;color:var(--text-light);"></i>
+                    <p class="text-muted mt-3">No active blockchain networks available.</p>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+document.addEventListener('DOMContentLoaded', function() {
+    const src = document.getElementById('sourceChain');
+    const tgt = document.getElementById('targetChain');
+    const warn = document.getElementById('sameChainWarning');
+    const btn = document.getElementById('submitBtn');
+
+    function validate() {
+        if (!src || !tgt || !warn || !btn) return;
+        const same = src.value && tgt.value && src.value === tgt.value;
+        warn.classList.toggle('d-none', !same);
+        btn.disabled = same;
+    }
+
+    if (src) src.addEventListener('change', validate);
+    if (tgt) tgt.addEventListener('change', validate);
+});
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block title %}Range Proof - MediChain{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'zk_dashboard' %}">ZK Proofs</a></li>
+        <li class="breadcrumb-item active">Range Proof</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-sliders"></i> Range Proof</div>
+            <div class="card-body">
+
+                <div class="p-3 mb-4 rounded" style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);">
+                    <small style="color:#86efac;">
+                        <i class="bi bi-info-circle"></i>
+                        Prove that a private value falls within [min, max] without disclosing the value.
+                        Use cases: patient age &ge; 18, blood pressure within safe range, dosage &le; maximum threshold.
+                    </small>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Private Value <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" name="value" class="form-control" required
+                               placeholder="The secret value to prove (not shared with verifier)"
+                               style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+                        <div class="form-text">This value is never included in the proof output.</div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Minimum (inclusive) <span class="text-danger">*</span></label>
+                            <input type="number" name="min" value="0" class="form-control" required id="minVal"
+                                   style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Maximum (inclusive) <span class="text-danger">*</span></label>
+                            <input type="number" name="max" value="100" class="form-control" required id="maxVal"
+                                   style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+                        </div>
+                    </div>
+
+                    <!-- Visual range indicator -->
+                    <div class="p-3 mb-4 rounded" id="rangePreview"
+                         style="background:rgba(255,255,255,0.03);border:1px solid var(--border);">
+                        <div class="d-flex justify-content-between small text-muted mb-2">
+                            <span>min: <strong id="previewMin">0</strong></span>
+                            <span>Proving value is within this range</span>
+                            <span>max: <strong id="previewMax">100</strong></span>
+                        </div>
+                        <div class="progress" style="height:8px;background:var(--border);">
+                            <div class="progress-bar" style="width:100%;background:var(--accent);border-radius:4px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Example use cases -->
+                    <div class="mb-4">
+                        <label class="form-label text-muted small">Quick examples</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary example-btn"
+                                    data-min="18" data-max="120" data-label="Age verification (18+)">
+                                <i class="bi bi-person-check"></i> Age 18+
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary example-btn"
+                                    data-min="60" data-max="100" data-label="Normal SpO2 (60-100%)">
+                                <i class="bi bi-heart-pulse"></i> SpO2 Normal
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary example-btn"
+                                    data-min="0" data-max="500" data-label="Dosage limit (0-500mg)">
+                                <i class="bi bi-capsule"></i> Dosage limit
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="rangeError" class="alert alert-danger d-none">
+                        <i class="bi bi-exclamation-triangle"></i> Min must be less than max.
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1" id="submitBtn">
+                            <i class="bi bi-sliders"></i> Generate &amp; Verify Range Proof
+                        </button>
+                        <a href="{% url 'zk_dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+document.addEventListener('DOMContentLoaded', function() {
+    const minEl = document.getElementById('minVal');
+    const maxEl = document.getElementById('maxVal');
+    const previewMin = document.getElementById('previewMin');
+    const previewMax = document.getElementById('previewMax');
+    const errEl = document.getElementById('rangeError');
+    const btn = document.getElementById('submitBtn');
+
+    function update() {
+        const mn = parseInt(minEl.value, 10);
+        const mx = parseInt(maxEl.value, 10);
+        if (previewMin) previewMin.textContent = isNaN(mn) ? '?' : mn;
+        if (previewMax) previewMax.textContent = isNaN(mx) ? '?' : mx;
+        const invalid = !isNaN(mn) && !isNaN(mx) && mn >= mx;
+        if (errEl) errEl.classList.toggle('d-none', !invalid);
+        if (btn) btn.disabled = invalid;
+    }
+
+    if (minEl) minEl.addEventListener('input', update);
+    if (maxEl) maxEl.addEventListener('input', update);
+
+    document.querySelectorAll('.example-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            if (minEl) minEl.value = this.dataset.min;
+            if (maxEl) maxEl.value = this.dataset.max;
+            update();
+        });
+    });
+
+    update();
+});
+{% endblock %}

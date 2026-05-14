@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% block title %}Cross-Chain Relay - MediChain{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 style="color: var(--accent);"><i class="bi bi-arrow-left-right"></i> Cross-Chain Relay</h2>
+        <p class="text-muted mb-0">Bridge messages between blockchain networks with ZK verification</p>
+    </div>
+    <a href="{% url 'crosschain_transfer' %}" class="btn btn-primary">
+        <i class="bi bi-send"></i> New Transfer
+    </a>
+</div>
+
+<!-- Stats -->
+<div class="row mb-4 g-3">
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ total_messages }}</div>
+            <div class="stat-label"><i class="bi bi-envelope"></i> Total Messages</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value" style="color:#22c55e;">{{ relayed }}</div>
+            <div class="stat-label"><i class="bi bi-check-circle"></i> Relayed</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value {% if pending > 0 %}text-warning{% endif %}">{{ pending }}</div>
+            <div class="stat-label"><i class="bi bi-hourglass-split"></i> Pending</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value {% if rejected > 0 %}" style="color:#f87171;{% endif %}">{{ rejected }}</div>
+            <div class="stat-label"><i class="bi bi-x-circle"></i> Rejected</div>
+        </div>
+    </div>
+</div>
+
+<!-- How it works -->
+<div class="card mb-4">
+    <div class="card-header"><i class="bi bi-diagram-3"></i> How Cross-Chain Relay Works</div>
+    <div class="card-body">
+        <div class="row g-3 text-center">
+            <div class="col-md-3">
+                <div class="p-3 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);">
+                    <i class="bi bi-1-circle-fill" style="font-size:1.5rem;color:var(--accent);"></i>
+                    <p class="mt-2 mb-0 small"><strong>Originate</strong><br>Message created on source chain with data hash and ZK proof</p>
+                </div>
+            </div>
+            <div class="col-md-1 d-flex align-items-center justify-content-center">
+                <i class="bi bi-arrow-right" style="color:var(--text-light);font-size:1.2rem;"></i>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);">
+                    <i class="bi bi-2-circle-fill" style="font-size:1.5rem;color:var(--accent);"></i>
+                    <p class="mt-2 mb-0 small"><strong>Verify</strong><br>Relay service validates ZK proof before forwarding</p>
+                </div>
+            </div>
+            <div class="col-md-1 d-flex align-items-center justify-content-center">
+                <i class="bi bi-arrow-right" style="color:var(--text-light);font-size:1.2rem;"></i>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);">
+                    <i class="bi bi-3-circle-fill" style="font-size:1.5rem;color:var(--accent);"></i>
+                    <p class="mt-2 mb-0 small"><strong>Relay</strong><br>Message delivered to target chain and marked VERIFIED</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Message List -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-list-ul"></i> Recent Messages</span>
+        <a href="{% url 'crosschain_transfer' %}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-send"></i> New Transfer
+        </a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Message ID</th>
+                        <th>Source</th>
+                        <th>Target</th>
+                        <th>Data Hash</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Relayed</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for msg in messages %}
+                    {% with ms=msg.status %}
+                    <tr>
+                        <td>
+                            <code class="hash-text" onclick="copyToClipboard('{{ msg.message_id }}')"
+                                  style="cursor:pointer;" title="{{ msg.message_id }}">
+                                {{ msg.message_id|slice:":16" }}…
+                            </code>
+                        </td>
+                        <td><small class="text-muted">{{ msg.source_chain.name }}</small></td>
+                        <td><small class="text-muted">{{ msg.target_chain.name }}</small></td>
+                        <td>
+                            <code class="hash-text" style="font-size:0.72rem;" title="{{ msg.data_hash }}">
+                                {{ msg.data_hash|slice:":16" }}…
+                            </code>
+                        </td>
+                        <td>
+                            <span class="badge"
+                                  style="background:{% if ms == 'VERIFIED' %}#22c55e{% elif ms == 'RELAYED' %}#38bdf8;color:#000{% elif ms == 'PENDING' %}#facc15;color:#000{% else %}#f87171{% endif %};">
+                                {{ ms }}
+                            </span>
+                        </td>
+                        <td><small class="text-muted">{{ msg.created_at|date:"d M, H:i" }}</small></td>
+                        <td>
+                            <small class="text-muted">{{ msg.relayed_at|date:"d M, H:i"|default:"—" }}</small>
+                        </td>
+                        <td>
+                            <a href="{% url 'crosschain_detail' msg.message_id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endwith %}
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <i class="bi bi-arrow-left-right" style="font-size:2rem;color:var(--text-light);"></i>
+                            <p class="text-muted mt-2">No cross-chain messages yet.</p>
+                            <a href="{% url 'crosschain_transfer' %}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-send"></i> Send First Message
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

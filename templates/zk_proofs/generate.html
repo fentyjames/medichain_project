@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}Generate ZK Proof - MediChain{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'zk_dashboard' %}">ZK Proofs</a></li>
+        <li class="breadcrumb-item active">Generate Proof</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-plus-circle"></i> Generate ZK Proof</div>
+            <div class="card-body">
+
+                <div class="p-3 mb-4 rounded" style="background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.25);">
+                    <small style="color:#c4b5fd;">
+                        <i class="bi bi-eye-slash"></i>
+                        A proof is computed over the provided private inputs and public output.
+                        The resulting proof can be shared publicly — it reveals nothing about the inputs themselves.
+                    </small>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Proof Type</label>
+                        <div class="d-flex gap-3">
+                            <label class="d-flex align-items-center gap-2 p-3 rounded flex-grow-1"
+                                   style="background:rgba(255,255,255,0.04);border:1px solid var(--border);cursor:pointer;border-radius:10px!important;">
+                                <input type="radio" name="proof_type" value="zk_snark" checked
+                                       style="accent-color:var(--accent);">
+                                <div>
+                                    <strong>ZK-SNARK</strong>
+                                    <br><small class="text-muted">Compact · Fast verify</small>
+                                </div>
+                            </label>
+                            <label class="d-flex align-items-center gap-2 p-3 rounded flex-grow-1"
+                                   style="background:rgba(255,255,255,0.04);border:1px solid var(--border);cursor:pointer;border-radius:10px!important;">
+                                <input type="radio" name="proof_type" value="zk_stark"
+                                       style="accent-color:#a78bfa;">
+                                <div>
+                                    <strong>ZK-STARK</strong>
+                                    <br><small class="text-muted">Transparent · Quantum-safe</small>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Private Inputs <span class="text-danger">*</span>
+                            <small class="text-muted fw-normal ms-1">— one per line</small>
+                        </label>
+                        <textarea name="inputs" class="form-control" rows="5" required
+                                  placeholder="patient_record_hash_abc123&#10;hospital_id_xyz456&#10;diagnosis_code_ICD10"
+                                  style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;font-family:monospace;font-size:0.85rem;"></textarea>
+                        <div class="form-text">These values are hashed into the proof but never exposed.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">
+                            Public Output <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" name="public_output" class="form-control" required
+                               placeholder="e.g. record data hash or commitment value"
+                               style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;font-family:monospace;font-size:0.85rem;">
+                        <div class="form-text">The publicly-visible output the proof commits to.</div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-eye-slash"></i> Generate Proof
+                        </button>
+                        <a href="{% url 'zk_dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- What happens next -->
+        <div class="card mt-4">
+            <div class="card-header"><i class="bi bi-arrow-right-circle"></i> What happens next</div>
+            <div class="card-body small text-muted">
+                <ol class="mb-0">
+                    <li class="mb-1">Each input is SHA-256 hashed individually.</li>
+                    <li class="mb-1">A commitment is formed: <code>hash(all_input_hashes + public_output)</code>.</li>
+                    <li class="mb-1">The proof JSON is returned — share it with verifiers or attach it to a cross-chain message.</li>
+                    <li>The verifier re-hashes the same inputs and confirms the commitment matches.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+// Pre-select proof type from query param
+document.addEventListener('DOMContentLoaded', function() {
+    const params = new URLSearchParams(window.location.search);
+    const type = params.get('type');
+    if (type) {
+        const radio = document.querySelector('input[name="proof_type"][value="' + type + '"]');
+        if (radio) radio.checked = true;
+    }
+});
+{% endblock %}

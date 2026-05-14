@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Verify ZK Proof - MediChain{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'zk_dashboard' %}">ZK Proofs</a></li>
+        <li class="breadcrumb-item active">Verify Proof</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-patch-check"></i> Verify ZK Proof</div>
+            <div class="card-body">
+
+                <div class="p-3 mb-4 rounded" style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);">
+                    <small style="color:#86efac;">
+                        <i class="bi bi-info-circle"></i>
+                        Verification re-hashes the expected inputs and checks they match the commitment embedded
+                        in the proof. No private data leaves your system.
+                    </small>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Proof Type</label>
+                        <div class="d-flex gap-3">
+                            <label class="d-flex align-items-center gap-2 p-3 rounded flex-grow-1"
+                                   style="background:rgba(255,255,255,0.04);border:1px solid var(--border);cursor:pointer;border-radius:10px!important;">
+                                <input type="radio" name="proof_type" value="zk_snark" checked
+                                       style="accent-color:var(--accent);">
+                                <div>
+                                    <strong>ZK-SNARK</strong>
+                                    <br><small class="text-muted">Compact · Fast verify</small>
+                                </div>
+                            </label>
+                            <label class="d-flex align-items-center gap-2 p-3 rounded flex-grow-1"
+                                   style="background:rgba(255,255,255,0.04);border:1px solid var(--border);cursor:pointer;border-radius:10px!important;">
+                                <input type="radio" name="proof_type" value="zk_stark"
+                                       style="accent-color:#a78bfa;">
+                                <div>
+                                    <strong>ZK-STARK</strong>
+                                    <br><small class="text-muted">Transparent · Quantum-safe</small>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Proof <span class="text-danger">*</span></label>
+                        <textarea name="proof" class="form-control" rows="5" required
+                                  placeholder='Paste the full proof JSON here…'
+                                  style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;font-family:monospace;font-size:0.8rem;"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Expected Inputs <span class="text-danger">*</span>
+                            <small class="text-muted fw-normal ms-1">— one per line, must match originals exactly</small>
+                        </label>
+                        <textarea name="expected_inputs" class="form-control" rows="4" required
+                                  placeholder="patient_record_hash_abc123&#10;hospital_id_xyz456&#10;diagnosis_code_ICD10"
+                                  style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;font-family:monospace;font-size:0.85rem;"></textarea>
+                        <div class="form-text">The same private inputs used at proof generation — in the same order.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Public Output <span class="text-danger">*</span></label>
+                        <input type="text" name="public_output" class="form-control" required
+                               placeholder="The public output the proof commits to"
+                               style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;font-family:monospace;font-size:0.85rem;">
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-patch-check"></i> Verify Proof
+                        </button>
+                        <a href="{% url 'zk_dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

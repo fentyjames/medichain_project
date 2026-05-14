@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% block title %}Message {{ message.message_id|slice:":16" }}… - MediChain{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'crosschain_dashboard' %}">Cross-Chain</a></li>
+        <li class="breadcrumb-item active">{{ message.message_id|slice:":20" }}…</li>
+    </ol>
+</nav>
+
+<!-- Header -->
+{% with ms=message.status %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h2 style="color:var(--accent);">
+            <i class="bi bi-envelope-paper"></i> Cross-Chain Message
+        </h2>
+        <code class="hash-text" onclick="copyToClipboard('{{ message.message_id }}')"
+              style="cursor:pointer;font-size:0.9rem;" title="Click to copy full ID">
+            {{ message.message_id }}
+        </code>
+    </div>
+    <span class="badge"
+          style="font-size:1rem;padding:8px 18px;background:{% if ms == 'VERIFIED' %}#22c55e{% elif ms == 'RELAYED' %}#38bdf8;color:#000{% elif ms == 'PENDING' %}#facc15;color:#000{% else %}#f87171{% endif %};">
+        <i class="bi bi-{% if ms == 'VERIFIED' %}check-circle{% elif ms == 'RELAYED' %}send-check{% elif ms == 'PENDING' %}hourglass-split{% else %}x-circle{% endif %}"></i>
+        {{ ms }}
+    </span>
+</div>
+
+<div class="row g-4">
+    <!-- Route & Timeline -->
+    <div class="col-md-5">
+        <!-- Chain Route -->
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-arrow-left-right"></i> Relay Route</div>
+            <div class="card-body">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="text-center flex-grow-1">
+                        <div class="p-2 rounded mb-1" style="background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);">
+                            <i class="bi bi-hdd-network" style="color:#38bdf8;"></i>
+                        </div>
+                        <strong style="font-size:0.85rem;">{{ message.source_chain.name }}</strong>
+                        <br><small class="text-muted">Chain {{ message.source_chain.chain_id }}</small>
+                    </div>
+                    <div class="text-center">
+                        <i class="bi bi-arrow-right" style="font-size:1.4rem;color:var(--accent);"></i>
+                    </div>
+                    <div class="text-center flex-grow-1">
+                        <div class="p-2 rounded mb-1" style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);">
+                            <i class="bi bi-hdd-network" style="color:#22c55e;"></i>
+                        </div>
+                        <strong style="font-size:0.85rem;">{{ message.target_chain.name }}</strong>
+                        <br><small class="text-muted">Chain {{ message.target_chain.chain_id }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="card">
+            <div class="card-header"><i class="bi bi-clock-history"></i> Timeline</div>
+            <div class="card-body">
+                <div class="d-flex align-items-start gap-2 mb-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:28px;height:28px;background:#22c55e;flex-shrink:0;">
+                        <i class="bi bi-check" style="color:#000;font-size:0.8rem;"></i>
+                    </div>
+                    <div>
+                        <strong class="small">Created</strong>
+                        <br><small class="text-muted">{{ message.created_at|date:"d M Y, H:i:s" }}</small>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-start gap-2 mb-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:28px;height:28px;background:{% if message.relayed_at %}#38bdf8{% else %}var(--border){% endif %};flex-shrink:0;">
+                        <i class="bi bi-{% if message.relayed_at %}check{% else %}dash{% endif %}" style="color:{% if message.relayed_at %}#000{% else %}#888{% endif %};font-size:0.8rem;"></i>
+                    </div>
+                    <div>
+                        <strong class="small">Relayed</strong>
+                        <br>
+                        {% if message.relayed_at %}
+                            <small class="text-muted">{{ message.relayed_at|date:"d M Y, H:i:s" }}</small>
+                        {% else %}
+                            <small class="text-muted">Not yet relayed</small>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-start gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:28px;height:28px;background:{% if message.verified_at %}#22c55e{% else %}var(--border){% endif %};flex-shrink:0;">
+                        <i class="bi bi-{% if message.verified_at %}shield-check{% else %}dash{% endif %}" style="color:{% if message.verified_at %}#000{% else %}#888{% endif %};font-size:0.8rem;"></i>
+                    </div>
+                    <div>
+                        <strong class="small">ZK Verified</strong>
+                        <br>
+                        {% if message.verified_at %}
+                            <small class="text-muted">{{ message.verified_at|date:"d M Y, H:i:s" }}</small>
+                        {% else %}
+                            <small class="text-muted">Pending verification</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cryptographic Details -->
+    <div class="col-md-7">
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-shield-lock"></i> Cryptographic Details</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label text-muted small mb-1">Data Hash</label>
+                    <div class="p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);">
+                        <code class="hash-text small" onclick="copyToClipboard('{{ message.data_hash }}')"
+                              style="cursor:pointer;word-break:break-all;">{{ message.data_hash }}</code>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-muted small mb-1">Nonce</label>
+                    <div class="p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);">
+                        <code class="hash-text small" style="word-break:break-all;">{{ message.nonce }}</code>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-muted small mb-1">Signature</label>
+                    <div class="p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);">
+                        <code class="hash-text small" onclick="copyToClipboard('{{ message.signature }}')"
+                              style="cursor:pointer;word-break:break-all;">{{ message.signature }}</code>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="form-label text-muted small mb-1">ZK Proof</label>
+                    <div class="p-2 rounded" style="background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.2);">
+                        <small style="color:#c4b5fd;font-family:monospace;word-break:break-all;font-size:0.75rem;">
+                            {{ message.proof|truncatechars:300 }}
+                        </small>
+                        {% if message.proof|length > 300 %}
+                        <button class="btn btn-sm btn-link p-0 mt-1" style="color:var(--accent);"
+                                onclick="copyToClipboard('{{ message.proof|escapejs }}')">
+                            <i class="bi bi-clipboard"></i> Copy full proof
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <a href="{% url 'crosschain_dashboard' %}" class="btn btn-outline-secondary w-100">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endwith %}
+{% endblock %}
