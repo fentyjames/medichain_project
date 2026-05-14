@@ -22,11 +22,15 @@ with ZK proofs and cross-chain messaging.
 12. [Create a Rollup Batch (Layer-2)](#12-create-a-rollup-batch-layer-2)
 13. [Send a Cross-Chain Message](#13-send-a-cross-chain-message)
 14. [Use ZK Proofs](#14-use-zk-proofs)
-15. [View Reports](#15-view-reports)
-16. [Read the Audit Log](#16-read-the-audit-log)
-17. [Edit and Delete Records](#17-edit-and-delete-records)
-18. [Using the Admin Panel](#18-using-the-admin-panel)
-19. [Full Workflow Example (End to End)](#19-full-workflow-example-end-to-end)
+15. [View the ZK Proof History](#15-view-the-zk-proof-history)
+16. [Explore the Dashboard Charts](#16-explore-the-dashboard-charts)
+17. [Download CSV Exports](#17-download-csv-exports)
+18. [Use the API Documentation (Swagger)](#18-use-the-api-documentation-swagger)
+19. [View Reports](#19-view-reports)
+20. [Read the Audit Log](#20-read-the-audit-log)
+21. [Edit and Delete Records](#21-edit-and-delete-records)
+22. [Using the Admin Panel](#22-using-the-admin-panel)
+23. [Full Workflow Example (End to End)](#23-full-workflow-example-end-to-end)
 
 ---
 
@@ -38,7 +42,7 @@ Open a terminal in the project root folder (`E:\medichain_project`) and run:
 # Activate the virtual environment (Windows PowerShell)
 .\venv\Scripts\activate
 
-# Apply any pending database migrations
+# Apply any pending database migrations  (single DB — do NOT add --database=blockchain)
 python manage.py migrate
 
 # Start the development server
@@ -49,6 +53,16 @@ The application will be available at: **http://127.0.0.1:8000/**
 
 > **Note:** The server auto-reloads when you change template or Python files.
 > Stop it with `Ctrl+C`.
+
+### Alternative — Docker Compose
+
+If you have Docker installed, you can skip manual database setup entirely:
+
+```bash
+docker compose up --build
+# First time only:
+docker compose exec web python manage.py createsuperuser
+```
 
 ---
 
@@ -71,7 +85,6 @@ Example:
 Username: admin
 Email: admin@medichain.com
 Password: ••••••••
-Password (again): ••••••••
 Superuser created successfully.
 ```
 
@@ -93,9 +106,8 @@ The sidebar on the left gives you access to every section of the application.
 ## 4. Set Up a Blockchain Network (Admin Panel)
 
 > **Why:** Hospitals, rollup batches, blocks, and cross-chain messages all require a
-> Blockchain Network to exist first. This is the foundation everything else builds on.
-> Blockchain Networks are managed through the Django Admin Panel because they are
-> infrastructure-level configuration, not day-to-day data entry.
+> Blockchain Network to exist first. This is infrastructure-level configuration managed
+> through the Django Admin Panel.
 
 ### Steps
 
@@ -109,10 +121,10 @@ The sidebar on the left gives you access to every section of the application.
 |---|---|---|
 | Network ID | `medichain-mainnet` | Unique identifier, no spaces |
 | Name | `MediChain Mainnet` | Display name |
-| Chain ID | `1001` | Any integer, must be unique per network |
-| RPC URL | `http://localhost:8545` | Simulated — can be any valid URL format |
+| Chain ID | `1001` | Any unique integer |
+| RPC URL | `http://localhost:8545` | Simulated — any valid URL format |
 | Consensus type | `PBFT` | Options: `PBFT`, `PoS`, `PoW` |
-| Is active | ✓ checked | Must be checked for it to appear in dropdowns |
+| Is active | ✓ checked | Must be checked to appear in dropdowns |
 
 6. Click **SAVE**
 
@@ -135,17 +147,16 @@ linked to the hospital where it was created.
 | Field | Example Value | Notes |
 |---|---|---|
 | Hospital Name | `Ankara University Hospital` | Required |
-| Address | `06100 Sıhhiye, Ankara` | Optional but recommended |
+| Address | `06100 Sıhhiye, Ankara` | Optional |
 | License Number | `HOSP-TR-2024-001` | Required, must be unique |
-| Public Key | `MIIBIjANBgkq...` | Cryptographic key — paste any text for simulation |
-| Blockchain Network | `MediChain Mainnet` | Select from dropdown (must exist — see Step 4) |
+| Public Key | `MIIBIjANBgkq...` | Paste any text for simulation |
+| Blockchain Network | `MediChain Mainnet` | Select from dropdown |
 
 4. Click **Register Hospital**
 5. You will be redirected to the Hospital list
 
-> **Tip:** After creation, click the hospital name to open its detail page.
-> You will see its records, a "Verified" / "Pending" badge, and buttons to Edit or generate a Report.
-> To mark a hospital as Verified, click **Edit** and check the "Verified hospital" checkbox.
+> After creation, click the hospital name to open its detail page. Click **Edit** and
+> check **Verified hospital** to mark it as verified.
 
 ---
 
@@ -164,12 +175,9 @@ Laboratories are affiliated with hospitals and can be granted access to lab resu
 | Laboratory Name | `Central Pathology Lab` | Required |
 | Accreditation | `ISO 15189` | Certification standard |
 | Public Key | `MIIBIjANBgkq...` | Any text for simulation |
-| Affiliated Hospital | `Ankara University Hospital` | Select from dropdown — optional |
+| Affiliated Hospital | `Ankara University Hospital` | Optional |
 
 4. Click **Register Laboratory**
-
-> The lab's detail page shows a Quick Actions sidebar with Edit, Create Lab Result,
-> Report, and Print buttons.
 
 ---
 
@@ -209,15 +217,21 @@ connect back to a patient.
 | Public Key | `MIIBIjANBgkq...` | Required — patient's cryptographic identity |
 | Date of Birth | `1985-03-15` | Optional |
 | Blood Type | `A+` | Select from dropdown |
-| Known Allergies | `Penicillin` | Optional, free text |
+| Known Allergies | `Penicillin` | Optional |
 | Emergency Contact | `Ali Yılmaz — 0532 xxx xx xx` | Optional |
 
 4. Click **Register Patient**
 
-> **Linking a patient to a user account:**
-> The `Patient` model has an optional `user` foreign key. To link a patient to a login account,
-> go to the **Admin Panel → Healthcare → Patients**, open the patient record, and set the `User` field.
-> Once linked, the patient's full name and email will appear throughout the app.
+### Linking a patient to a user account
+
+A patient's display name and email come from a linked Django User account.
+
+1. Admin Panel → **Authentication → Users** → create or find a user
+2. Admin Panel → **Healthcare → Patients** → open the patient record
+3. In the **User** field, select the login account
+4. Click **Save**
+
+Once linked, the patient's full name and email appear on list pages and detail pages.
 
 ---
 
@@ -239,7 +253,7 @@ and optionally anchored to a blockchain transaction.
 | Record Type | `Diagnosis` | See types below |
 | Title | `Type 2 Diabetes Initial Assessment` | Required |
 | Description | `Patient presents with...` | Clinical notes, free text |
-| IPFS Hash | *(leave blank)* | Optional — reference to off-chain storage |
+| IPFS Hash | *(leave blank)* | Optional reference to off-chain file |
 | Signature | *(leave blank)* | Optional cryptographic signature |
 
 4. Click **Create Record**
@@ -258,20 +272,11 @@ and optionally anchored to a blockchain transaction.
 
 ### What happens automatically
 
-When you save a record, the system automatically:
-- Generates a unique `record_id` (SHA-256 hash)
-- Computes a `data_hash` of the record content for integrity verification
-- Creates a blockchain **Transaction** of type `CREATE` and links it to the record
-- Writes an **Audit Log** entry with action `CREATE`
-
-### After creation
-
-The record detail page (`/healthcare/records/<id>/`) shows:
-- Clinical Notes (description)
-- Cryptographic integrity section (data hash, metadata hash, IPFS hash, blockchain TX)
-- Patient info panel
-- Linked access permissions
-- Full audit trail
+When you save a record:
+- Unique `record_id` is generated (SHA-256 hash)
+- `data_hash` is computed for integrity verification
+- A blockchain **Transaction** of type `CREATE` is created with status `PENDING`
+- An **Audit Log** entry with action `CREATE` is written
 
 ---
 
@@ -287,20 +292,19 @@ with other hospitals, labs, insurance providers, or doctors.
 
 | Field | Example Value | Notes |
 |---|---|---|
-| Record | *(select the record)* | Choose from dropdown |
-| Patient (Grantor) | *(select the patient)* | The patient authorising the access |
+| Record | *(select the record)* | |
+| Patient (Grantor) | *(select the patient)* | The patient authorising access |
 | Grantee Name | `Central Pathology Lab` | Name of who receives access |
 | Grantee Type | `Laboratory` | Hospital / Lab / Insurance / Doctor |
 | Permission Type | `READ` | READ / WRITE / SHARE |
-| Purpose | `Lab result analysis` | Required — explains why access is needed |
+| Purpose | `Lab result analysis` | Required — HIPAA explanation |
 | Valid Until | `2025-12-31` | Optional expiry date |
 
 3. Click **Grant Permission**
 4. You are redirected back to the record's detail page
 
-> **Revoking access:** Go to **Permissions** in the sidebar. Find the permission row and click
-> the red **X** button in the Actions column. The permission status changes to "Revoked".
-> Revoked permissions remain in the audit trail but are no longer considered active.
+> **Revoking access:** Sidebar → **Permissions** → find the row → click the red **X**.
+> Revoked permissions remain in the audit trail but no longer grant access.
 
 ---
 
@@ -311,22 +315,21 @@ You can also create them manually to simulate custom on-chain events.
 
 ### Steps
 
-1. Go to **Blockchain → Transactions** or click the **Transactions** link in the sidebar
+1. Go to **Blockchain → Transactions** (`/blockchain/transactions/`)
 2. Click **+ New Transaction**
 3. Fill in the form:
 
 | Field | Example Value | Notes |
 |---|---|---|
 | Transaction Type | `CREATE` | CREATE / UPDATE / SHARE / VERIFY / ACCESS |
-| Sender | `Ankara University Hospital` | Who is sending — any identifier string |
+| Sender | `Ankara University Hospital` | Any identifier string |
 | Receiver | `Central Pathology Lab` | Optional |
-| Data Hash | `a3f5...` | SHA-256 hash of the data being transacted |
+| Data Hash | `a3f5...` | SHA-256 hash of the data |
 | Signature | *(any text)* | Simulated digital signature |
 
 4. Click **Submit Transaction**
 
-> The transaction starts with status **PENDING**. It moves to **BATCHED** when included
-> in a rollup batch (Step 12), and to **CONFIRMED** if included in a block.
+> Status flow: **PENDING → BATCHED** (when included in a rollup) → **CONFIRMED** (when in a block)
 
 ---
 
@@ -339,17 +342,15 @@ Layer-2 simulation.
 
 1. Go to **Blockchain → Rollup Batches** or `/blockchain/rollups/`
 2. Click **+ Create Batch**
-3. Choose the **Target Network** from the list (only active networks appear)
-4. The form shows how many pending transactions are queued
-5. Click **Generate Batch & ZK Proof**
+3. Choose the **Target Network** from the list
+4. Click **Generate Batch & ZK Proof**
 
 ### What happens
 
 - All PENDING transactions (up to 50) are grouped into the batch
-- A **Merkle tree** is computed over all transaction hashes
+- A **Merkle tree** is computed over transaction hashes
 - A **ZK-SNARK proof** is generated (simulated JSON structure)
-- All included transactions move from `PENDING` → `BATCHED`
-- The batch is saved with status `BATCHED`
+- Included transactions move: `PENDING → BATCHED`
 
 > View the batch detail page to see the full Merkle root, ZK proof payload, and every
 > transaction included in the batch.
@@ -359,7 +360,7 @@ Layer-2 simulation.
 ## 13. Send a Cross-Chain Message
 
 Cross-chain messaging simulates relaying a verified message from one blockchain network
-to another — for example, sharing a record hash across two separate chains.
+to another.
 
 ### Steps
 
@@ -370,49 +371,165 @@ to another — for example, sharing a record hash across two separate chains.
 | Field | Example Value | Notes |
 |---|---|---|
 | Source Network | `MediChain Mainnet` | Where the message originates |
-| Target Network | `MediChain Testnet` | Where it is being sent |
+| Target Network | `MediChain Testnet` | Where it is sent — must differ from source |
 | Data Hash | `a3f5...` | The data being relayed (e.g. a record hash) |
 | Signature | *(any text)* | Simulated signature |
-| Nonce | *(leave blank or any value)* | Auto-generated if blank |
+| Nonce | *(leave blank)* | Auto-generated if blank |
 
 4. Click **Send Transfer**
 
-> The message starts as `PENDING`. The relay service validates it using the ZK proof
-> middleware before marking it `RELAYED` then `VERIFIED`.
-> Click a message row in the dashboard to open its **Detail** page showing status history.
+> Messages start as `PENDING`. The relay service validates using the ZK proof middleware
+> before marking them `RELAYED` then `VERIFIED`.
+> Click a message row in the dashboard to open its **Detail** page.
 
 ---
 
 ## 14. Use ZK Proofs
 
-The ZK Proofs section simulates zero-knowledge proof generation and verification.
-These are SHA-256-based simulations — not real cryptographic ZK proofs.
-
 ### Generate a Proof
 
 1. Go to **ZK Proofs** in the navbar or `/zk-proofs/`
-2. Click **Generate Proof** (or go to `/zk-proofs/generate/`)
+2. Click **Generate Proof** (or go directly to `/zk-proofs/generate/`)
 3. Enter:
-   - **Secret inputs** — comma-separated values (e.g. `record_id,patient_id`)
+   - **Secret inputs** — comma-separated values or transaction hashes (e.g. `record_id,patient_id`)
    - **Public statement** — the data_hash of a record
+   - **Proof type** — `zk_snark` (default) or `zk_stark`
 4. Click **Generate** — the page returns a proof JSON object
+5. Copy the JSON — you will need it for verification
 
 ### Verify a Proof
 
 1. Go to `/zk-proofs/verify/`
 2. Paste the proof JSON generated above
 3. Enter the same public statement (data_hash)
-4. Click **Verify** — the page returns `valid: true` or `valid: false`
+4. Enter the same secret inputs in **Expected Inputs**
+5. Click **Verify** — the page returns `valid: true` or `valid: false`
 
 ### Range Proof
 
 1. Go to `/zk-proofs/range/`
-2. Enter a secret value (e.g. a patient's age) and a range (min / max)
-3. The proof confirms the value is within the range without revealing the actual value
+2. Enter a secret value (e.g. a patient's blood pressure reading) and a range (min / max)
+3. Click **Generate Range Proof**
+4. The proof confirms the value is within the range without revealing the exact number
 
 ---
 
-## 15. View Reports
+## 15. View the ZK Proof History
+
+Every proof generated or verified through the UI is automatically saved to the
+`ZKProofRecord` database table.
+
+### Steps
+
+1. Go to `/zk-proofs/` (the ZK Dashboard)
+2. Scroll down to the **Proof History** section
+3. The table shows:
+   - **Type** — zk-SNARK, zk-STARK, or Range Proof
+   - **Generated By** — username or IP address
+   - **Inputs** — number of private inputs
+   - **Public Output** — committed Merkle root
+   - **Verified** — green tick or red cross badge
+   - **Created At** — timestamp
+
+> The table shows the most recent 20 entries. Older proofs are stored in the database
+> and accessible via Admin Panel → **ZK Proofs → ZK proof records**.
+
+---
+
+## 16. Explore the Dashboard Charts
+
+The main dashboard at `/dashboard/` contains three live charts:
+
+### Transaction Volume (7-day bar chart)
+
+- Displays how many blockchain transactions were created each day over the last 7 days
+- Useful for spotting activity spikes or quiet periods
+- Updates on every page load from live database data
+
+### Record Type Distribution (doughnut chart)
+
+- Shows the proportion of each `MedicalRecord` type currently active in the system
+- Types shown: Diagnosis, Lab Result, Prescription, Imaging, Surgery, Discharge, Insurance
+
+### Audit Activity (horizontal bar chart)
+
+- Shows the 10 most frequent audit actions recorded in the last 30 days
+- Helps compliance monitoring at a glance (e.g. how many READ vs CREATE events)
+
+> Charts render empty gracefully if there is no data yet. Add some records and transactions,
+> then reload the dashboard to see them populate.
+
+---
+
+## 17. Download CSV Exports
+
+Every major list view has a **CSV** button that downloads the current dataset as a
+spreadsheet-compatible file.
+
+### Available exports
+
+| What | Button location | Direct URL |
+|------|----------------|-----------|
+| Patients | Patients list (top right) | `/healthcare/patients/export/csv/` |
+| Medical Records | Records list (top right) | `/healthcare/records/export/csv/` |
+| Audit Log | Audit Log list (top right) | `/healthcare/audit/export/csv/` |
+| Transactions | Transactions list (top right) | `/blockchain/transactions/export/csv/` |
+
+### Steps
+
+1. Navigate to the list page (e.g. **Patients**)
+2. Click the **CSV** button in the page header
+3. Your browser automatically downloads the file (e.g. `patients.csv`)
+4. Open in Excel, LibreOffice, or any spreadsheet tool
+
+> Exports are limited to 10 000 rows per download. You must be logged in — anonymous
+> requests redirect to the login page.
+
+---
+
+## 18. Use the API Documentation (Swagger)
+
+MediChain includes a full interactive API explorer powered by **drf-spectacular**.
+
+### Access Swagger UI
+
+1. Go to **http://127.0.0.1:8000/api/docs/**
+2. You will see all API endpoints grouped by module (Healthcare, Blockchain, ZK Proofs, etc.)
+
+### Authenticate in Swagger
+
+1. Click the **Authorize** button (top right of the Swagger page)
+2. First obtain a token:
+   - Scroll to `POST /api/v1/auth/login/`
+   - Click **Try it out** → enter your username and password → **Execute**
+   - Copy the `token` value from the response
+3. Back in Authorize, enter: `Token YOUR_TOKEN_HERE`
+4. Click **Authorize** → **Close**
+
+Now all **Try it out** calls will include your token automatically.
+
+### Try an endpoint
+
+1. Find any endpoint (e.g. `GET /api/v1/dashboard/`)
+2. Click it to expand
+3. Click **Try it out**
+4. Click **Execute**
+5. The response body and status code appear below
+
+### Alternative — ReDoc
+
+For a cleaner read-only view: **http://127.0.0.1:8000/api/redoc/**
+
+### Import into Postman
+
+1. Go to **http://127.0.0.1:8000/api/schema/** — this returns the raw OpenAPI JSON
+2. Save it as `medichain_api.json`
+3. In Postman: **Import → Upload Files** → select `medichain_api.json`
+4. All endpoints are imported with their request schemas ready to fill in
+
+---
+
+## 19. View Reports
 
 Reports give you printable summaries of every entity and the whole platform.
 
@@ -426,7 +543,7 @@ Reports give you printable summaries of every entity and the whole platform.
 | Report | URL | What it shows |
 |---|---|---|
 | System Overview | `/healthcare/reports/overview/` | Platform-wide counts, record breakdown, recent activity |
-| Audit & Compliance | `/healthcare/reports/audit/` | All audit events with filters by date and actor type |
+| Audit & Compliance | `/healthcare/reports/audit/` | All audit events with date and actor type filters |
 | Patient Report | Patient detail → **Report** button | All records, permissions, audit trail for one patient |
 | Hospital Report | Hospital detail → **Report** button | All records and labs for one hospital |
 | Laboratory Report | Lab detail → **Report** button | Lab results and linked permissions |
@@ -435,16 +552,12 @@ Reports give you printable summaries of every entity and the whole platform.
 
 ### Print any report
 
-Every report page has a **Print** button. Clicking it opens a standalone browser window
-with a clean print-optimised document. Your browser's print dialog opens automatically.
-
-> Filters on the Audit & Compliance report: use the **Date From / Date To** inputs to
-> narrow the date range, and the **Actor Type** dropdown to filter by DOCTOR, HOSPITAL,
-> LAB, PATIENT, or ADMIN.
+Every report page has a **Print** button. Click it to open a print-optimised standalone
+document — your browser's print dialog opens automatically.
 
 ---
 
-## 16. Read the Audit Log
+## 20. Read the Audit Log
 
 Every CREATE, READ, UPDATE, SHARE, and DELETE action on a medical record is automatically
 logged. The audit log cannot be edited or deleted — even admins cannot modify it.
@@ -456,6 +569,7 @@ logged. The audit log cannot be edited or deleted — even admins cannot modify 
    - **Action** — CREATE / READ / UPDATE / SHARE / DELETE / ACCESS_DENIED
    - **Actor Type** — DOCTOR / HOSPITAL / LAB / PATIENT / ADMIN
 3. Use pagination to browse older entries
+4. **Download:** click the **CSV** button to export all filtered entries
 
 ### Reading a log entry
 
@@ -464,16 +578,16 @@ Each row shows:
 - **Actor** — who did it (hospital ID, username, or patient ID)
 - **Actor Type** — their role
 - **Record** — which record was affected (click to open it)
-- **Details** — extra JSON metadata (e.g. record type, title)
+- **Details** — extra JSON metadata
 - **IP Address** — originating request IP
 - **Timestamp** — exact date and time
 
-> The audit trail is also visible on each individual **Record Detail** page at the bottom
-> of the page, filtered to that record only.
+> The audit trail is also visible on each **Record Detail** page at the bottom,
+> filtered to that record only.
 
 ---
 
-## 17. Edit and Delete Records
+## 21. Edit and Delete Records
 
 ### Edit a Patient
 1. Open the patient's detail page
@@ -482,9 +596,9 @@ Each row shows:
 4. Click **Save Changes**
 
 ### Delete a Patient
-1. From the patient's Edit page, click **Delete** (top right, red button)
-2. A confirmation screen asks you to confirm
-3. Click **Yes, Delete** — all associated records and permissions are also deleted
+1. From the patient's Edit page, click **Delete** (red button)
+2. Confirm on the confirmation screen
+3. Click **Yes, Delete** — associated records and permissions are also deleted
 
 ### Edit a Medical Record
 1. Open the record's detail page
@@ -493,10 +607,9 @@ Each row shows:
 4. Click **Save Changes** — an `UPDATE` audit log entry is written automatically
 
 ### Archive a Medical Record
-Archiving hides a record from active lists but keeps it in the audit trail.
 1. Open the record's detail page
 2. Click **Archive**
-3. Confirm — the record's status changes to "Archived" and disappears from filtered active lists
+3. Confirm — the record's status changes to "Archived" and disappears from active filtered lists
 
 ### Edit a Hospital
 1. Hospital detail → **Edit**
@@ -514,33 +627,31 @@ Archiving hides a record from active lists but keeps it in the audit trail.
 
 ---
 
-## 18. Using the Admin Panel
+## 22. Using the Admin Panel
 
 The Django Admin Panel at **http://127.0.0.1:8000/admin/** gives you direct database access.
-Use it for tasks the main UI doesn't support.
+Use it for tasks the main UI does not support.
 
 ### What you can do in Admin
 
 | Section | What to manage |
 |---|---|
 | **Blockchain Networks** | Create / edit networks (required before using the app) |
-| **Blocks** | View auto-created blocks, hash is read-only |
+| **Blocks** | View auto-created blocks — hash is read-only |
 | **Transactions** | View all transactions, filter by type and status |
-| **Rollup Batches** | View batch Merkle roots, ZK proofs, and included transactions |
+| **Rollup Batches** | View Merkle roots, ZK proofs, included transactions |
 | **Cross-Chain Messages** | View relay status, source/target chain details |
 | **Validator Nodes** | Add simulated consensus validators |
 | **Smart Contracts** | Register simulated contract addresses |
-| **Patients** | View all patients, link a patient to a User account |
+| **Patients** | View all patients, **link a patient to a User account** |
 | **Hospitals** | View / edit hospitals, toggle verified status |
 | **Medical Records** | Read-only view of hashes and integrity data |
 | **Access Permissions** | Full view of who has access to what |
 | **Audit Logs** | Read-only — cannot be added or changed, even by admin |
+| **ZK Proof Records** | View full proof history with payloads |
 | **Users** | Manage user accounts, reset passwords, set staff/superuser flags |
 
 ### Linking a Patient to a User account
-
-By default, patients created through the web form are not linked to a login account.
-To link them:
 
 1. Admin Panel → **Authentication → Users** → create a new user (or use existing)
 2. Admin Panel → **Healthcare → Patients** → open the patient record
@@ -551,19 +662,19 @@ Once linked, the patient's full name and email appear throughout the app.
 
 ---
 
-## 19. Full Workflow Example (End to End)
+## 23. Full Workflow Example (End to End)
 
 This walkthrough creates one complete patient journey from setup to report.
 
 ### Step 1 — Infrastructure setup (Admin Panel)
 1. Go to `/admin/` → **Blockchain Networks** → Add:
-   - **MediChain Mainnet** (Chain ID: 1001, Consensus: PBFT)
-   - **MediChain Testnet** (Chain ID: 1002, Consensus: PBFT)
+   - **MediChain Mainnet** (Chain ID: 1001, Consensus: PBFT, Is active: ✓)
+   - **MediChain Testnet** (Chain ID: 1002, Consensus: PBFT, Is active: ✓)
 
 ### Step 2 — Register a hospital
 1. `/healthcare/hospitals/add/`
 2. Name: `City General Hospital`, License: `CGH-001`, Network: `MediChain Mainnet`
-3. After saving, go to Edit → check **Verified hospital** → Save
+3. After saving: Edit → check **Verified hospital** → Save
 
 ### Step 3 — Register a laboratory
 1. `/healthcare/labs/add/`
@@ -576,11 +687,11 @@ This walkthrough creates one complete patient journey from setup to report.
 ### Step 5 — Register a patient
 1. `/healthcare/patients/add/`
 2. Public Key: `patientpublickey123`, DOB: `1990-06-15`, Blood Type: `O+`
-3. After saving, note the patient ID
+3. After saving, note the patient ID shown in the detail page URL
 
 ### Step 6 — Create a medical record
 1. `/healthcare/records/add/`
-2. Patient: *(select the one you just created)*
+2. Patient: *(the one you just created)*
 3. Hospital: `City General Hospital`
 4. Type: `Diagnosis`, Title: `Annual Health Check`, Description: `All vitals normal.`
 5. Click **Create Record**
@@ -608,27 +719,40 @@ This walkthrough creates one complete patient journey from setup to report.
 1. `/zk-proofs/generate/`
 2. Secret inputs: *(the record_id)*, Public statement: *(the data_hash)*
 3. Click **Generate** — copy the proof output
+4. Go back to `/zk-proofs/` — the proof appears in the **Proof History** table
 
-### Step 11 — View the patient report
+### Step 11 — Check the dashboard charts
+1. Go to `/dashboard/`
+2. The **Transaction Volume** bar chart should now show activity for today
+3. The **Record Type Distribution** doughnut should show one "Diagnosis" slice
+4. The **Audit Activity** chart should show CREATE and SHARE actions
+
+### Step 12 — Download a CSV export
+1. Go to `/healthcare/patients/`
+2. Click the **CSV** button in the top-right corner
+3. Open the downloaded `patients.csv` to verify your patient appears
+
+### Step 13 — View the patient report
 1. Patient detail page → **Report** button
 2. The report shows all records, permissions, audit entries, and record-type breakdown
 3. Click **Print** to open the print-ready document
 
-### Step 12 — Check the audit trail
+### Step 14 — Check the audit trail
 1. Sidebar → **Audit Log**
 2. You will see CREATE and SHARE entries for the record you just created
-3. Filter by **Action: SHARE** to see only the permission grant events
+3. Filter by **Action: SHARE** to see only permission-grant events
+4. Click **CSV** to download the filtered results
 
 ---
 
 ## Quick Reference
 
-### URL map
+### Full URL map
 
 | Page | URL |
 |---|---|
 | Landing | `/` |
-| Main Dashboard | `/dashboard/` |
+| Main Dashboard (with charts) | `/dashboard/` |
 | Healthcare Dashboard | `/healthcare/` |
 | Patients | `/healthcare/patients/` |
 | Hospitals | `/healthcare/hospitals/` |
@@ -638,12 +762,26 @@ This walkthrough creates one complete patient journey from setup to report.
 | Permissions | `/healthcare/permissions/` |
 | Audit Log | `/healthcare/audit/` |
 | Reports Hub | `/healthcare/reports/` |
+| **CSV Exports** | |
+| Export Patients | `/healthcare/patients/export/csv/` |
+| Export Records | `/healthcare/records/export/csv/` |
+| Export Audit Log | `/healthcare/audit/export/csv/` |
+| Export Transactions | `/blockchain/transactions/export/csv/` |
+| **Blockchain** | |
 | Blockchain Dashboard | `/blockchain/` |
 | Blocks | `/blockchain/blocks/` |
 | Transactions | `/blockchain/transactions/` |
 | Rollup Batches | `/blockchain/rollups/` |
 | Cross-Chain | `/cross-chain/` |
-| ZK Proofs | `/zk-proofs/` |
+| **ZK Proofs** | |
+| ZK Dashboard + History | `/zk-proofs/` |
+| Generate Proof | `/zk-proofs/generate/` |
+| Verify Proof | `/zk-proofs/verify/` |
+| Range Proof | `/zk-proofs/range/` |
+| **API & Docs** | |
+| Swagger UI | `/api/docs/` |
+| ReDoc | `/api/redoc/` |
+| OpenAPI Schema (JSON) | `/api/schema/` |
 | Admin Panel | `/admin/` |
 | Profile / Settings | `/accounts/profile/` |
 
@@ -662,7 +800,7 @@ This walkthrough creates one complete patient journey from setup to report.
 ### Transaction status flow
 
 ```
-PENDING  →  (added to rollup)  →  BATCHED  →  (confirmed on chain)  →  CONFIRMED
+PENDING  →  (added to rollup batch)  →  BATCHED  →  (confirmed on chain)  →  CONFIRMED
 ```
 
 ### Permission lifecycle
@@ -675,4 +813,4 @@ Revoked permissions are kept for audit purposes but no longer grant access.
 
 ---
 
-*MediChain Framework v1.0 — Department of Artificial Intelligence Technologies, Ankara University*
+*MediChain Framework v1.1 — Department of Artificial Intelligence Technologies, Ankara University*

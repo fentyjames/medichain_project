@@ -3,7 +3,7 @@
 > **MediChain** is a Scalable Cross-Chain Layer-2 Blockchain Framework for Privacy-Preserving and Interoperable Healthcare Data Exchange Using Zero-Knowledge Proofs.
 
 **Author:** Fenty James Conteh — Department of Artificial Intelligence Technologies, Ankara University  
-**Framework Version:** 1.0.0
+**Framework Version:** 1.1.0
 
 ---
 
@@ -13,13 +13,16 @@
 2. [Prerequisites & Setup](#2-prerequisites--setup)
 3. [Where to Input Data — All Entry Points](#3-where-to-input-data--all-entry-points)
 4. [Module-by-Module Usage](#4-module-by-module-usage)
-5. [API Reference](#5-api-reference)
-6. [How the Blockchain Works](#6-how-the-blockchain-works)
-7. [Zero-Knowledge Proofs](#7-zero-knowledge-proofs)
-8. [Cross-Chain Relay](#8-cross-chain-relay)
-9. [Testing](#9-testing)
-10. [Production Deployment](#10-production-deployment)
-11. [Troubleshooting](#11-troubleshooting)
+5. [Dashboard Charts](#5-dashboard-charts)
+6. [CSV Data Exports](#6-csv-data-exports)
+7. [API Reference](#7-api-reference)
+8. [Interactive API Documentation](#8-interactive-api-documentation)
+9. [How the Blockchain Works](#9-how-the-blockchain-works)
+10. [Zero-Knowledge Proofs & Proof History](#10-zero-knowledge-proofs--proof-history)
+11. [Cross-Chain Relay](#11-cross-chain-relay)
+12. [Testing](#12-testing)
+13. [Production Deployment](#13-production-deployment)
+14. [Troubleshooting](#14-troubleshooting)
 
 ---
 
@@ -31,7 +34,7 @@ MediChain is a Django-based web application with **four core modules** and a **u
 ┌─────────────────────────────────────────────────────┐
 │                    Frontend (Templates)              │
 │  base.html ← All pages extend this dark-themed UI   │
-│  ├── index.html          (Main Dashboard)           │
+│  ├── index.html          (Dashboard + Chart.js)     │
 │  ├── healthcare/*.html   (Patient/Record/Hospital)  │
 │  ├── blockchain/*.html   (Blocks/Txs/Rollups)       │
 │  ├── cross_chain/*.html  (Inter-chain transfers)    │
@@ -42,13 +45,15 @@ MediChain is a Django-based web application with **four core modules** and a **u
 │  ├── api/blockchain/     (Blockchain CRUD)          │
 │  ├── api/healthcare/     (Healthcare CRUD)          │
 │  ├── api/cross-chain/    (Relay endpoints)          │
-│  └── api/zk-proofs/      (Proof generation)         │
+│  ├── api/zk-proofs/      (Proof generation)         │
+│  ├── /api/docs/          (Swagger UI)               │
+│  └── /api/redoc/         (ReDoc)                    │
 ├─────────────────────────────────────────────────────┤
 │                    Core Modules                      │
 │  ├── blockchain/          (Blocks, Txs, Rollups)    │
-│  ├── healthcare/          (Patients, Records, Acls) │
+│  ├── healthcare/          (Patients, Records, ACLs) │
 │  ├── cross_chain/         (Relay service, messages) │
-│  └── zk_proofs/           (ZK-SNARK/STARK proofs)   │
+│  └── zk_proofs/           (ZK-SNARK/STARK + history)│
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -56,8 +61,10 @@ MediChain is a Django-based web application with **four core modules** and a **u
 
 | Model | App | Purpose |
 |-------|-----|---------|
-| `Patient` | healthcare | Patient identity with public key |
+| `Patient` | healthcare | Patient identity; name/email via linked `User` account |
 | `Hospital` | healthcare | Hospital registration & identity |
+| `Laboratory` | healthcare | Lab affiliated with a hospital |
+| `InsuranceProvider` | healthcare | Insurance company |
 | `MedicalRecord` | healthcare | Medical records with on-chain hash anchoring |
 | `AccessPermission` | healthcare | Patient-granted access control |
 | `AuditLog` | healthcare | Complete audit trail of all actions |
@@ -68,6 +75,7 @@ MediChain is a Django-based web application with **four core modules** and a **u
 | `CrossChainMessage` | blockchain | Inter-chain relay messages |
 | `ValidatorNode` | blockchain | Consensus validator nodes |
 | `SmartContract` | blockchain | Deployed smart contracts |
+| `ZKProofRecord` | zk_proofs | Persistent history of generated/verified proofs |
 
 ---
 
@@ -82,67 +90,35 @@ MediChain is a Django-based web application with **four core modules** and a **u
 | Redis | 6.0 | [redis.io](https://redis.io/download) |
 | Git | 2.40 | [git-scm.com](https://git-scm.com/downloads) |
 
-### Quick Setup (Using the Automated Script)
+### Option A — Local setup (Windows PowerShell)
 
-```bash
-# 1. Navigate to project directory
-cd /path/to/medichain_project
+```powershell
+# From project root  E:\medichain_project
+.\venv\Scripts\activate
 
-# 2. Run the automated setup script
-chmod +x setup.sh
-./setup.sh
-
-# 3. Follow prompts (creates venv, installs deps, runs migrations, optional superuser)
-```
-
-### Manual Setup
-
-```bash
-# 1. Create and activate virtual environment
-python3 -m venv venv
-source venv/bin/activate          # Linux/macOS
-# venv\Scripts\activate           # Windows
-
-# 2. Install dependencies
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# 3. Configure database (PostgreSQL)
-# Create .env file in medichain_project/ directory:
+# Single migration command — one database only
+python manage.py migrate
 
-# .env
-DEBUG=True
-SECRET_KEY=your-secure-secret-key-change-this
-ALLOWED_HOSTS=localhost,127.0.0.1
-DB_NAME=medichain_db
-DB_USER=medichain_user
-DB_PASSWORD=your_secure_password
-DB_HOST=localhost
-DB_PORT=5432
-REDIS_URL=redis://localhost:6379/0
-
-# 4. Create PostgreSQL database
-sudo -u postgres psql
--- CREATE DATABASE medichain_db;
--- CREATE USER medichain_user WITH PASSWORD 'your_secure_password';
--- GRANT ALL PRIVILEGES ON DATABASE medichain_db TO medichain_user;
--- \q
-
-# 5. Run migrations
-python manage.py migrate --database=default
-python manage.py migrate --database=blockchain
-
-# 6. Create admin user
 python manage.py createsuperuser
-
-# 7. Collect static files
-python manage.py collectstatic --noinput
-
-# 8. Start the server
 python manage.py runserver
 ```
 
-**Access the application:** `http://localhost:8000/`
+> **Database note:** The project uses **one** PostgreSQL database (`medichain_db` on
+> port 5433). Do NOT run `migrate --database=blockchain` — that alias is commented out.
+
+### Option B — Docker Compose
+
+```bash
+docker compose up --build
+
+# First run only
+docker compose exec web python manage.py createsuperuser
+```
+
+Access the app at **http://localhost:8000/**
 
 ---
 
@@ -150,378 +126,238 @@ python manage.py runserver
 
 ### 🩺 A. Register a Patient
 
-**UI:** Navigate to `Healthcare → Add Patient` or `http://localhost:8000/healthcare/patients/add/`
+**UI:** `Healthcare → Add Patient` → `/healthcare/patients/add/`
 
-**Form Fields:**
+| Field | Required | Notes |
+|-------|----------|-------|
+| Public Key | ✅ | Cryptographic identity string |
+| Date of Birth | ❌ | YYYY-MM-DD |
+| Blood Type | ❌ | A+, A-, B+, B-, AB+, AB-, O+, O- |
+| Allergies | ❌ | Free text |
+| Emergency Contact | ❌ | Phone/name |
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| **Public Key** | ✅ | Cryptographic public key for blockchain identity |
-| **Date of Birth** | ❌ | Patient's date of birth |
-| **Blood Type** | ❌ | A+, A-, B+, B-, AB+, AB-, O+, O- |
-| **Allergies** | ❌ | Known allergies (free text) |
-| **Emergency Contact** | ❌ | Phone number (e.g., +90-555-123-4567) |
+> The patient's **display name** comes from the linked `User` account
+> (`patient.user.get_full_name()`). Link via Admin Panel → Healthcare → Patients → User field.
 
 **API:**
 ```bash
-POST /api/healthcare/patients/
+POST /api/healthcare/api/patients/
 Authorization: Token YOUR_TOKEN
 Content-Type: application/json
 
-{
-  "public_key": "0xPatientPublicKeyHere",
-  "blood_type": "A+",
-  "allergies": "Penicillin",
-  "emergency_contact": "+90-555-123-4567"
-}
+{"public_key": "0xPatientKey", "blood_type": "A+", "emergency_contact": "+1-555-0100"}
 ```
-
-**Backend Logic** (`healthcare/views.py` → `PatientViewSet.create`):
-- Creates a `Patient` record with auto-generated `patient_id` (SHA-256 hash of UUID + timestamp)
-- Only stores the hash on-chain, not personal data directly
 
 ---
 
 ### 🏥 B. Register a Hospital
 
-**UI:** Navigate to `Healthcare → Add Hospital` or `http://localhost:8000/healthcare/hospitals/add/`
+**UI:** `/healthcare/hospitals/add/`
 
-**Form Fields:**
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| **Hospital Name** | ✅ | Full name (e.g., "Ankara University Hospital") |
-| **License Number** | ✅ | Government-issued license (e.g., "LIC-2025-001") |
-| **Address** | ❌ | Full hospital address |
-| **Public Key** | ✅ | Hospital's cryptographic public key |
-| **Blockchain Network** | ❌ | Link to an active blockchain network |
+| Field | Required | Notes |
+|-------|----------|-------|
+| Hospital Name | ✅ | Full name |
+| License Number | ✅ | Must be unique |
+| Address | ❌ | Free text |
+| Public Key | ✅ | Cryptographic key |
+| Blockchain Network | ❌ | Link to an active network |
 
 **API:**
 ```bash
-POST /api/healthcare/hospitals/
-Authorization: Token YOUR_TOKEN
-Content-Type: application/json
-
-{
-  "name": "Ankara University Hospital",
-  "address": "Ankara, Turkey",
-  "license_number": "LIC-2025-001",
-  "public_key": "0xHospitalPublicKey"
-}
-```
-
-**Backend Logic** (`healthcare/views.py` → `HospitalViewSet.create`):
-- Auto-generates `hospital_id` as SHA-256 hash
-- Can optionally link to a blockchain network for on-chain anchoring
-
----
-
-### 📄 C. Create a Medical Record
-
-**UI:** Navigate to `Healthcare → Add Record` or `http://localhost:8000/healthcare/records/add/`
-
-**Form Fields:**
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| **Patient** | ✅ | Dropdown of registered patients |
-| **Hospital** | ✅ | Dropdown of registered hospitals |
-| **Record Type** | ✅ | DIAGNOSIS, LAB_RESULT, PRESCRIPTION, IMAGING, SURGERY, DISCHARGE, INSURANCE |
-| **Title** | ✅ | Short title (e.g., "Annual Health Checkup 2025") |
-| **Description** | ❌ | Detailed medical description |
-| **Medical File** | ❌ | Upload PDF, JPG, PNG, or DICOM file (encrypted → IPFS) |
-| **IPFS Hash** | ❌ | Pre-uploaded IPFS CID (Qm...) |
-| **Digital Signature** | ✅ | ECDSA signature of record hash |
-
-**Data Flow on Record Creation:**
-1. Record metadata is collected and validated
-2. SHA-256 hash is computed for integrity verification
-3. File is encrypted with AES-256-GCM and uploaded to IPFS
-4. Hash + IPFS CID are submitted as a blockchain transaction
-5. Transaction is batched in Layer-2 rollup with ZK proof
-
-**API:**
-```bash
-POST /api/healthcare/records/
-Authorization: Token YOUR_TOKEN
-Content-Type: application/json
-
-{
-  "patient_id": "PATIENT_ID",
-  "hospital_id": "HOSPITAL_ID",
-  "record_type": "DIAGNOSIS",
-  "title": "Annual Health Checkup",
-  "description": "Patient shows normal vital signs...",
-  "ipfs_hash": "QmTestHash123",
-  "signature": "ECDSA_SIGNATURE_HERE",
-  "file_size": 102400
-}
-```
-
-**Backend Logic** (`healthcare/views.py` → `MedicalRecordViewSet.create`):
-- Creates `MedicalRecord` with auto-computed `data_hash`
-- Creates a `Transaction` (tx_type='CREATE', status='PENDING')
-- Creates an `AuditLog` entry for compliance
-
----
-
-### 🔑 D. Grant Access Permission
-
-**UI:** Navigate to `Healthcare → Grant Access` or `http://localhost:8000/healthcare/permissions/add/`
-
-**Form Fields:**
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| **Record** | ✅ | Dropdown of medical records |
-| **Patient (Grantor)** | ✅ | Patient granting the access |
-| **Grantee ID** | ✅ | Hospital/Lab/Doctor ID receiving access |
-| **Grantee Type** | ✅ | HOSPITAL, LAB, INSURANCE, DOCTOR |
-| **Permission Type** | ✅ | READ (Read Only), WRITE (Read+Write), SHARE (Share with Others) |
-| **Valid Until** | ❌ | Expiration date/time (nullable) |
-| **Purpose** | ✅ | HIPAA-required purpose (e.g., "Emergency treatment") |
-| **Patient Digital Signature** | ✅ | ECDSA authorization signature |
-
-**API:**
-```bash
-POST /api/records/{record_id}/grant-access/
-Authorization: Token YOUR_TOKEN
-Content-Type: application/json
-
-{
-  "grantee": "HOSPITAL_ID",
-  "grantee_type": "HOSPITAL",
-  "permission_type": "READ",
-  "purpose": "Second opinion consultation",
-  "signature": "PATIENT_ECDSA_SIGNATURE",
-  "valid_until": "2026-01-01T00:00:00Z"
-}
-```
-
-**Backend Logic** (`healthcare/views.py` → `permission_add`):
-- Creates `AccessPermission` linked to the record and patient
-- Logs a `SHARE` action in `AuditLog`
-- Access is revocable by deleting the permission record
-
----
-
-### ⛓️ E. Create a Blockchain Transaction (Direct)
-
-**UI:** Navigate to `Blockchain → Create Transaction` or `http://localhost:8000/blockchain/transactions/add/`
-
-**Form Fields:**
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| **Transaction Type** | ✅ | CREATE, UPDATE, SHARE, VERIFY, ACCESS |
-| **Sender ID** | ✅ | Hospital or Patient ID |
-| **Receiver ID** | ❌ | Target entity ID (optional) |
-| **Data Hash** | ✅ | SHA-256 hash of the data |
-| **Digital Signature** | ✅ | ECDSA signature |
-
-**API:**
-```bash
-POST /api/blockchain/transactions/
-Authorization: Token YOUR_TOKEN
-Content-Type: application/json
-
-{
-  "tx_type": "CREATE",
-  "sender": "HOSPITAL_ID",
-  "receiver": "PATIENT_ID",
-  "data_hash": "abc123...",
-  "signature": "ECDSA_SIGNATURE"
-}
+POST /api/healthcare/api/hospitals/
+{"name": "Ankara University Hospital", "license_number": "LIC-001", "public_key": "key"}
 ```
 
 ---
 
-### 📦 F. Create a Rollup Batch
+### 🧪 C. Register a Laboratory
 
-**UI:** Navigate to `Blockchain → Create Rollup` or `http://localhost:8000/blockchain/rollups/create/`
+**UI:** `/healthcare/labs/add/`
 
-**Form Fields:**
+| Field | Required | Notes |
+|-------|----------|-------|
+| Laboratory Name | ✅ | |
+| Accreditation | ❌ | e.g. ISO 15189 |
+| Public Key | ✅ | |
+| Affiliated Hospital | ❌ | Select from dropdown |
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| **Blockchain Network** | ✅ | Select active network |
+---
 
-**How Rollup Batching Works:**
-1. All pending transactions are collected (up to 50)
-2. A Merkle tree is built from transaction hashes
-3. A ZK-SNARK proof is generated for the batch
-4. Only the Merkle root + proof are submitted on-chain
-5. This reduces gas costs by ~75%
+### 🛡️ D. Register an Insurance Provider
+
+**UI:** `/healthcare/insurance/add/`
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| Provider Name | ✅ | |
+| License Number | ✅ | Must be unique |
+| Public Key | ✅ | |
+
+---
+
+### 📄 E. Create a Medical Record
+
+**UI:** `Healthcare → Add Record` → `/healthcare/records/add/`
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| Patient | ✅ | Dropdown |
+| Hospital | ✅ | Dropdown |
+| Record Type | ✅ | DIAGNOSIS, LAB_RESULT, PRESCRIPTION, IMAGING, SURGERY, DISCHARGE, INSURANCE |
+| Title | ✅ | Short descriptive title |
+| Description | ❌ | Clinical notes |
+| IPFS Hash | ❌ | Pre-uploaded CID (Qm…) |
+| Signature | ❌ | ECDSA signature |
+
+**What happens automatically on save:**
+1. Unique `record_id` is generated (SHA-256 of UUID + timestamp)
+2. `data_hash` is computed for integrity verification
+3. A `Transaction` of type `CREATE` is created and linked to the record
+4. An `AuditLog` entry with action `CREATE` is written
+
+**API:**
+```bash
+POST /api/healthcare/api/records/
+{"patient": "PATIENT_ID", "hospital": "HOSPITAL_ID", "record_type": "DIAGNOSIS",
+ "title": "Annual Check", "description": "All vitals normal.", "signature": "sig"}
+```
+
+---
+
+### 🔑 F. Grant Access Permission
+
+**UI:** `/healthcare/permissions/add/` (or **Grant Access** button on any record detail page)
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| Record | ✅ | Dropdown |
+| Patient (Grantor) | ✅ | Patient authorising access |
+| Grantee Name | ✅ | Hospital/Lab/Doctor name |
+| Grantee Type | ✅ | HOSPITAL, LAB, INSURANCE, DOCTOR |
+| Permission Type | ✅ | READ / WRITE / SHARE |
+| Purpose | ✅ | HIPAA required explanation |
+| Valid Until | ❌ | Optional expiry date |
+
+Revoke by clicking the red **X** on the Permissions list. Revoked permissions stay in the audit trail.
+
+---
+
+### ⛓️ G. Create a Blockchain Transaction (Direct)
+
+**UI:** `/blockchain/transactions/add/`
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| Transaction Type | ✅ | CREATE / UPDATE / SHARE / VERIFY / ACCESS |
+| Sender | ✅ | Hospital or Patient ID |
+| Receiver | ❌ | Target entity ID |
+| Data Hash | ✅ | SHA-256 of data |
+| Signature | ✅ | ECDSA signature |
+
+Status flow: `PENDING → BATCHED → CONFIRMED`
+
+---
+
+### 📦 H. Create a Rollup Batch
+
+**UI:** `/blockchain/rollups/create/`
+
+1. Select the target **Blockchain Network**
+2. Click **Generate Batch & ZK Proof**
+
+What happens:
+- All PENDING transactions (up to 50) are collected
+- Merkle tree is built from transaction hashes
+- ZK-SNARK proof is generated for the batch
+- Transactions move `PENDING → BATCHED`
 
 **API:**
 ```bash
 POST /api/v1/rollup/create/
-Authorization: Token YOUR_TOKEN
-Content-Type: application/json
-
-{
-  "network_id": "ethereum_main"
-}
+{"network_id": "ethereum_main"}
 ```
-
-**Backend Logic** (`blockchain/views.py` → `rollup_create`):
-- Fetches all PENDING transactions not yet in a block
-- Creates `RollupBatch` with calculated Merkle root
-- Calls `ZKProofService.generate_proof()` on transaction hashes
-- Updates transaction statuses to 'BATCHED'
 
 ---
 
-### 🔄 G. Cross-Chain Transfer
+### 🔄 I. Cross-Chain Transfer
 
-**UI:** Navigate to `Cross-Chain → Transfer` or `http://localhost:8000/cross-chain/transfer/`
+**UI:** `/cross-chain/transfer/`
 
-**Form Fields:**
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| **Source Chain** | ✅ | Dropdown of active blockchain networks |
-| **Target Chain** | ✅ | Dropdown of active blockchain networks |
-| **Data Hash** | ✅ | SHA-256 hash of data to transfer |
-| **ZK Proof** | ✅ | JSON proof for data verification |
-| **Sender ID** | ✅ | Hospital or entity ID |
-
-**Security Verification:**
-- Message signature is verified
-- ZK proof is validated
-- Nonce is checked for replay attack prevention
-- Relay node verifies before forwarding
+| Field | Required | Notes |
+|-------|----------|-------|
+| Source Network | ✅ | Where the message originates |
+| Target Network | ✅ | Where it is sent (must be different) |
+| Data Hash | ✅ | SHA-256 hash of data being relayed |
+| Signature | ✅ | Simulated ECDSA signature |
+| Nonce | ❌ | Auto-generated if blank |
 
 **API:**
 ```bash
 POST /api/v1/cross-chain/transfer/
-Authorization: Token YOUR_TOKEN
-Content-Type: application/json
-
-{
-  "source_chain": "ethereum_main",
-  "target_chain": "polygon",
-  "data_hash": "data_hash_here",
-  "proof": "zk_proof_here",
-  "sender": "hospital_1"
-}
+{"source_chain": "ethereum_main", "target_chain": "polygon",
+ "data_hash": "abc123", "proof": "zk_proof_json", "sender": "hospital_1"}
 ```
-
-**Backend Logic** (`cross_chain/views.py` → `crosschain_transfer`):
-- Calls `CrossChainRelayService.create_message()` to build the message
-- Calls `CrossChainRelayService.relay_message()` to relay it
-- Stores the `CrossChainMessage` in the database with status
 
 ---
 
-### 🔐 H. Generate a Zero-Knowledge Proof
+### 🔐 J. Generate a Zero-Knowledge Proof
 
-**UI:** Navigate to `ZK Proofs → Generate` or `http://localhost:8000/zk-proofs/generate/`
+**UI:** `/zk-proofs/generate/`
 
-**Form Fields:**
+| Field | Required | Notes |
+|-------|----------|-------|
+| Private Inputs | ✅ | Transaction hashes, one per line |
+| Public Output | ✅ | SHA-256 Merkle root (public commitment) |
+| Proof Type | ❌ | zk-SNARK (default) or zk-STARK |
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| **Private Inputs** | ✅ | Transaction hashes (one per line) — never revealed |
-| **Public Output** | ✅ | SHA-256 Merkle root — public commitment |
-| **Proof Type** | ❌ | zk-SNARK (recommended) or zk-STARK (quantum resistant) |
+**What happens:**
+- `ZKProofService.generate_proof()` creates a JSON proof structure
+- The proof is saved as a `ZKProofRecord` entry (visible in ZK Proof History)
+- The generated JSON is displayed for copy-paste
 
 **API:**
 ```bash
 POST /api/zk-proofs/generate/
-Authorization: Token YOUR_TOKEN
-Content-Type: application/json
-
-{
-  "inputs": ["tx_hash_1", "tx_hash_2", "tx_hash_3"],
-  "public_output": "merkle_root_hash",
-  "proof_type": "zk_snark"
-}
+{"inputs": ["tx_hash_1", "tx_hash_2"], "public_output": "merkle_root", "proof_type": "zk_snark"}
 ```
-
-**Backend Logic** (`zk_proofs/views.py` → `zk_generate`):
-- Creates a `ZKProofService` instance with the selected proof type
-- Generates proof using `_simulate_proof()` (production would use `snarkjs`, `libsnark`, or `ZoKrates`)
-- Returns JSON proof containing: proof type, timestamp, public inputs, private inputs hash, proof values, verification key
 
 ---
 
-### ✅ I. Verify a Zero-Knowledge Proof
+### ✅ K. Verify a Zero-Knowledge Proof
 
-**UI:** Navigate to `ZK Proofs → Verify` or `http://localhost:8000/zk-proofs/verify/`
+**UI:** `/zk-proofs/verify/`
 
-**Form Fields:**
+| Field | Required | Notes |
+|-------|----------|-------|
+| Proof JSON | ✅ | Paste the proof from the generate page |
+| Public Output | ✅ | Expected Merkle root |
+| Expected Inputs | ❌ | Transaction hashes for cross-check |
+| Proof Type | ❌ | zk-SNARK or zk-STARK |
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| **Proof JSON** | ✅ | Paste the ZK proof JSON |
-| **Public Output (Merkle Root)** | ✅ | Expected Merkle root |
-| **Expected Inputs** | ❌ | Transaction hashes to verify against |
-| **Proof Type** | ❌ | zk-SNARK or zk-STARK |
-
-**API:**
-```bash
-POST /api/zk-proofs/verify/
-Authorization: Token YOUR_TOKEN
-Content-Type: application/json
-
-{
-  "proof": "{\"proof_type\": \"zk_snark\", ...}",
-  "public_output": "merkle_root_hash",
-  "expected_inputs": ["tx_hash_1", "tx_hash_2"],
-  "proof_type": "zk_snark"
-}
-```
-
-**Verification Steps** (in `zk_proofs/zk_service.py` → `verify_proof`):
-1. Verify proof type matches
-2. Verify public inputs match the provided Merkle root
-3. Verify input count matches expected inputs
-4. Verify input hash matches computed hash of expected inputs
-5. Verify proof structure has all required keys
+Each verification is also saved as a `ZKProofRecord` with `is_verified` reflecting the result.
 
 ---
 
-### 📏 J. Generate a Range Proof
+### 📏 L. Generate a Range Proof
 
-**UI:** Navigate to `ZK Proofs → Range Proof` or `http://localhost:8000/zk-proofs/range/`
+**UI:** `/zk-proofs/range/`
 
-**Form Fields:**
+| Field | Required | Notes |
+|-------|----------|-------|
+| Value | ✅ | Secret value to prove (e.g. blood pressure 120) |
+| Min | ✅ | Minimum of acceptable range (e.g. 90) |
+| Max | ✅ | Maximum of acceptable range (e.g. 140) |
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| **Value** | ✅ | The value to prove (e.g., blood pressure 120) |
-| **Min** | ✅ | Minimum healthy range (e.g., 90) |
-| **Max** | ✅ | Maximum healthy range (e.g., 140) |
-
-**Use Case:** Prove that a medical value (blood pressure, glucose level, etc.) falls within a healthy range **without revealing the exact value** — critical for HIPAA compliance.
+Use case: prove a medical value is within a healthy range without revealing the exact number — critical for HIPAA compliance.
 
 **API:**
 ```bash
 POST /api/zk-proofs/range-proof/
-Authorization: Token YOUR_TOKEN
-Content-Type: application/json
+{"action": "generate", "value": 120, "min": 90, "max": 140}
 
-{
-  "action": "generate",
-  "value": 120,
-  "min": 90,
-  "max": 140
-}
-```
-
-To verify:
-```bash
+# Verify
 POST /api/zk-proofs/range-proof/
-Authorization: Token YOUR_TOKEN
-Content-Type: application/json
-
-{
-  "action": "verify",
-  "proof": "<proof_json>",
-  "min": 90,
-  "max": 140
-}
+{"action": "verify", "proof": "<proof_json>", "min": 90, "max": 140}
 ```
 
 ---
@@ -530,63 +366,138 @@ Content-Type: application/json
 
 ### Healthcare Module
 
-**Dashboard** (`http://localhost:8000/healthcare/`)
-- Displays counts: patients, hospitals, records, permissions
-- Shows recent patients and recent records in tables
+**Dashboard** (`/healthcare/`)
+- Counts: patients, hospitals, labs, insurance providers, records, permissions
+- Recent patients and recent records tables
 - Quick action buttons for all CRUD operations
 
 **Patient Management:**
-- **List:** `http://localhost:8000/healthcare/patients/`
-- **Add:** `http://localhost:8000/healthcare/patients/add/`
-- **Detail:** `http://localhost:8000/healthcare/patients/{patient_id}/`
+- **List:** `/healthcare/patients/` — search by name, email, ID, blood type; paginated
+- **Add:** `/healthcare/patients/add/`
+- **Detail:** `/healthcare/patients/{patient_id}/` — records, permissions, audit trail
+- **Edit:** `/healthcare/patients/{patient_id}/edit/`
+- **CSV export:** `/healthcare/patients/export/csv/`
 
 **Hospital Management:**
-- **List:** `http://localhost:8000/healthcare/hospitals/`
-- **Add:** `http://localhost:8000/healthcare/hospitals/add/`
-- **Detail:** `http://localhost:8000/healthcare/hospitals/{hospital_id}/`
+- **List:** `/healthcare/hospitals/`
+- **Add:** `/healthcare/hospitals/add/`
+- **Detail:** `/healthcare/hospitals/{hospital_id}/`
+
+**Laboratory Management:**
+- **List:** `/healthcare/labs/`
+- **Add:** `/healthcare/labs/add/`
+- **Detail:** `/healthcare/labs/{lab_id}/`
+
+**Insurance Providers:**
+- **List:** `/healthcare/insurance/`
+- **Add:** `/healthcare/insurance/add/`
+- **Detail:** `/healthcare/insurance/{ins_id}/`
 
 **Medical Records:**
-- **List:** `http://localhost:8000/healthcare/records/`
-- **Add:** `http://localhost:8000/healthcare/records/add/`
-- **Detail:** `http://localhost:8000/healthcare/records/{record_id}/` — shows permissions and audit logs
+- **List:** `/healthcare/records/` — search by title, type, patient
+- **Add:** `/healthcare/records/add/`
+- **Detail:** `/healthcare/records/{record_id}/` — integrity hashes, permissions, audit trail
+- **Edit:** `/healthcare/records/{record_id}/edit/`
+- **CSV export:** `/healthcare/records/export/csv/`
 
-**Access Control:**
-- **Grant:** `http://localhost:8000/healthcare/permissions/add/`
-- Patients grant access to hospitals/labs/insurance via digital signatures
-- Each permission has a type (READ/WRITE/SHARE), purpose, and optional expiration
+**Access Permissions:**
+- **List:** `/healthcare/permissions/`
+- **Grant:** `/healthcare/permissions/add/`
 
-### Blockchain Module
+**Audit Log:**
+- **List:** `/healthcare/audit/` — filter by action and actor type; paginated
+- **CSV export:** `/healthcare/audit/export/csv/`
 
-**Dashboard** (`http://localhost:8000/blockchain/`)
-- Stats: total blocks, transactions, pending, validators
-- Recent blocks table with hash, Merkle root, TX count, network, time
-- Active networks list with consensus type
-
-**Blocks:** `http://localhost:8000/blockchain/blocks/`
-**Transactions:** `http://localhost:8000/blockchain/transactions/`
-**Rollups:** `http://localhost:8000/blockchain/rollups/`
-
-### Cross-Chain Module
-
-**Dashboard** (`http://localhost:8000/cross-chain/`)
-- Total messages, relayed, pending, rejected counts
-- Message list with source chain, target chain, status
-
-**Transfer:** `http://localhost:8000/cross-chain/transfer/`
-**Message Detail:** `http://localhost:8000/cross-chain/{message_id}/`
-
-### ZK Proofs Module
-
-**Dashboard** (`http://localhost:8000/zk-proofs/`)
-- Navigation to generate, verify, and range proof pages
-
-**Generate:** `http://localhost:8000/zk-proofs/generate/`
-**Verify:** `http://localhost:8000/zk-proofs/verify/`
-**Range:** `http://localhost:8000/zk-proofs/range/`
+**Reports:**
+- **Hub:** `/healthcare/reports/`
+- **System Overview:** `/healthcare/reports/overview/`
+- **Audit & Compliance:** `/healthcare/reports/audit/`
+- Per-entity reports via **Report** button on detail pages
 
 ---
 
-## 5. API Reference
+### Blockchain Module
+
+**Dashboard** (`/blockchain/`)
+- Stats: total blocks, transactions, pending, validators
+- Recent blocks table (hash, Merkle root, TX count, network, time)
+- Active networks with consensus type
+
+**Blocks:** `/blockchain/blocks/` → detail: `/blockchain/blocks/{block_number}/`
+**Transactions:** `/blockchain/transactions/`
+- CSV export: `/blockchain/transactions/export/csv/`
+
+**Rollup Batches:** `/blockchain/rollups/`
+- Create: `/blockchain/rollups/create/`
+- Detail: `/blockchain/rollups/{batch_id}/`
+
+---
+
+### Cross-Chain Module
+
+**Dashboard** (`/cross-chain/`)
+- Counts: total messages, relayed, pending, rejected
+- Recent message list with source/target chain and status
+
+**New Transfer:** `/cross-chain/transfer/`
+**Message Detail:** `/cross-chain/{message_id}/`
+
+---
+
+### ZK Proofs Module
+
+**Dashboard** (`/zk-proofs/`)
+- Summary cards: total proofs generated and verified
+- **Proof History** table — all `ZKProofRecord` entries (type, inputs, output, verified, time)
+
+**Generate:** `/zk-proofs/generate/`
+**Verify:** `/zk-proofs/verify/`
+**Range Proof:** `/zk-proofs/range/`
+
+---
+
+## 5. Dashboard Charts
+
+The main dashboard (`/dashboard/`) contains three live charts rendered with **Chart.js 4.4**:
+
+### Transaction Volume (7-day bar chart)
+- Shows the number of blockchain transactions per day for the last 7 days
+- Data is computed server-side with `TruncDate` + `Count` and passed as JSON
+
+### Record Type Distribution (doughnut chart)
+- Shows the breakdown of active `MedicalRecord` records by `record_type`
+- Types: DIAGNOSIS, LAB_RESULT, PRESCRIPTION, IMAGING, SURGERY, DISCHARGE, INSURANCE
+
+### Audit Activity (horizontal bar chart)
+- Shows the 10 most common `AuditLog` actions over the last 30 days
+- Useful for compliance monitoring at a glance
+
+Charts are responsive and update on every page load. They gracefully render empty when there is no data yet.
+
+---
+
+## 6. CSV Data Exports
+
+Every major list view includes a **CSV** download button. Exports are served as file downloads with appropriate `Content-Disposition` headers. Up to 10 000 rows are exported per request.
+
+| Export | URL | Columns |
+|--------|-----|---------|
+| Patients | `/healthcare/patients/export/csv/` | Patient ID, Name, Email, DOB, Blood Type, Emergency Contact, Status, Registered |
+| Medical Records | `/healthcare/records/export/csv/` | Record ID, Title, Type, Patient, Hospital, IPFS Hash, On-chain TX, Active, Created |
+| Audit Log | `/healthcare/audit/export/csv/` | Action, Actor, Actor Type, Record ID, Details, IP Address, Timestamp |
+| Transactions | `/blockchain/transactions/export/csv/` | TX Hash, Type, Status, Sender, Receiver, Gas Used, Block, Timestamp |
+
+### How to use
+
+1. Navigate to the list page (e.g. `/healthcare/patients/`)
+2. Click the **CSV** button in the top-right corner
+3. Your browser downloads the file immediately
+
+All exports require login. Unauthenticated requests redirect to `/accounts/login/`.
+
+---
+
+## 7. API Reference
 
 ### Authentication
 
@@ -595,26 +506,22 @@ All API endpoints (except login) require **Token Authentication**.
 ```bash
 # Get token
 POST /api/v1/auth/login/
-{
-  "username": "admin",
-  "password": "your_password"
-}
+{"username": "admin", "password": "your_password"}
+# → {"token": "abc123...", "user_id": 1, "username": "admin"}
 
-# Response: {"token": "abc123...", "user_id": 1, "username": "admin"}
-
-# Use token in subsequent requests
+# Use in all subsequent requests
 Authorization: Token abc123...
 ```
 
-### Unified API Endpoints (`api/v1/`)
+### Unified API (`/api/v1/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/v1/auth/login/` | POST | Authenticate and get token |
 | `/api/v1/dashboard/` | GET | System-wide statistics |
 | `/api/v1/networks/status/` | GET | All network health statuses |
-| `/api/v1/rollup/create/` | POST | Create a Layer-2 rollup batch |
-| `/api/v1/rollup/submit/` | POST | Submit rollup batch to main chain |
+| `/api/v1/rollup/create/` | POST | Create Layer-2 rollup batch |
+| `/api/v1/rollup/submit/` | POST | Submit rollup to main chain |
 | `/api/v1/cross-chain/transfer/` | POST | Initiate cross-chain transfer |
 | `/api/v1/zk/verify/` | POST | Verify a ZK proof |
 | `/api/v1/merkle/` | POST | Build/verify Merkle tree |
@@ -622,43 +529,39 @@ Authorization: Token abc123...
 | `/api/v1/records/{id}/grant-access/` | POST | Grant access to a record |
 | `/api/v1/records/{id}/audit/` | GET | Get audit trail for a record |
 
-### Healthcare API (`api/healthcare/`)
+### Healthcare API (`/api/healthcare/api/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/healthcare/patients/` | GET, POST | List or create patients |
-| `/api/healthcare/patients/{id}/` | GET, PUT, DELETE | CRUD single patient |
-| `/api/healthcare/patients/{id}/records/` | GET | Get patient's records |
-| `/api/healthcare/hospitals/` | GET, POST | List or create hospitals |
-| `/api/healthcare/hospitals/{id}/` | GET, PUT, DELETE | CRUD single hospital |
-| `/api/healthcare/records/` | GET, POST | List or create medical records |
-| `/api/healthcare/records/{id}/` | GET, PUT, DELETE | CRUD single record |
-| `/api/healthcare/records/{id}/grant_access/` | POST | Grant access to record |
-| `/api/healthcare/records/{id}/verify_integrity/` | POST | Verify record hash |
-| `/api/healthcare/records/{id}/zk_verify/` | POST | ZK verify record |
-| `/api/healthcare/audit/` | GET | List audit logs |
+| `/api/healthcare/api/patients/` | GET, POST | List or create patients |
+| `/api/healthcare/api/patients/{id}/` | GET, PUT, DELETE | CRUD single patient |
+| `/api/healthcare/api/hospitals/` | GET, POST | List or create hospitals |
+| `/api/healthcare/api/records/` | GET, POST | List or create medical records |
+| `/api/healthcare/api/records/{id}/` | GET, PUT, DELETE | CRUD single record |
+| `/api/healthcare/api/records/{id}/grant_access/` | POST | Grant access |
+| `/api/healthcare/api/records/{id}/verify_integrity/` | POST | Verify record hash |
+| `/api/healthcare/api/audit/` | GET | List audit logs |
 
-### Blockchain API (`api/blockchain/`)
+### Blockchain API (`/api/blockchain/api/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/blockchain/networks/` | GET, POST | List or create networks |
-| `/api/blockchain/blocks/` | GET, POST | List or create blocks |
-| `/api/blockchain/transactions/` | GET, POST | List or create transactions |
-| `/api/blockchain/rollup/` | POST | Create rollup batch |
-| `/api/blockchain/consensus/` | GET | Consensus info |
-| `/api/blockchain/dashboard/` | GET | Blockchain-specific dashboard stats |
+| `/api/blockchain/api/networks/` | GET, POST | List or create networks |
+| `/api/blockchain/api/blocks/` | GET, POST | List or create blocks |
+| `/api/blockchain/api/transactions/` | GET, POST | List or create transactions |
+| `/api/blockchain/api/rollup/` | POST | Create rollup batch |
+| `/api/blockchain/api/dashboard/` | GET | Blockchain-specific stats |
 
-### Cross-Chain API (`api/cross-chain/`)
+### Cross-Chain API (`/api/cross-chain/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/cross-chain/relay/` | POST | Relay a cross-chain message |
-| `/api/cross-chain/verify/` | POST | Verify a cross-chain message |
-| `/api/cross-chain/status/{message_id}/` | GET | Get relay status |
+| `/api/cross-chain/verify/` | POST | Verify a message |
+| `/api/cross-chain/status/{id}/` | GET | Get relay status |
 | `/api/cross-chain/stats/` | GET | Bridge statistics |
 
-### ZK Proofs API (`api/zk-proofs/`)
+### ZK Proofs API (`/api/zk-proofs/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -668,7 +571,32 @@ Authorization: Token abc123...
 
 ---
 
-## 6. How the Blockchain Works
+## 8. Interactive API Documentation
+
+MediChain ships with **drf-spectacular** providing auto-generated, interactive API docs:
+
+| URL | Interface | Description |
+|-----|-----------|-------------|
+| `/api/docs/` | Swagger UI | Explore and test endpoints in-browser |
+| `/api/redoc/` | ReDoc | Clean read-only API reference |
+| `/api/schema/` | OpenAPI JSON | Raw schema for import into Postman, Insomnia, etc. |
+
+### Using Swagger UI
+
+1. Go to **http://127.0.0.1:8000/api/docs/**
+2. Click **Authorize** and enter `Token YOUR_TOKEN` to authenticate
+3. Browse endpoints by tag (Healthcare, Blockchain, ZK Proofs, etc.)
+4. Click any endpoint → **Try it out** → fill parameters → **Execute**
+
+### Importing into Postman
+
+1. Go to `/api/schema/` and save the JSON response
+2. In Postman: **Import → Raw text** → paste the JSON
+3. All endpoints are imported with their request schemas
+
+---
+
+## 9. How the Blockchain Works
 
 ### Transaction Lifecycle
 
@@ -692,310 +620,201 @@ Authorization: Token abc123...
 | Field | Type | Description |
 |-------|------|-------------|
 | block_number | BigInteger | Sequential block number |
-| previous_hash | Char(64) | Hash of previous block (chain linkage) |
+| previous_hash | Char(64) | Hash of previous block |
 | merkle_root | Char(64) | Merkle root of all transactions in block |
-| rollup_proof | Text | ZK-SNARK proof for the rollup batch |
+| rollup_proof | Text | ZK-SNARK proof payload |
 | timestamp | DateTime | When block was created |
-| nonce | BigInteger | Proof-of-work or consensus nonce |
-| hash | Char(64) | SHA-256 hash of this block |
-| transaction_count | Integer | Number of transactions in block |
+| hash | Char(64) | SHA-256 of this block |
+| transaction_count | Integer | Number of transactions |
+
+### Layer-2 Rollup
+
+Rollup batches reduce the cost of on-chain storage:
+1. Collect up to `ROLLUP_BATCH_SIZE` (default 50) pending transactions
+2. Compute a Merkle tree — `RollupBatch.calculate_merkle_root()`
+3. Generate a ZK-SNARK proof — `ZKProofService.generate_proof()`
+4. Store only the Merkle root and proof on-chain (not all transaction data)
+5. This reduces storage by ~75% compared to posting each transaction individually
 
 ---
 
-## 7. Zero-Knowledge Proofs
+## 10. Zero-Knowledge Proofs & Proof History
 
 ### What is a ZK Proof?
 
-A Zero-Knowledge Proof allows one party (the prover) to prove to another party (the verifier) that a statement is true **without revealing any information beyond the validity of the statement itself**.
+A Zero-Knowledge Proof allows a prover to demonstrate a statement is true without
+revealing any information beyond the validity of the statement.
 
 ### Use Cases in MediChain
 
-1. **Medical Record Verification:** Prove a record exists and hasn't been tampered with without revealing the record contents.
-2. **Cross-Chain Transfers:** Prove ownership of data on one chain without revealing the data when transferring to another chain.
-3. **Range Proofs:** Prove that a medical value (blood pressure, glucose, etc.) is within a healthy range without revealing the exact value.
+1. **Record verification:** Prove a record exists and hasn't been tampered with
+2. **Cross-chain transfers:** Prove data ownership when relaying between chains
+3. **Range proofs:** Prove a medical value is within a healthy range without revealing it
 
-### Supported Proof Types
+### Supported Types
 
 | Type | Strengths | Use Case |
 |------|-----------|----------|
-| **zk-SNARK** | Small proof size, fast verification | Default for rollups and transfers |
+| **zk-SNARK** | Small proof, fast verification | Default for rollups |
 | **zk-STARK** | Quantum-resistant, no trusted setup | Future-proof security |
-| **Range Proof** | Prove value within [min, max] | Medical value compliance |
+| **Range Proof** | Prove value ∈ [min, max] | Medical value compliance |
 
-### How Proofs are Generated
+> **Implementation note:** MediChain's proofs are SHA-256-based simulations, not real
+> cryptographic ZK circuits. `ZKProofService.verify_proof()` re-hashes the inputs and
+> compares structure. Production use would require `snarkjs`, `libsnark`, or `ZoKrates`.
 
-1. **Private Inputs:** Transaction hashes or data values that must remain secret
-2. **Public Output:** Merkle root or committed value that can be publicly verified
-3. **Proof Generation:** `ZKProofService.generate_proof(inputs, public_output)` creates a JSON proof
-4. **Verification:** `ZKProofService.verify_proof(proof, public_output, expected_inputs)` returns True/False
+### ZK Proof History (`ZKProofRecord`)
+
+Every generate and verify action through the UI is persisted in the `ZKProofRecord`
+model (table `zk_proof_records`). Fields:
+
+| Field | Description |
+|-------|-------------|
+| `proof_type` | zk_snark / zk_stark / range |
+| `inputs` | JSON array of private inputs |
+| `public_output` | Merkle root or committed value |
+| `proof_payload` | Full JSON proof structure |
+| `generated_by` | Username or IP of requester |
+| `is_verified` | True if verification passed |
+| `created_at` | Timestamp |
+
+The **ZK Dashboard** (`/zk-proofs/`) displays the last 20 entries in the Proof History
+table with colour-coded verification status badges.
 
 ---
 
-## 8. Cross-Chain Relay
+## 11. Cross-Chain Relay
 
-### Supported Networks
-
-| Network ID | Name | Chain ID | Consensus |
-|------------|------|----------|-----------|
-| ethereum_main | Ethereum Mainnet | 1 | PoS |
-| polygon | Polygon | 137 | PoS |
-| hyperledger | Hyperledger Fabric | 999 | PBFT |
-
-### How Cross-Chain Transfer Works
+### How It Works
 
 ```
-Source Chain                Relay Service              Target Chain
-    │                            │                           │
-    │  1. Create Message         │                           │
-    │  ├─ data_hash             │                           │
-    │  ├─ proof (ZK)            │                           │
-    │  └─ sender signature      │                           │
-    │                            │                           │
-    │                            │  2. Verify Message         │
-    │                            │  ├─ Check signature       │
-    │                            │  ├─ Validate ZK proof     │
-    │                            │  └─ Replay attack check   │
-    │                            │                           │
-    │  3. Status: RELAYED        │                           │
-    │◄───────────────────────────│──────────────────────────►│
+Source Chain          Relay Service           Target Chain
+    │                      │                       │
+    │  1. Create Message    │                       │
+    │  ├─ data_hash        │                       │
+    │  └─ ZK proof         │                       │
+    │                      │  2. Verify            │
+    │                      │  ├─ ZK proof check    │
+    │                      │  └─ Nonce check       │
+    │                      │                       │
+    │  3. Status: RELAYED  │──────────────────────►│
 ```
 
 ### Security Measures
 
-- **Signature Verification:** Every message is signed with the sender's private key
-- **ZK Proof Validation:** Proof must verify against the data hash
-- **Replay Attack Prevention:** Each message has a unique nonce (checked against history)
-- **Status Tracking:** Messages can be PENDING, RELAYED, or REJECTED
+- **ZK Proof Validation:** `CrossChainRelayService` calls `ZKProofService.verify_proof()` before relaying
+- **Nonce Replay Prevention:** Stubs in place (`_is_nonce_used` / `_mark_nonce_used`) — full implementation TODO
+- **Status Tracking:** Messages are `PENDING → RELAYED → VERIFIED` or `REJECTED`
 
 ---
 
-## 9. Testing
+## 12. Testing
 
-### Run All Tests
+### Run Tests
 
-```bash
+```powershell
+# Full suite
 python manage.py test tests --verbosity=2
-```
 
-**Expected Output:**
-```
-test_generate_proof (tests.test_medichain.ZKProofServiceTest) ... ok
-test_verify_proof_valid (tests.test_medichain.ZKProofServiceTest) ... ok
-test_create_message (tests.test_medichain.CrossChainRelayTest) ... ok
-test_dashboard_api (tests.test_medichain.APIIntegrationTest) ... ok
-...
-Ran 25 tests in 3.456s
-OK
-```
-
-### Run Specific Test Modules
-
-```bash
-# ZK Proof tests only
+# Single class
 python manage.py test tests.test_medichain.ZKProofServiceTest
 
-# Cross-chain relay tests
-python manage.py test tests.test_medichain.CrossChainRelayTest
+# Single test
+python manage.py test tests.test_medichain.APIIntegrationTest.test_dashboard_api
 
-# API integration tests
-python manage.py test tests.test_medichain.APIIntegrationTest
-
-# Performance benchmarks
-python manage.py test tests.test_medichain.PerformanceTest
-
-# Blockchain model tests
-python manage.py test tests.test_medichain.BlockchainModelTest
-
-# Healthcare model tests
-python manage.py test tests.test_medichain.HealthcareModelTest
+# Skip the slow PerformanceTest during iteration
+python manage.py test tests.test_medichain.ZKProofServiceTest tests.test_medichain.CrossChainRelayTest tests.test_medichain.APIIntegrationTest
 ```
 
-### Run with Coverage Report
+### Coverage Report
 
-```bash
-pip install coverage
+```powershell
 coverage run --source='.' manage.py test tests
 coverage html
-# Open htmlcov/index.html in your browser
+# Open htmlcov/index.html in browser
 ```
+
+### Test Classes
+
+| Class | What it covers |
+|-------|---------------|
+| `ZKProofServiceTest` | ZK-SNARK/STARK generation and verification |
+| `MerkleTreeTest` | Merkle tree construction and root computation |
+| `CrossChainRelayTest` | Message creation, relay, and status updates |
+| `BlockchainModelTest` | Block and Transaction SHA-256 hash auto-computation |
+| `HealthcareModelTest` | Patient, Hospital, MedicalRecord model save hooks |
+| `APIIntegrationTest` | DRF endpoint authentication and response status |
+| `PerformanceTest` | Bulk transaction and rollup throughput (slow — skip when iterating) |
 
 ---
 
-## 10. Production Deployment
+## 13. Production Deployment
 
-### Security Settings (`medichain_project/settings.py`)
+### Docker Compose (recommended)
+
+```bash
+# Edit settings.py first: DEBUG=False, strong SECRET_KEY
+docker compose up -d
+```
+
+### Gunicorn + Nginx
+
+```bash
+gunicorn medichain_project.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 120
+```
+
+Nginx snippet:
+```nginx
+location / { proxy_pass http://127.0.0.1:8000; proxy_set_header Host $host; }
+location /static/ { alias /app/staticfiles/; }
+location /media/ { alias /app/media/; }
+```
+
+### Security checklist
 
 ```python
 DEBUG = False
-ALLOWED_HOSTS = ['yourdomain.com', 'www.yourdomain.com']
-SECRET_KEY = os.environ.get('SECRET_KEY')  # From environment variable
-
-# Security middleware
+ALLOWED_HOSTS = ['yourdomain.com']
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
-SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 ```
 
-### Using Gunicorn
+### Database backup
 
 ```bash
-pip install gunicorn
-gunicorn medichain_project.wsgi:application --bind 0.0.0.0:8000 --workers 4
-```
-
-### Nginx Reverse Proxy
-
-```nginx
-server {
-    listen 80;
-    server_name yourdomain.com;
-
-    location / {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-
-    location /static/ {
-        alias /path/to/medichain_django/medichain_project/staticfiles/;
-    }
-
-    location /media/ {
-        alias /path/to/medichain_django/medichain_project/media/;
-    }
-}
-```
-
-### SSL/TLS with Let's Encrypt
-
-```bash
-sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d yourdomain.com
-```
-
-### Database Backup
-
-```bash
-# Backup PostgreSQL database
-pg_dump -U medichain_user medichain_db > backup_$(date +%Y%m%d).sql
-
-# Restore from backup
-psql -U medichain_user medichain_db < backup_20250101.sql
+pg_dump -U postgres -p 5433 medichain_db > backup_$(date +%Y%m%d).sql
 ```
 
 ---
 
-## 11. Troubleshooting
+## 14. Troubleshooting
 
-### Issue: "Command not found: python"
-```bash
-# Use python3 instead
-python3 -m venv venv
-python3 manage.py runserver
-```
+### "could not connect to server" (PostgreSQL)
 
-### Issue: "psycopg2.errors.InsufficientPrivilege"
-```sql
--- In psql
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO medichain_user;
-ALTER USER medichain_user CREATEDB;
-```
+Check PostgreSQL is running on port 5433 and `medichain_db` exists.
 
-### Issue: "django.db.utils.OperationalError: could not connect to server"
-```bash
-# Ensure PostgreSQL is running
-sudo systemctl start postgresql    # Linux
-brew services start postgresql     # macOS
-# Windows: Start from Services panel
-```
+### Django `{{ block.xxx }}` renders empty
 
-### Issue: "ImportError: No module named 'rest_framework'"
-```bash
-source venv/bin/activate           # Linux/macOS
-# or
-venv\Scripts\activate              # Windows
-pip install -r requirements.txt
-```
+Any context variable named `block` is silently overridden by Django's template engine
+(conflict with `{% block %}` tag). Rename the view context variable to something else
+(e.g. `blk`) and update all template references.
 
-### Issue: "Port 8000 already in use"
-```bash
-python manage.py runserver 8080
-# or
-python manage.py runserver 9000
-```
+### "export" URL captured as a hash/ID
 
-### Issue: CSRF errors in API requests
-```bash
-# For testing, use Token Authentication in headers
-Authorization: Token YOUR_TOKEN
-# Token is obtained via POST /api/v1/auth/login/
-```
+Static paths (`.../export/csv/`) must appear **before** parameterized paths
+(`.../\<str:tx_hash\>/`) in `urlpatterns`. Django matches top-to-bottom.
+
+### Charts not rendering
+
+Verify Chart.js is loading via CDN. The dashboard uses `{% block extra_scripts %}` in
+`base.html` — not `{% block extra_js %}`. If you override `base.html`, preserve that block.
+
+### CSV download returns 302 (redirect to login)
+
+All CSV export views require authentication. Log in first, or include a valid session cookie.
 
 ---
 
-## Quick Reference — All Data Input Points
-
-| # | Action | URL (UI) | API Endpoint | Key Fields |
-|---|--------|----------|--------------|------------|
-| 1 | **Register Patient** | `/healthcare/patients/add/` | `POST /api/healthcare/patients/` | public_key, blood_type, allergies, emergency_contact |
-| 2 | **Register Hospital** | `/healthcare/hospitals/add/` | `POST /api/healthcare/hospitals/` | name, license_number, public_key, blockchain_network |
-| 3 | **Create Medical Record** | `/healthcare/records/add/` | `POST /api/healthcare/records/` | patient_id, hospital_id, record_type, title, description, ipfs_hash, signature |
-| 4 | **Grant Access** | `/healthcare/permissions/add/` | `POST /api/records/{id}/grant-access/` | record_id, patient_id, grantee, grantee_type, permission_type, purpose, signature |
-| 5 | **Create Transaction** | `/blockchain/transactions/add/` | `POST /api/blockchain/transactions/` | tx_type, sender, receiver, data_hash, signature |
-| 6 | **Create Rollup** | `/blockchain/rollups/create/` | `POST /api/v1/rollup/create/` | network_id |
-| 7 | **Cross-Chain Transfer** | `/cross-chain/transfer/` | `POST /api/v1/cross-chain/transfer/` | source_chain, target_chain, data_hash, proof, sender |
-| 8 | **Generate ZK Proof** | `/zk-proofs/generate/` | `POST /api/zk-proofs/generate/` | inputs, public_output, proof_type |
-| 9 | **Verify ZK Proof** | `/zk-proofs/verify/` | `POST /api/zk-proofs/verify/` | proof, public_output, expected_inputs, proof_type |
-| 10 | **Range Proof** | `/zk-proofs/range/` | `POST /api/zk-proofs/range-proof/` | value, min, max |
-
----
-
-## Configuration — `settings.py` MediChain Section
-
-```python
-MEDICHAIN_CONFIG = {
-    'BLOCKCHAIN_NETWORKS': [
-        {'id': 'ethereum_main', 'name': 'Ethereum Mainnet', 'chain_id': 1, 'rpc_url': 'https://mainnet.infura.io/v3/'},
-        {'id': 'polygon', 'name': 'Polygon', 'chain_id': 137, 'rpc_url': 'https://polygon-rpc.com'},
-        {'id': 'hyperledger', 'name': 'Hyperledger Fabric', 'chain_id': 999, 'rpc_url': 'http://localhost:7051'},
-    ],
-    'ROLLUP_BATCH_SIZE': 50,
-    'ZK_PROOF_TYPE': 'zk_snark',
-    'CROSS_CHAIN_RELAY_INTERVAL': 1.0,
-    'IPFS_GATEWAY': 'https://ipfs.io/ipfs/',
-    'ENCRYPTION_ALGORITHM': 'AES-256-GCM',
-    'HASH_FUNCTION': 'SHA-256',
-    'CONSENSUS_MECHANISM': 'PBFT',
-    'BLOCK_TIME': 12,
-}
-```
-
----
-
-## UI Theme Options
-
-The application features **four built-in themes**, cycled via the moon/sun icon button in the top-right navbar:
-
-1. **Dark Theme** (default) — Deep navy background, cyan accents
-2. **Light Theme** — Clean white background, blue accents
-3. **Blue-Black Theme** — Near-black with electric blue borders
-4. **Warm-Dark Theme** — Brown/amber tones for reduced eye strain
-
-The sidebar also supports **collapse/expand** via the chevron button.
-
----
-
-## Summary
-
-MediChain provides a complete framework for **privacy-preserving healthcare data exchange** using:
-
-- **Blockchain anchoring** — SHA-256 hashes of medical records stored on-chain
-- **Layer-2 Rollups** — 50 transactions batched per block with 75% gas reduction
-- **Zero-Knowledge Proofs** — Verify data integrity without revealing contents
-- **Cross-Chain Relay** — Interoperability between Ethereum, Polygon, and Hyperledger
-- **Fine-grained Access Control** — Patient-controlled permissions with audit trails
-- **HIPAA/GDPR Compliance** — No PHI stored on-chain; AES-256-GCM encryption for off-chain data
-
-All interaction points — whether through the web UI or REST API — ultimately create, read, update, or query the core models: **Patients**, **Hospitals**, **MedicalRecords**, **Transactions**, **Blocks**, **RollupBatches**, and **CrossChainMessages**.
+*MediChain Framework v1.1 — Department of Artificial Intelligence Technologies, Ankara University*

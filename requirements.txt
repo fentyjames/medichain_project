@@ -1,44 +1,48 @@
 # MediChain Django Framework Requirements
-# Generated for: Scalable Cross-Chain Layer-2 Blockchain Framework
+# Pinned versions matching the installed environment (Python 3.12)
 
 # Core Framework
-django>=4.2.0,<5.0
-djangorestframework>=3.14.0
-django-cors-headers>=4.0.0
+Django==4.2.30
+djangorestframework==3.17.1
+django-cors-headers==4.7.0
 
 # Database
-psycopg2-binary>=2.9.0
+psycopg2-binary==2.9.12
 
-# Authentication
-pyotp>=2.9.0
+# Authentication & OTP
+pyotp==2.9.0
 
 # Cryptography & ZK Proofs
-cryptography>=41.0.0
-pycryptodome>=3.18.0
+cryptography==48.0.0
+pycryptodome==3.23.0
 
 # Blockchain & Web3
-web3>=6.0.0
-eth-account>=0.9.0
+web3==7.16.0
+eth-account==0.13.7
 
 # IPFS & Storage
-ipfshttpclient>=0.8.0a2
+ipfshttpclient==0.8.0a2
 
 # Async & Tasks
-celery>=5.3.0
-redis>=4.5.0
+celery==5.6.3
+redis==7.4.0
 
 # Testing
-pytest>=7.4.0
-pytest-django>=4.5.0
+pytest==9.0.3
+pytest-django==4.12.0
+coverage==7.8.0
 
-# Documentation
-drf-spectacular>=0.26.0
+# API Documentation
+drf-spectacular==0.29.0
 
 # Production
-gunicorn>=21.0.0
-whitenoise>=6.5.0
+gunicorn==26.0.0
+whitenoise==6.12.0
 
 # Utilities
-python-decouple>=3.8.0
-requests>=2.31.0
-Pillow>=10.0.0
+python-decouple==3.8
+requests==2.34.0
+Pillow==12.2.0
+
+# Browser automation (dev/screenshots only)
+playwright==1.59.0
