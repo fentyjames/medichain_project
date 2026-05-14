@@ -1,28 +1,28 @@
 {% extends 'base.html' %}
-{% block title %}Block #{{ block.block_number }} - MediChain{% endblock %}
+{% block title %}Block #{{ blk.block_number }} - MediChain{% endblock %}
 
 {% block content %}
 <nav aria-label="breadcrumb" class="mb-4">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'blockchain_dashboard' %}">Blockchain</a></li>
         <li class="breadcrumb-item"><a href="{% url 'block_list' %}">Blocks</a></li>
-        <li class="breadcrumb-item active">Block #{{ block.block_number }}</li>
+        <li class="breadcrumb-item active">Block #{{ blk.block_number }}</li>
     </ol>
 </nav>
 
 <div class="d-flex justify-content-between align-items-start mb-4">
     <div>
         <h2 style="color:var(--accent);">
-            <i class="bi bi-box"></i> Block <span style="font-family:monospace;">#{{ block.block_number }}</span>
+            <i class="bi bi-box"></i> Block <span style="font-family:monospace;">#{{ blk.block_number }}</span>
         </h2>
         <small class="text-muted">
-            <i class="bi bi-link-45deg"></i> {{ block.network.name }}
+            <i class="bi bi-link-45deg"></i> {{ blk.network.name }}
             &nbsp;&middot;&nbsp;
-            <i class="bi bi-calendar3"></i> {{ block.timestamp|date:"d M Y, H:i" }}
+            <i class="bi bi-calendar3"></i> {{ blk.timestamp|date:"d M Y, H:i" }}
         </small>
     </div>
     <span class="badge" style="background:var(--accent);color:#000;font-size:1rem;padding:8px 16px;">
-        {{ block.transaction_count }} TX{{ block.transaction_count|pluralize }}
+        {{ blk.transaction_count }} TX{{ blk.transaction_count|pluralize }}
     </span>
 </div>
 
@@ -35,30 +35,30 @@
                 <div class="mb-3">
                     <label class="form-label text-muted small mb-1">Block Hash</label>
                     <div class="p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);">
-                        <code class="hash-text" onclick="copyToClipboard('{{ block.hash }}')"
+                        <code class="hash-text" onclick="copyToClipboard('{{ blk.hash }}')"
                               style="cursor:pointer;word-break:break-all;" title="Click to copy">
-                            {{ block.hash }}
+                            {{ blk.hash }}
                         </code>
                     </div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label text-muted small mb-1">Previous Hash</label>
                     <div class="p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);">
-                        <code class="hash-text" style="word-break:break-all;">{{ block.previous_hash }}</code>
+                        <code class="hash-text" style="word-break:break-all;">{{ blk.previous_hash }}</code>
                     </div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label text-muted small mb-1">Merkle Root</label>
                     <div class="p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);">
-                        <code class="hash-text" style="word-break:break-all;">{{ block.merkle_root }}</code>
+                        <code class="hash-text" style="word-break:break-all;">{{ blk.merkle_root }}</code>
                     </div>
                 </div>
-                {% if block.rollup_proof %}
+                {% if blk.rollup_proof %}
                 <div class="mb-0">
                     <label class="form-label text-muted small mb-1">Rollup Proof</label>
                     <div class="p-2 rounded" style="background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.2);">
                         <code style="font-size:0.72rem;color:#c4b5fd;word-break:break-all;">
-                            {{ block.rollup_proof|truncatechars:200 }}
+                            {{ blk.rollup_proof|truncatechars:200 }}
                         </code>
                     </div>
                 </div>
@@ -113,22 +113,22 @@
             <div class="card-body">
                 <dl class="row mb-0">
                     <dt class="col-5 text-muted">Block #</dt>
-                    <dd class="col-7 fw-bold" style="color:var(--accent);">{{ block.block_number }}</dd>
+                    <dd class="col-7 fw-bold" style="color:var(--accent);">{{ blk.block_number }}</dd>
 
                     <dt class="col-5 text-muted">Network</dt>
-                    <dd class="col-7">{{ block.network.name }}</dd>
+                    <dd class="col-7">{{ blk.network.name }}</dd>
 
                     <dt class="col-5 text-muted">Chain ID</dt>
-                    <dd class="col-7"><code>{{ block.network.chain_id }}</code></dd>
+                    <dd class="col-7"><code>{{ blk.network.chain_id }}</code></dd>
 
                     <dt class="col-5 text-muted">Nonce</dt>
-                    <dd class="col-7"><code>{{ block.nonce }}</code></dd>
+                    <dd class="col-7"><code>{{ blk.nonce }}</code></dd>
 
                     <dt class="col-5 text-muted">TX Count</dt>
-                    <dd class="col-7">{{ block.transaction_count }}</dd>
+                    <dd class="col-7">{{ blk.transaction_count }}</dd>
 
                     <dt class="col-5 text-muted">Timestamp</dt>
-                    <dd class="col-7"><small>{{ block.timestamp|date:"d M Y, H:i:s" }}</small></dd>
+                    <dd class="col-7"><small>{{ blk.timestamp|date:"d M Y, H:i:s" }}</small></dd>
                 </dl>
             </div>
         </div>

@@ -107,6 +107,13 @@ def record_login_attempt(ip_address, username, successful):
 @login_required
 def index(request):
     """Main dashboard view - renders index.html with system stats"""
+    import json
+    from datetime import timedelta
+
+    from django.db.models import Count
+    from django.db.models.functions import TruncDate
+    from django.utils import timezone
+
     from blockchain.models import Block, BlockchainNetwork, Transaction
     from healthcare.models import AuditLog, Hospital, MedicalRecord, Patient
 
@@ -122,11 +129,47 @@ def index(request):
         }
         cache.set('dashboard_stats', stats, timeout=60)
 
+    # Chart: record type distribution
+    record_type_qs = (
+        MedicalRecord.objects.filter(is_active=True)
+        .values('record_type').annotate(count=Count('id')).order_by('record_type')
+    )
+    record_type_labels = [r['record_type'] for r in record_type_qs]
+    record_type_data   = [r['count']      for r in record_type_qs]
+
+    # Chart: daily transaction count (last 7 days)
+    seven_days_ago = timezone.now() - timedelta(days=6)
+    tx_by_day = (
+        Transaction.objects.filter(timestamp__gte=seven_days_ago)
+        .annotate(day=TruncDate('timestamp'))
+        .values('day').annotate(count=Count('id')).order_by('day')
+    )
+    tx_day_map = {str(r['day']): r['count'] for r in tx_by_day}
+    tx_labels, tx_data = [], []
+    for i in range(7):
+        d = (seven_days_ago + timedelta(days=i)).date()
+        tx_labels.append(d.strftime('%d %b'))
+        tx_data.append(tx_day_map.get(str(d), 0))
+
+    # Chart: audit actions (last 30 days)
+    audit_qs = (
+        AuditLog.objects.filter(timestamp__gte=timezone.now() - timedelta(days=30))
+        .values('action').annotate(count=Count('id')).order_by('-count')
+    )
+    audit_labels = [r['action'] for r in audit_qs]
+    audit_data   = [r['count']  for r in audit_qs]
+
     recent_logs = AuditLog.objects.select_related('record', 'record__patient').order_by('-timestamp')[:10]
 
     return render(request, 'index.html', {
         'stats': stats,
         'recent_logs': recent_logs,
+        'record_type_labels': json.dumps(record_type_labels),
+        'record_type_data':   json.dumps(record_type_data),
+        'tx_labels':  json.dumps(tx_labels),
+        'tx_data':    json.dumps(tx_data),
+        'audit_labels': json.dumps(audit_labels),
+        'audit_data':   json.dumps(audit_data),
     })
 
 

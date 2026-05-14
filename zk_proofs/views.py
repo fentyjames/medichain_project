@@ -10,6 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .models import ZKProofRecord
 from .zk_service import MerkleTreeService, ZKProofService
 
 # ==================== TEMPLATE VIEWS ====================
@@ -17,7 +18,8 @@ from .zk_service import MerkleTreeService, ZKProofService
 @login_required(login_url='/accounts/login/')
 def zk_dashboard(request):
     """ZK proofs dashboard"""
-    return render(request, 'zk_proofs/dashboard.html')
+    proofs = ZKProofRecord.objects.order_by('-created_at')[:20]
+    return render(request, 'zk_proofs/dashboard.html', {'proofs': proofs, 'total': ZKProofRecord.objects.count()})
 
 
 @login_required(login_url='/accounts/login/')
@@ -31,8 +33,15 @@ def zk_generate(request):
         zk_service = ZKProofService(proof_type)
         proof = zk_service.generate_proof(inputs, public_output)
 
-        messages.success(request, 'ZK Proof generated successfully!')
-        messages.info(request, f'Proof: {str(proof)[:120]}…')
+        ZKProofRecord.objects.create(
+            proof_type=proof_type,
+            inputs=inputs,
+            public_output=public_output,
+            proof_payload=proof,
+            generated_by=request.user.username,
+        )
+
+        messages.success(request, 'ZK Proof generated and saved successfully!')
         return redirect('zk_dashboard')
     return render(request, 'zk_proofs/generate.html')
 
@@ -53,6 +62,15 @@ def zk_verify_page(request):
             messages.success(request, 'ZK Proof is VALID — commitment verified successfully.')
         else:
             messages.error(request, 'ZK Proof is INVALID — commitment does not match.')
+
+        ZKProofRecord.objects.create(
+            proof_type=proof_type,
+            inputs=expected_inputs,
+            public_output=public_output,
+            proof_payload={'raw': proof[:500]} if isinstance(proof, str) else {'raw': str(proof)[:500]},
+            generated_by=request.user.username,
+            is_verified=is_valid,
+        )
         return redirect('zk_dashboard')
     return render(request, 'zk_proofs/verify.html')
 

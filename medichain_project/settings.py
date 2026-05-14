@@ -41,6 +41,7 @@ INSTALLED_APPS = [
 
     'accounts.apps.AccountsConfig',  # Must be before apps using User
     'corsheaders',
+    'drf_spectacular',
     'blockchain',
     'healthcare',
     'cross_chain',
@@ -135,6 +136,14 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 50,
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'MediChain API',
+    'DESCRIPTION': 'Layer-2 blockchain API for privacy-preserving healthcare data exchange.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }
 
 CORS_ALLOWED_ORIGINS = [

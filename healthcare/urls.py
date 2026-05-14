@@ -21,6 +21,7 @@ template_urlpatterns = [
     # Patients
     path('patients/', views.patient_list, name='patient_list'),
     path('patients/add/', views.patient_add, name='patient_add'),
+    path('patients/export/csv/', views.export_patients_csv, name='export_patients_csv'),
     path('patients/<str:patient_id>/', views.patient_detail, name='patient_detail'),
     path('patients/<str:patient_id>/report/', views.patient_report, name='patient_report'),
     path('patients/<str:patient_id>/report/print/', views.patient_print_report, name='patient_print_report'),
@@ -37,6 +38,7 @@ template_urlpatterns = [
     # Records
     path('records/', views.record_list, name='record_list'),
     path('records/add/', views.record_add, name='record_add'),
+    path('records/export/csv/', views.export_records_csv, name='export_records_csv'),
     path('records/<str:record_id>/', views.record_detail, name='record_detail'),
     path('records/<str:record_id>/edit/', views.record_edit, name='record_edit'),
     path('records/<str:record_id>/archive/', views.record_archive, name='record_archive'),
@@ -64,6 +66,7 @@ template_urlpatterns = [
     path('permissions/<str:permission_id>/revoke/', views.permission_revoke, name='permission_revoke'),
     # Audit Log
     path('audit/', views.audit_log_list, name='audit_log_list'),
+    path('audit/export/csv/', views.export_audit_csv, name='export_audit_csv'),
     # Reports hub + individual reports
     path('reports/', views.reports_hub, name='reports_hub'),
     path('reports/overview/', views.system_overview_report, name='system_overview_report'),

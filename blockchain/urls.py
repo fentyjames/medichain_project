@@ -23,6 +23,7 @@ template_urlpatterns = [
     path('blocks/', views.block_list, name='block_list'),
     path('transactions/', views.transaction_list, name='transaction_list'),
     path('transactions/add/', views.transaction_add, name='transaction_add'),
+    path('transactions/export/csv/', views.export_transactions_csv, name='export_transactions_csv'),
     path('rollups/', views.rollup_list, name='rollup_list'),
     path('rollups/create/', views.rollup_create, name='rollup_create'),
     path('blocks/<int:block_number>/', views.block_detail, name='block_detail'),

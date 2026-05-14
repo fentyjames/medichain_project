@@ -1234,3 +1234,61 @@ class AuditLogViewSet(viewsets.ViewSet):
             'details': log.details, 'timestamp': log.timestamp,
         } for log in logs]
         return Response(data)
+
+
+# ==================== CSV EXPORTS ====================
+
+import csv
+from django.http import HttpResponse
+
+
+@login_required(login_url='/accounts/login/')
+def export_patients_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="patients.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['Patient ID', 'Name', 'Email', 'Date of Birth', 'Blood Type', 'Emergency Contact', 'Status', 'Registered'])
+    for p in Patient.objects.select_related('user').order_by('created_at'):
+        name = p.user.get_full_name() if p.user else ''
+        email = p.user.email if p.user else ''
+        writer.writerow([
+            p.patient_id, name, email, p.date_of_birth, p.blood_type,
+            p.emergency_contact, 'Active' if p.is_active else 'Inactive',
+            p.created_at.strftime('%Y-%m-%d'),
+        ])
+    return response
+
+
+@login_required(login_url='/accounts/login/')
+def export_records_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="medical_records.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['Record ID', 'Title', 'Type', 'Patient', 'Hospital', 'On-Chain', 'Active', 'Created'])
+    for r in MedicalRecord.objects.select_related('patient', 'patient__user', 'hospital', 'blockchain_tx').order_by('created_at'):
+        patient_name = r.patient.user.get_full_name() if r.patient and r.patient.user else (r.patient.patient_id[:16] if r.patient else '')
+        writer.writerow([
+            r.record_id, r.title, r.record_type,
+            patient_name,
+            r.hospital.name if r.hospital else '',
+            'Yes' if r.blockchain_tx_id else 'No',
+            'Yes' if r.is_active else 'No',
+            r.created_at.strftime('%Y-%m-%d'),
+        ])
+    return response
+
+
+@login_required(login_url='/accounts/login/')
+def export_audit_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="audit_log.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['Log ID', 'Action', 'Actor', 'Actor Type', 'Record', 'IP Address', 'Details', 'Timestamp'])
+    for log in AuditLog.objects.select_related('record').order_by('-timestamp')[:5000]:
+        writer.writerow([
+            log.log_id, log.action, log.actor, log.actor_type,
+            log.record.record_id if log.record else '',
+            log.ip_address, log.details,
+            log.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+        ])
+    return response

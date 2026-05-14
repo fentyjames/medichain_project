@@ -171,10 +171,10 @@ def rollup_create(request):
 
 @login_required(login_url='/accounts/login/')
 def block_detail(request, block_number):
-    block = get_object_or_404(Block.objects.select_related('network'), block_number=block_number)
-    transactions = Transaction.objects.filter(block=block).order_by('-timestamp')
+    blk = get_object_or_404(Block.objects.select_related('network'), block_number=block_number)
+    transactions = Transaction.objects.filter(block=blk).order_by('-timestamp')
     return render(request, 'blockchain/block_detail.html', {
-        'block': block, 'transactions': transactions,
+        'blk': blk, 'transactions': transactions,
     })
 
 
@@ -276,3 +276,26 @@ class DashboardView(APIView):
             'medical_records': MedicalRecord.objects.filter(is_active=True).count(),
         }
         return Response(stats)
+
+
+# ==================== CSV EXPORT ====================
+
+import csv
+from django.http import HttpResponse
+
+
+@login_required(login_url='/accounts/login/')
+def export_transactions_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="transactions.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['TX Hash', 'Type', 'Status', 'Sender', 'Receiver', 'Gas Used', 'Block', 'Timestamp'])
+    for tx in Transaction.objects.select_related('block').order_by('-timestamp')[:10000]:
+        writer.writerow([
+            tx.tx_hash, tx.tx_type, tx.status,
+            tx.sender, tx.receiver,
+            tx.gas_used,
+            tx.block.block_number if tx.block else '',
+            tx.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+        ])
+    return response
