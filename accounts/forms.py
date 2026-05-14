@@ -4,8 +4,10 @@ Custom forms for user registration, profile updates, and authentication
 """
 
 import re
+import secrets
 
 from django import forms
+from django.conf import settings
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.core.validators import MinLengthValidator, RegexValidator
 from django.utils.translation import gettext_lazy as _
@@ -308,3 +310,28 @@ class TwoFactorForm(forms.Form):
             'class': 'form-check-input'
         })
     )
+
+
+class AdminRegistrationForm(CustomUserCreationForm):
+    """Registration form for system administrators — requires a secret access code."""
+
+    admin_code = forms.CharField(
+        label="Admin Access Code",
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter admin access code',
+            'style': 'background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; border-radius: 10px;',
+            'autocomplete': 'off',
+        })
+    )
+
+    class Meta(CustomUserCreationForm.Meta):
+        fields = ('username', 'first_name', 'last_name', 'email', 'organization', 'password1', 'password2')
+
+    def clean_admin_code(self):
+        submitted = self.cleaned_data.get('admin_code', '')
+        expected = getattr(settings, 'ADMIN_REGISTRATION_CODE', '')
+        # Timing-safe comparison prevents brute-force timing attacks
+        if not secrets.compare_digest(submitted.encode(), expected.encode()):
+            raise forms.ValidationError("Invalid admin access code.")
+        return submitted

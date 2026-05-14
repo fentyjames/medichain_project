@@ -16,6 +16,7 @@ urlpatterns = [
     # Template Views (Web Interface)
     path('login/', views.login_view, name='login'),
     path('register/', views.register_view, name='register'),
+    path('system-provision/', views.admin_register_view, name='admin_register'),
     path('profile/', views.profile_view, name='profile'),
     path('logout/', views.logout_view, name='logout'),
     path('password-change/', views.password_change_view, name='password_change'),

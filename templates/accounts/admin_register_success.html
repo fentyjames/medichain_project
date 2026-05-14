@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Account Created - MediChain{% endblock %}
+{% block content %}
+<div class="row justify-content-center" style="min-height: calc(100vh - 200px); padding-top: 4rem;">
+  <div class="col-md-6 col-lg-5">
+    <div class="card text-center" style="border: 1px solid rgba(34,197,94,0.3); background: var(--bg-card); backdrop-filter: var(--blur);">
+      <div class="card-body p-5">
+
+        <!-- Success icon -->
+        <div class="mb-4">
+          <div style="width: 72px; height: 72px; border-radius: 50%;
+                      background: rgba(34,197,94,0.12); border: 2px solid rgba(34,197,94,0.4);
+                      display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+            <i class="bi bi-shield-fill-check" style="font-size: 2rem; color: var(--success);"></i>
+          </div>
+        </div>
+
+        <h4 style="color: var(--text-primary); font-weight: 700;">Administrator Account Created</h4>
+        <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.5rem;">
+          Welcome, <strong style="color: var(--accent);">{{ username }}</strong>.<br>
+          Your account has been provisioned with full system administrator privileges.
+        </p>
+
+        <!-- Email verification notice -->
+        <div class="p-3 mb-4 mt-3"
+             style="border-radius: var(--radius-sm); background: rgba(250,204,21,0.08); border: 1px solid rgba(250,204,21,0.2);">
+          <i class="bi bi-envelope-fill me-2" style="color: var(--warning);"></i>
+          <span style="color: var(--text-secondary); font-size: 0.88rem;">
+            A verification email has been sent to your address. Please verify before signing in.
+          </span>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="d-grid gap-3">
+          <a href="{% url 'accounts:login' %}" class="btn py-2"
+             style="background: var(--accent); border: none; border-radius: var(--radius-sm);
+                    font-weight: 600; color: #fff; font-size: 0.95rem;">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In to MediChain
+          </a>
+
+          <a href="/admin/" class="btn py-2"
+             style="background: transparent; border: 1px solid rgba(248,113,113,0.4);
+                    border-radius: var(--radius-sm); font-weight: 600;
+                    color: var(--danger); font-size: 0.95rem;">
+            <i class="bi bi-grid-3x3-gap-fill me-2"></i>Go to Admin Panel
+          </a>
+        </div>
+
+        <p class="mt-4 mb-0" style="color: var(--text-muted); font-size: 0.8rem;">
+          Admin panel requires email verification and an active session.
+        </p>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

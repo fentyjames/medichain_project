@@ -26,7 +26,14 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .forms import CustomUserCreationForm, PasswordResetRequestForm, TwoFactorForm, UserProfileForm, UserUpdateForm
+from .forms import (
+    AdminRegistrationForm,
+    CustomUserCreationForm,
+    PasswordResetRequestForm,
+    TwoFactorForm,
+    UserProfileForm,
+    UserUpdateForm,
+)
 from .models import LoginAttempt, LoginAudit, TwoFactorAuth, User, UserProfile, VerificationToken
 
 # ==================== RATE LIMITING ====================
@@ -242,6 +249,45 @@ def register_view(request):
         form = CustomUserCreationForm()
 
     return render(request, 'accounts/register.html', {'form': form})
+
+
+def admin_register_view(request):
+    """Privileged registration for system administrators — requires secret access code."""
+    if request.user.is_authenticated:
+        return redirect('index')
+
+    if request.method == 'POST':
+        form = AdminRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.role = 'ADMIN'
+            user.is_staff = True
+            user.is_superuser = True
+            user.save()
+
+            UserProfile.objects.create(user=user)
+            TwoFactorAuth.objects.create(user=user)
+
+            token = generate_verification_token(user, 'EMAIL')
+            send_verification_email(request, user, token)
+
+            LoginAudit.objects.create(
+                user=user,
+                action='LOGIN',
+                ip_address=get_client_ip(request),
+                user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                details={'method': 'admin_registration', 'role': 'ADMIN'},
+            )
+
+            return render(request, 'accounts/admin_register_success.html', {
+                'username': user.username,
+            })
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = AdminRegistrationForm()
+
+    return render(request, 'accounts/admin_register.html', {'form': form})
 
 
 def email_verification(request, token):
