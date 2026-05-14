@@ -18,14 +18,36 @@ urlpatterns = [
 # Template patterns — included at /healthcare/
 template_urlpatterns = [
     path('', views.healthcare_dashboard, name='healthcare_dashboard'),
+    # Patients
     path('patients/', views.patient_list, name='patient_list'),
     path('patients/add/', views.patient_add, name='patient_add'),
     path('patients/<str:patient_id>/', views.patient_detail, name='patient_detail'),
+    path('patients/<str:patient_id>/edit/', views.patient_edit, name='patient_edit'),
+    path('patients/<str:patient_id>/delete/', views.patient_delete, name='patient_delete'),
+    # Hospitals
     path('hospitals/', views.hospital_list, name='hospital_list'),
     path('hospitals/add/', views.hospital_add, name='hospital_add'),
     path('hospitals/<str:hospital_id>/', views.hospital_detail, name='hospital_detail'),
+    path('hospitals/<str:hospital_id>/edit/', views.hospital_edit, name='hospital_edit'),
+    path('hospitals/<str:hospital_id>/delete/', views.hospital_delete, name='hospital_delete'),
+    # Records
     path('records/', views.record_list, name='record_list'),
     path('records/add/', views.record_add, name='record_add'),
     path('records/<str:record_id>/', views.record_detail, name='record_detail'),
+    path('records/<str:record_id>/edit/', views.record_edit, name='record_edit'),
+    path('records/<str:record_id>/archive/', views.record_archive, name='record_archive'),
+    # Laboratories
+    path('labs/', views.laboratory_list, name='laboratory_list'),
+    path('labs/add/', views.laboratory_add, name='laboratory_add'),
+    path('labs/<str:lab_id>/', views.laboratory_detail, name='laboratory_detail'),
+    # Insurance Providers
+    path('insurance/', views.insurance_list, name='insurance_list'),
+    path('insurance/add/', views.insurance_add, name='insurance_add'),
+    path('insurance/<str:provider_id>/', views.insurance_detail, name='insurance_detail'),
+    # Permissions
+    path('permissions/', views.permission_list, name='permission_list'),
     path('permissions/add/', views.permission_add, name='permission_add'),
+    path('permissions/<str:permission_id>/revoke/', views.permission_revoke, name='permission_revoke'),
+    # Audit Log
+    path('audit/', views.audit_log_list, name='audit_log_list'),
 ]

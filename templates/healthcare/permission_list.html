@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}Access Permissions - MediChain{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 style="color: var(--accent);"><i class="bi bi-key-fill"></i> Access Permissions</h2>
+        <p class="text-muted mb-0">{{ page_obj.paginator.count }} permission{{ page_obj.paginator.count|pluralize }} total{% if selected_grantee_type or active_only %} (filtered){% endif %}</p>
+    </div>
+    <a href="{% url 'permission_add' %}" class="btn btn-primary">
+        <i class="bi bi-key"></i> Grant Permission
+    </a>
+</div>
+
+<!-- Filter Bar -->
+<div class="card mb-4">
+    <div class="card-body py-3">
+        <form method="get" class="d-flex flex-wrap gap-2 align-items-center">
+            <select name="grantee_type" class="form-select"
+                    style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;max-width:180px;">
+                <option value="">All Grantee Types</option>
+                <option value="HOSPITAL"  {% if selected_grantee_type == 'HOSPITAL'  %}selected{% endif %}>Hospital</option>
+                <option value="LAB"       {% if selected_grantee_type == 'LAB'       %}selected{% endif %}>Laboratory</option>
+                <option value="INSURANCE" {% if selected_grantee_type == 'INSURANCE' %}selected{% endif %}>Insurance</option>
+                <option value="DOCTOR"    {% if selected_grantee_type == 'DOCTOR'    %}selected{% endif %}>Doctor</option>
+            </select>
+            <select name="active" class="form-select"
+                    style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;max-width:160px;">
+                <option value="">All Statuses</option>
+                <option value="1" {% if active_only == '1' %}selected{% endif %}>Active Only</option>
+            </select>
+            <button type="submit" class="btn btn-outline-primary"><i class="bi bi-search"></i></button>
+            {% if selected_grantee_type or active_only %}
+            <a href="{% url 'permission_list' %}" class="btn btn-outline-secondary"><i class="bi bi-x"></i> Clear</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Record</th>
+                        <th>Grantor (Patient)</th>
+                        <th>Grantee</th>
+                        <th>Type</th>
+                        <th>Permission</th>
+                        <th>Valid Until</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for perm in permissions %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'record_detail' perm.record.record_id %}"
+                               style="font-size:0.85rem;">
+                                {{ perm.record.title|truncatechars:28 }}
+                            </a>
+                            <br>
+                            <code class="hash-text" style="font-size:0.7rem;">
+                                {{ perm.record.record_id|slice:":12" }}…
+                            </code>
+                        </td>
+                        <td>
+                            <small>
+                                {% if perm.grantor.user %}
+                                <a href="{% url 'patient_detail' perm.grantor.patient_id %}">
+                                    {{ perm.grantor.user.get_full_name|default:perm.grantor.user.username }}
+                                </a>
+                                {% else %}
+                                <span class="text-muted">—</span>
+                                {% endif %}
+                            </small>
+                        </td>
+                        <td><small>{{ perm.grantee|truncatechars:24 }}</small></td>
+                        <td>
+                            <span class="badge"
+                                  style="background:{% if perm.grantee_type == 'HOSPITAL' %}#38bdf8{% elif perm.grantee_type == 'LAB' %}#a78bfa{% elif perm.grantee_type == 'INSURANCE' %}#22c55e{% else %}#fb923c{% endif %};color:#000;font-size:0.72rem;">
+                                {{ perm.grantee_type }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge"
+                                  style="background:{% if perm.permission_type == 'READ' %}#64748b{% elif perm.permission_type == 'WRITE' %}#38bdf8;color:#000{% else %}#a78bfa{% endif %};">
+                                {{ perm.permission_type }}
+                            </span>
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                {{ perm.valid_until|date:"d M Y"|default:"No expiry" }}
+                            </small>
+                        </td>
+                        <td>
+                            {% if perm.is_active %}
+                                <span class="badge" style="background:#22c55e;">Active</span>
+                            {% else %}
+                                <span class="badge" style="background:#64748b;">Revoked</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if perm.is_active %}
+                            <form method="post" action="{% url 'permission_revoke' perm.permission_id %}"
+                                  onsubmit="return confirm('Revoke this permission?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Revoke">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="text-muted small">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <i class="bi bi-key" style="font-size:2rem;color:var(--text-light);"></i>
+                            <p class="text-muted mt-2">No permissions found.</p>
+                            <a href="{% url 'permission_add' %}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-key"></i> Grant First Permission
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% include 'partials/pagination.html' %}
+{% endblock %}

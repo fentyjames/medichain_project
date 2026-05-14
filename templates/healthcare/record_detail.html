@@ -40,6 +40,9 @@
     <a href="{% url 'permission_add' %}?record={{ record.record_id }}" class="btn btn-outline-primary btn-sm">
         <i class="bi bi-key"></i> Grant Access
     </a>
+    <a href="{% url 'record_edit' record.record_id %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-pencil"></i> Edit
+    </a>
 </div>
 {% endwith %}
 

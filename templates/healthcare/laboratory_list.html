@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Laboratories - MediChain{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 style="color: var(--accent);"><i class="bi bi-eyedropper"></i> Laboratories</h2>
+        <p class="text-muted mb-0">{{ page_obj.paginator.count }} lab{{ page_obj.paginator.count|pluralize }} registered{% if q %} matching "<strong>{{ q }}</strong>"{% endif %}</p>
+    </div>
+    <a href="{% url 'laboratory_add' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Add Laboratory
+    </a>
+</div>
+
+<!-- Search -->
+<div class="card mb-4">
+    <div class="card-body py-3">
+        <form method="get" class="d-flex gap-2">
+            <input type="text" name="q" value="{{ q }}" class="form-control"
+                   placeholder="Search by name, accreditation, or hospital…"
+                   style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+            <button type="submit" class="btn btn-outline-primary px-4"><i class="bi bi-search"></i></button>
+            {% if q %}<a href="{% url 'laboratory_list' %}" class="btn btn-outline-secondary"><i class="bi bi-x"></i></a>{% endif %}
+        </form>
+    </div>
+</div>
+
+<div class="row g-4">
+    {% for lab in labs %}
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-start gap-3 mb-3">
+                    <div class="rounded d-flex align-items-center justify-content-center"
+                         style="width:44px;height:44px;background:rgba(167,139,250,0.15);flex-shrink:0;">
+                        <i class="bi bi-eyedropper" style="font-size:1.3rem;color:#a78bfa;"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-0">{{ lab.name }}</h6>
+                        <small class="text-muted">{{ lab.accreditation }}</small>
+                    </div>
+                </div>
+
+                {% if lab.hospital %}
+                <p class="small mb-3" style="color:var(--accent);">
+                    <i class="bi bi-building"></i>
+                    <a href="{% url 'hospital_detail' lab.hospital.hospital_id %}" style="color:inherit;">
+                        {{ lab.hospital.name|truncatechars:36 }}
+                    </a>
+                </p>
+                {% else %}
+                <p class="small text-muted mb-3"><i class="bi bi-dash-circle"></i> No affiliated hospital</p>
+                {% endif %}
+
+                <div class="mb-3">
+                    <small class="text-muted">Lab ID</small><br>
+                    <code class="hash-text" onclick="copyToClipboard('{{ lab.lab_id }}')"
+                          style="cursor:pointer;font-size:0.72rem;" title="{{ lab.lab_id }}">
+                        {{ lab.lab_id|slice:":20" }}…
+                    </code>
+                </div>
+
+                <a href="{% url 'laboratory_detail' lab.lab_id %}" class="btn btn-sm btn-outline-primary w-100">
+                    <i class="bi bi-eye"></i> View Details
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <i class="bi bi-eyedropper" style="font-size:3rem;color:var(--text-light);"></i>
+        <p class="text-muted mt-3">No laboratories registered yet.</p>
+        <a href="{% url 'laboratory_add' %}" class="btn btn-outline-primary">
+            <i class="bi bi-plus-lg"></i> Add First Laboratory
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+{% include 'partials/pagination.html' %}
+{% endblock %}

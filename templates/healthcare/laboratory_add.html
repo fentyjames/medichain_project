@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Add Laboratory - MediChain{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'laboratory_list' %}">Laboratories</a></li>
+        <li class="breadcrumb-item active">Add Laboratory</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-md-7 col-lg-6">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-eyedropper"></i> Register Laboratory</div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Laboratory Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" required
+                                   placeholder="e.g. City Diagnostic Lab">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Accreditation Number</label>
+                            <input type="text" name="accreditation" class="form-control"
+                                   placeholder="e.g. SL-LAB-2024-001">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Affiliated Hospital <small class="text-muted">(optional)</small></label>
+                            <select name="hospital_id" class="form-select">
+                                <option value="">Independent / No hospital</option>
+                                {% for hospital in hospitals %}
+                                <option value="{{ hospital.hospital_id }}">{{ hospital.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Public Key <small class="text-muted">(optional)</small></label>
+                            <textarea name="public_key" class="form-control" rows="2"
+                                      placeholder="Lab's public key for cryptographic verification…"></textarea>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-plus-lg"></i> Register Laboratory
+                        </button>
+                        <a href="{% url 'laboratory_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

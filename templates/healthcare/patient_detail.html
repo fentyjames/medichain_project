@@ -43,6 +43,9 @@
         <a href="{% url 'permission_add' %}?patient={{ patient.patient_id }}" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-key"></i> Grant Access
         </a>
+        <a href="{% url 'patient_edit' patient.patient_id %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-pencil"></i> Edit
+        </a>
     </div>
 </div>
 

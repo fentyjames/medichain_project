@@ -3,6 +3,9 @@ MediChain Healthcare Views
 Template rendering + API endpoints for patient records, access control
 """
 
+import hashlib
+import uuid
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -263,6 +266,240 @@ def permission_add(request):
         'selected_patient': request.GET.get('patient', ''),
     }
     return render(request, 'healthcare/permission_add.html', context)
+
+
+# ==================== PATIENT EDIT / DELETE ====================
+
+@login_required(login_url='/accounts/login/')
+def patient_edit(request, patient_id):
+    patient = get_object_or_404(Patient, patient_id=patient_id)
+    if request.method == 'POST':
+        patient.date_of_birth = request.POST.get('date_of_birth') or None
+        patient.blood_type = request.POST.get('blood_type', '')
+        patient.allergies = request.POST.get('allergies', '')
+        patient.emergency_contact = request.POST.get('emergency_contact', '')
+        patient.is_active = 'is_active' in request.POST
+        patient.save()
+        messages.success(request, 'Patient updated successfully.')
+        return redirect('patient_detail', patient_id=patient_id)
+    return render(request, 'healthcare/patient_edit.html', {'patient': patient})
+
+
+@login_required(login_url='/accounts/login/')
+def patient_delete(request, patient_id):
+    patient = get_object_or_404(Patient, patient_id=patient_id)
+    if request.method == 'POST':
+        name = patient.user.get_full_name() if patient.user else patient.patient_id[:16]
+        patient.delete()
+        messages.success(request, f'Patient "{name}" deleted.')
+        return redirect('patient_list')
+    return render(request, 'healthcare/patient_edit.html', {'patient': patient, 'confirm_delete': True})
+
+
+# ==================== HOSPITAL EDIT / DELETE ====================
+
+@login_required(login_url='/accounts/login/')
+def hospital_edit(request, hospital_id):
+    hospital = get_object_or_404(Hospital, hospital_id=hospital_id)
+    if request.method == 'POST':
+        hospital.name = request.POST.get('name', hospital.name)
+        hospital.address = request.POST.get('address', hospital.address)
+        hospital.license_number = request.POST.get('license_number', hospital.license_number)
+        hospital.is_verified = 'is_verified' in request.POST
+        network_id = request.POST.get('blockchain_network')
+        if network_id:
+            hospital.blockchain_network = BlockchainNetwork.objects.filter(id=network_id).first()
+        hospital.save()
+        messages.success(request, f'Hospital "{hospital.name}" updated.')
+        return redirect('hospital_detail', hospital_id=hospital_id)
+    networks = BlockchainNetwork.objects.filter(is_active=True)
+    return render(request, 'healthcare/hospital_edit.html', {'hospital': hospital, 'networks': networks})
+
+
+@login_required(login_url='/accounts/login/')
+def hospital_delete(request, hospital_id):
+    hospital = get_object_or_404(Hospital, hospital_id=hospital_id)
+    if request.method == 'POST':
+        name = hospital.name
+        hospital.delete()
+        messages.success(request, f'Hospital "{name}" deleted.')
+        return redirect('hospital_list')
+    networks = BlockchainNetwork.objects.filter(is_active=True)
+    return render(request, 'healthcare/hospital_edit.html', {
+        'hospital': hospital, 'networks': networks, 'confirm_delete': True,
+    })
+
+
+# ==================== RECORD EDIT / ARCHIVE ====================
+
+@login_required(login_url='/accounts/login/')
+def record_edit(request, record_id):
+    record = get_object_or_404(MedicalRecord, record_id=record_id)
+    if request.method == 'POST':
+        record.title = request.POST.get('title', record.title)
+        record.description = request.POST.get('description', record.description)
+        record.record_type = request.POST.get('record_type', record.record_type)
+        record.ipfs_hash = request.POST.get('ipfs_hash', record.ipfs_hash)
+        record.save()
+        AuditLog.objects.create(
+            log_id=f"audit_{record.record_id}_edit_{int(timezone.now().timestamp())}",
+            record=record,
+            actor=request.user.username,
+            actor_type='DOCTOR',
+            action='UPDATE',
+            details={'title': record.title, 'record_type': record.record_type},
+        )
+        messages.success(request, 'Record updated.')
+        return redirect('record_detail', record_id=record_id)
+    return render(request, 'healthcare/record_edit.html', {'record': record})
+
+
+@login_required(login_url='/accounts/login/')
+def record_archive(request, record_id):
+    record = get_object_or_404(MedicalRecord, record_id=record_id)
+    if request.method == 'POST':
+        record.is_active = False
+        record.save()
+        AuditLog.objects.create(
+            log_id=f"audit_{record.record_id}_archive_{int(timezone.now().timestamp())}",
+            record=record,
+            actor=request.user.username,
+            actor_type='DOCTOR',
+            action='DELETE',
+            details={'archived': True},
+        )
+        messages.success(request, 'Record archived.')
+        return redirect('record_list')
+    return render(request, 'healthcare/record_edit.html', {'record': record, 'confirm_archive': True})
+
+
+# ==================== LABORATORY ====================
+
+@login_required(login_url='/accounts/login/')
+def laboratory_list(request):
+    q = request.GET.get('q', '').strip()
+    qs = Laboratory.objects.select_related('hospital').order_by('name')
+    if q:
+        qs = qs.filter(
+            Q(name__icontains=q) | Q(accreditation__icontains=q) | Q(hospital__name__icontains=q)
+        )
+    page_obj, qs_str = _paginate(request, qs, 12)
+    return render(request, 'healthcare/laboratory_list.html', {
+        'labs': page_obj, 'page_obj': page_obj, 'query_string': qs_str, 'q': q,
+    })
+
+
+@login_required(login_url='/accounts/login/')
+def laboratory_detail(request, lab_id):
+    lab = get_object_or_404(Laboratory.objects.select_related('hospital'), lab_id=lab_id)
+    return render(request, 'healthcare/laboratory_detail.html', {'lab': lab})
+
+
+@login_required(login_url='/accounts/login/')
+def laboratory_add(request):
+    if request.method == 'POST':
+        lab = Laboratory.objects.create(
+            lab_id=hashlib.sha256(f"lab_{uuid.uuid4()}".encode()).hexdigest(),
+            name=request.POST.get('name'),
+            accreditation=request.POST.get('accreditation', ''),
+            public_key=request.POST.get('public_key', ''),
+            hospital=Hospital.objects.filter(
+                hospital_id=request.POST.get('hospital_id')
+            ).first(),
+        )
+        messages.success(request, f'Laboratory "{lab.name}" registered.')
+        return redirect('laboratory_list')
+    hospitals = Hospital.objects.order_by('name')
+    return render(request, 'healthcare/laboratory_add.html', {'hospitals': hospitals})
+
+
+# ==================== INSURANCE PROVIDER ====================
+
+@login_required(login_url='/accounts/login/')
+def insurance_list(request):
+    q = request.GET.get('q', '').strip()
+    qs = InsuranceProvider.objects.order_by('name')
+    if q:
+        qs = qs.filter(Q(name__icontains=q) | Q(license_number__icontains=q))
+    page_obj, qs_str = _paginate(request, qs, 12)
+    return render(request, 'healthcare/insurance_list.html', {
+        'providers': page_obj, 'page_obj': page_obj, 'query_string': qs_str, 'q': q,
+    })
+
+
+@login_required(login_url='/accounts/login/')
+def insurance_detail(request, provider_id):
+    provider = get_object_or_404(InsuranceProvider, provider_id=provider_id)
+    return render(request, 'healthcare/insurance_detail.html', {'provider': provider})
+
+
+@login_required(login_url='/accounts/login/')
+def insurance_add(request):
+    if request.method == 'POST':
+        provider = InsuranceProvider.objects.create(
+            provider_id=hashlib.sha256(f"ins_{uuid.uuid4()}".encode()).hexdigest(),
+            name=request.POST.get('name'),
+            license_number=request.POST.get('license_number', ''),
+            public_key=request.POST.get('public_key', ''),
+        )
+        messages.success(request, f'Insurance provider "{provider.name}" registered.')
+        return redirect('insurance_list')
+    return render(request, 'healthcare/insurance_add.html')
+
+
+# ==================== ACCESS PERMISSIONS LIST / REVOKE ====================
+
+@login_required(login_url='/accounts/login/')
+def permission_list(request):
+    grantee_type = request.GET.get('grantee_type', '').strip()
+    active_only = request.GET.get('active', '').strip()
+    qs = AccessPermission.objects.select_related('record', 'grantor__user').order_by('-created_at')
+    if grantee_type:
+        qs = qs.filter(grantee_type=grantee_type)
+    if active_only == '1':
+        qs = qs.filter(is_active=True)
+    page_obj, qs_str = _paginate(request, qs, 25)
+    return render(request, 'healthcare/permission_list.html', {
+        'permissions': page_obj, 'page_obj': page_obj, 'query_string': qs_str,
+        'selected_grantee_type': grantee_type, 'active_only': active_only,
+    })
+
+
+@login_required(login_url='/accounts/login/')
+def permission_revoke(request, permission_id):
+    perm = get_object_or_404(AccessPermission, permission_id=permission_id)
+    if request.method == 'POST':
+        perm.is_active = False
+        perm.save()
+        AuditLog.objects.create(
+            log_id=f"audit_{perm.record.record_id}_revoke_{int(timezone.now().timestamp())}",
+            record=perm.record,
+            actor=request.user.username,
+            actor_type='DOCTOR',
+            action='UPDATE',
+            details={'permission_id': permission_id, 'revoked': True},
+        )
+        messages.success(request, 'Permission revoked.')
+        return redirect('permission_list')
+    return redirect('permission_list')
+
+
+# ==================== AUDIT LOG ====================
+
+@login_required(login_url='/accounts/login/')
+def audit_log_list(request):
+    action_filter = request.GET.get('action', '').strip()
+    actor_type_filter = request.GET.get('actor_type', '').strip()
+    qs = AuditLog.objects.select_related('record').order_by('-timestamp')
+    if action_filter:
+        qs = qs.filter(action=action_filter)
+    if actor_type_filter:
+        qs = qs.filter(actor_type=actor_type_filter)
+    page_obj, qs_str = _paginate(request, qs, 25)
+    return render(request, 'healthcare/audit_log_list.html', {
+        'logs': page_obj, 'page_obj': page_obj, 'query_string': qs_str,
+        'selected_action': action_filter, 'selected_actor_type': actor_type_filter,
+    })
 
 
 # ==================== API VIEWSETS ====================

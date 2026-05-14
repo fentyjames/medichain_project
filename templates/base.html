@@ -143,19 +143,31 @@
                         <i class="bi bi-eye-slash"></i> <span class="sidebar-text">ZK Proofs</span>
                     </a>
                     <hr class="my-3" style="border-color: var(--border);">
-                    <a class="nav-link" href="{% url 'patient_list' %}">
+                    <a class="nav-link {% if '/healthcare/patients' in request.path %}active{% endif %}" href="{% url 'patient_list' %}">
                         <i class="bi bi-people"></i> <span class="sidebar-text">Patients</span>
                     </a>
-                    <a class="nav-link" href="{% url 'hospital_list' %}">
+                    <a class="nav-link {% if '/healthcare/hospitals' in request.path %}active{% endif %}" href="{% url 'hospital_list' %}">
                         <i class="bi bi-building"></i> <span class="sidebar-text">Hospitals</span>
                     </a>
-                    <a class="nav-link" href="{% url 'record_list' %}">
+                    <a class="nav-link {% if '/healthcare/labs' in request.path %}active{% endif %}" href="{% url 'laboratory_list' %}">
+                        <i class="bi bi-eyedropper"></i> <span class="sidebar-text">Laboratories</span>
+                    </a>
+                    <a class="nav-link {% if '/healthcare/insurance' in request.path %}active{% endif %}" href="{% url 'insurance_list' %}">
+                        <i class="bi bi-shield-check"></i> <span class="sidebar-text">Insurance</span>
+                    </a>
+                    <a class="nav-link {% if '/healthcare/records' in request.path %}active{% endif %}" href="{% url 'record_list' %}">
                         <i class="bi bi-file-medical"></i> <span class="sidebar-text">Records</span>
                     </a>
-                    <a class="nav-link" href="{% url 'transaction_list' %}">
+                    <a class="nav-link {% if '/healthcare/permissions' in request.path %}active{% endif %}" href="{% url 'permission_list' %}">
+                        <i class="bi bi-key"></i> <span class="sidebar-text">Permissions</span>
+                    </a>
+                    <a class="nav-link {% if '/healthcare/audit' in request.path %}active{% endif %}" href="{% url 'audit_log_list' %}">
+                        <i class="bi bi-journal-text"></i> <span class="sidebar-text">Audit Log</span>
+                    </a>
+                    <a class="nav-link {% if '/blockchain/transactions' in request.path %}active{% endif %}" href="{% url 'transaction_list' %}">
                         <i class="bi bi-currency-exchange"></i> <span class="sidebar-text">Transactions</span>
                     </a>
-                    <a class="nav-link" href="{% url 'block_list' %}">
+                    <a class="nav-link {% if '/blockchain/blocks' in request.path %}active{% endif %}" href="{% url 'block_list' %}">
                         <i class="bi bi-box"></i> <span class="sidebar-text">Blocks</span>
                     </a>
                 </nav>

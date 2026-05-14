@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}Audit Log - MediChain{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 style="color: var(--accent);"><i class="bi bi-journal-text"></i> Audit Log</h2>
+        <p class="text-muted mb-0">{{ page_obj.paginator.count }} event{{ page_obj.paginator.count|pluralize }}{% if selected_action or selected_actor_type %} (filtered){% endif %}</p>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card mb-4">
+    <div class="card-body py-3">
+        <form method="get" class="d-flex flex-wrap gap-2 align-items-center">
+            <select name="action" class="form-select"
+                    style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;max-width:180px;">
+                <option value="">All Actions</option>
+                <option value="CREATE"       {% if selected_action == 'CREATE'       %}selected{% endif %}>Create</option>
+                <option value="READ"         {% if selected_action == 'READ'         %}selected{% endif %}>Read</option>
+                <option value="UPDATE"       {% if selected_action == 'UPDATE'       %}selected{% endif %}>Update</option>
+                <option value="SHARE"        {% if selected_action == 'SHARE'        %}selected{% endif %}>Share</option>
+                <option value="DELETE"       {% if selected_action == 'DELETE'       %}selected{% endif %}>Delete / Archive</option>
+                <option value="ACCESS_DENIED" {% if selected_action == 'ACCESS_DENIED' %}selected{% endif %}>Access Denied</option>
+            </select>
+            <select name="actor_type" class="form-select"
+                    style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;max-width:160px;">
+                <option value="">All Actor Types</option>
+                <option value="HOSPITAL"  {% if selected_actor_type == 'HOSPITAL'  %}selected{% endif %}>Hospital</option>
+                <option value="PATIENT"   {% if selected_actor_type == 'PATIENT'   %}selected{% endif %}>Patient</option>
+                <option value="DOCTOR"    {% if selected_actor_type == 'DOCTOR'    %}selected{% endif %}>Doctor</option>
+                <option value="LAB"       {% if selected_actor_type == 'LAB'       %}selected{% endif %}>Laboratory</option>
+                <option value="INSURANCE" {% if selected_actor_type == 'INSURANCE' %}selected{% endif %}>Insurance</option>
+            </select>
+            <button type="submit" class="btn btn-outline-primary"><i class="bi bi-search"></i></button>
+            {% if selected_action or selected_actor_type %}
+            <a href="{% url 'audit_log_list' %}" class="btn btn-outline-secondary"><i class="bi bi-x"></i> Clear</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Action</th>
+                        <th>Actor</th>
+                        <th>Actor Type</th>
+                        <th>Record</th>
+                        <th>Details</th>
+                        <th>IP Address</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    {% with act=log.action %}
+                    <tr>
+                        <td>
+                            <span class="badge"
+                                  style="background:{% if act == 'CREATE' %}#22c55e{% elif act == 'READ' %}#38bdf8;color:#000{% elif act == 'UPDATE' %}#facc15;color:#000{% elif act == 'SHARE' %}#a78bfa{% elif act == 'DELETE' %}#f87171{% else %}#dc2626{% endif %};">
+                                <i class="bi bi-{% if act == 'CREATE' %}plus-circle{% elif act == 'READ' %}eye{% elif act == 'UPDATE' %}pencil{% elif act == 'SHARE' %}share{% elif act == 'DELETE' %}archive{% else %}slash-circle{% endif %}"></i>
+                                {{ log.get_action_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <small class="hash-text" title="{{ log.actor }}">
+                                {{ log.actor|truncatechars:22 }}
+                            </small>
+                        </td>
+                        <td>
+                            <span class="badge" style="background:rgba(255,255,255,0.1);color:#94a3b8;font-size:0.72rem;">
+                                {{ log.actor_type }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'record_detail' log.record.record_id %}"
+                               style="font-size:0.82rem;">
+                                {{ log.record.title|truncatechars:24 }}
+                            </a>
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                {% for k, v in log.details.items %}
+                                    <span title="{{ k }}">{{ v|truncatechars:20 }}</span>{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </small>
+                        </td>
+                        <td><small class="text-muted">{{ log.ip_address|default:"—" }}</small></td>
+                        <td><small class="text-muted">{{ log.timestamp|date:"d M Y, H:i" }}</small></td>
+                    </tr>
+                    {% endwith %}
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <i class="bi bi-journal" style="font-size:2rem;color:var(--text-light);"></i>
+                            <p class="text-muted mt-2">No audit events yet.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% include 'partials/pagination.html' %}
+{% endblock %}
