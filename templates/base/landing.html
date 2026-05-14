@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% block title %}MediChain — Blockchain Healthcare{% endblock %}
+{% block content %}
+<!-- Hero Section -->
+<div class="card mb-5" style="border: 1px solid var(--border); background: linear-gradient(135deg, rgba(56,189,248,0.1) 0%, rgba(15,23,42,0.8) 100%); backdrop-filter: var(--blur); position: relative; overflow: hidden;">
+  <div class="card-body p-5 text-center" style="position: relative; z-index: 1;">
+    <div class="mb-3">
+      <span style="display: inline-block; background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.3); color: var(--accent); padding: 0.4rem 1rem; border-radius: 999px; font-size: 0.85rem; font-weight: 500;">
+        <i class="bi bi-layers me-2"></i>Layer-2 Blockchain Healthcare Network
+      </span>
+    </div>
+    <h1 style="color: var(--text-primary); font-size: 2.8rem; font-weight: 700; margin-bottom: 1rem; line-height: 1.2;">
+      Secure Medical Data.<br><span style="color: var(--accent);">Zero Knowledge.</span> Full Trust.
+    </h1>
+    <p style="color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto 2rem; line-height: 1.7;">
+      MediChain enables privacy-preserving, interoperable healthcare data exchange
+      across institutions using Layer-2 rollups, cross-chain relay, and
+      zero-knowledge proof verification.
+    </p>
+    <div class="d-flex justify-content-center gap-3 mb-5">
+      <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-lg" style="background: var(--accent); border: none; border-radius: var(--radius-sm); padding: 0.75rem 2rem; font-weight: 600;">
+        <i class="bi bi-rocket-takeoff me-2"></i>Get Started Free
+      </a>
+      <a href="{% url 'about' %}" class="btn btn-outline-primary btn-lg" style="border-color: var(--accent); color: var(--accent); border-radius: var(--radius-sm); padding: 0.75rem 2rem; font-weight: 600;">
+        <i class="bi bi-journal-text me-2"></i>Learn the Science
+      </a>
+    </div>
+
+    <!-- Metrics -->
+    <div class="row justify-content-center">
+      <div class="col-md-3">
+        <div class="stat-card" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border);">
+          <div class="stat-value" style="font-size: 2.5rem;">10x</div>
+          <div class="stat-label" style="font-size: 0.85rem;">Throughput vs single-chain</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-card" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border);">
+          <div class="stat-value" style="font-size: 2.5rem;">75%</div>
+          <div class="stat-label" style="font-size: 0.85rem;">Transaction cost reduction</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-card" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border);">
+          <div class="stat-value" style="font-size: 2.5rem;"><i class="bi bi-eye-slash" style="color: var(--accent);"></i></div>
+          <div class="stat-label" style="font-size: 0.85rem;">Zero-knowledge privacy</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Core Technology Section -->
+<div class="text-center mb-4">
+  <span style="display: inline-block; background: rgba(56,189,248,0.1); color: var(--accent); padding: 0.3rem 0.8rem; border-radius: 999px; font-size: 0.8rem; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Core Technology</span>
+  <h2 class="mt-3" style="color: var(--text-primary); font-weight: 700;">Built on Research-Grade Cryptography</h2>
+</div>
+
+<div class="row g-4 mb-5">
+  <div class="col-md-4">
+    <div class="card h-100" style="border: 1px solid var(--border); background: var(--bg-card); backdrop-filter: var(--blur); transition: transform 0.3s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+      <div class="card-body p-4 text-center">
+        <div style="width: 60px; height: 60px; background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+          <i class="bi bi-layers" style="font-size: 1.5rem; color: var(--accent);"></i>
+        </div>
+        <h5 style="color: var(--text-primary); margin-bottom: 0.75rem;">Layer-2 Rollups</h5>
+        <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin: 0;">
+          Aggregate up to 50 transactions per batch, reducing on-chain cost by 75%
+          while maintaining full blockchain security. Merkle roots anchor every batch.
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100" style="border: 1px solid var(--border); background: var(--bg-card); backdrop-filter: var(--blur); transition: transform 0.3s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+      <div class="card-body p-4 text-center">
+        <div style="width: 60px; height: 60px; background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+          <i class="bi bi-eye-slash" style="font-size: 1.5rem; color: var(--accent);"></i>
+        </div>
+        <h5 style="color: var(--text-primary); margin-bottom: 0.75rem;">Zero-Knowledge Proofs</h5>
+        <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin: 0;">
+          Verify medical records, insurance claims, and patient identity without
+          revealing any underlying data. HIPAA and GDPR compliant by design.
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100" style="border: 1px solid var(--border); background: var(--bg-card); backdrop-filter: var(--blur); transition: transform 0.3s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+      <div class="card-body p-4 text-center">
+        <div style="width: 60px; height: 60px; background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+          <i class="bi bi-arrow-left-right" style="font-size: 1.5rem; color: var(--accent);"></i>
+        </div>
+        <h5 style="color: var(--text-primary); margin-bottom: 0.75rem;">Cross-Chain Relay</h5>
+        <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin: 0;">
+          Share records across hospital, lab, and insurance blockchains with
+          triple-gate verification: signature, ZK proof, and nonce freshness.
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100" style="border: 1px solid var(--border); background: var(--bg-card); backdrop-filter: var(--blur); transition: transform 0.3s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+      <div class="card-body p-4 text-center">
+        <div style="width: 60px; height: 60px; background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+          <i class="bi bi-person-check" style="font-size: 1.5rem; color: var(--accent);"></i>
+        </div>
+        <h5 style="color: var(--text-primary); margin-bottom: 0.75rem;">Patient Sovereignty</h5>
+        <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin: 0;">
+          Patients control their own records. Every access request requires an
+          explicit patient signature with purpose-limitation enforcement.
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100" style="border: 1px solid var(--border); background: var(--bg-card); backdrop-filter: var(--blur); transition: transform 0.3s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+      <div class="card-body p-4 text-center">
+        <div style="width: 60px; height: 60px; background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+          <i class="bi bi-search" style="font-size: 1.5rem; color: var(--accent);"></i>
+        </div>
+        <h5 style="color: var(--text-primary); margin-bottom: 0.75rem;">Live Blockchain Explorer</h5>
+        <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin: 0;">
+          Inspect every block, transaction, and relay message in real time.
+          Verify chain integrity and track the full audit trail.
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100" style="border: 1px solid var(--border); background: var(--bg-card); backdrop-filter: var(--blur); transition: transform 0.3s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+      <div class="card-body p-4 text-center">
+        <div style="width: 60px; height: 60px; background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+          <i class="bi bi-hdd-network" style="font-size: 1.5rem; color: var(--accent);"></i>
+        </div>
+        <h5 style="color: var(--text-primary); margin-bottom: 0.75rem;">Off-Chain Storage</h5>
+        <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin: 0;">
+          Full records stored encrypted off-chain. Only SHA-256 hashes are
+          anchored on-chain, achieving 99.99% storage cost reduction.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CTA Section -->
+<div class="card" style="border: 1px solid var(--border); background: linear-gradient(135deg, rgba(56,189,248,0.08) 0%, rgba(15,23,42,0.9) 100%);">
+  <div class="card-body p-5 text-center">
+    <h2 style="color: var(--text-primary); margin-bottom: 1rem;">Ready to secure your healthcare data?</h2>
+    <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 1.05rem; max-width: 500px; margin-left: auto; margin-right: auto;">
+      Join hospitals, laboratories, and insurance providers on the MediChain network.
+    </p>
+    <div class="d-flex justify-content-center gap-3">
+      <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-lg" style="background: var(--accent); border: none; border-radius: var(--radius-sm); padding: 0.75rem 2rem; font-weight: 600;">
+        <i class="bi bi-person-plus me-2"></i>Create Account
+      </a>
+      <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary btn-lg" style="border-color: var(--accent); color: var(--accent); border-radius: var(--radius-sm); padding: 0.75rem 2rem; font-weight: 600;">
+        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -6,7 +6,7 @@ Patient records, access control, and medical data management
 import hashlib
 import json
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.utils import timezone
 import uuid
 from django.apps import apps  # Add this at top
@@ -15,7 +15,7 @@ from django.core.validators import MinLengthValidator
 class Patient(models.Model):
     """Patient entity in MediChain"""
     patient_id = models.CharField(max_length=64, unique=True)
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
     public_key = models.TextField()
     date_of_birth = models.DateField(null=True, blank=True)
     blood_type = models.CharField(max_length=10, blank=True)

@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}Profile Settings - MediChain{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 style="color: var(--accent);"><i class="bi bi-person-gear"></i> Profile Settings</h1>
+    <p style="color: var(--text-muted);">Manage your MediChain account</p>
+  </div>
+</div>
+
+<div class="row">
+  <!-- Left Column: Edit Form -->
+  <div class="col-lg-8">
+    <div class="card mb-4" style="border: 1px solid var(--border); background: var(--bg-card); backdrop-filter: var(--blur);">
+      <div class="card-header" style="background: rgba(56,189,248,0.1); border-bottom: 1px solid var(--border); color: var(--accent); font-weight: 600;">
+        <i class="bi bi-pencil-square me-2"></i>Account Information
+      </div>
+      <div class="card-body p-4">
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label" style="color: var(--text-light); font-size: 0.85rem; font-weight: 500;">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+            <div class="mt-1" style="color: var(--danger); font-size: 0.8rem;">{{ field.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-primary" style="background: var(--accent); border: none; border-radius: var(--radius-sm); font-weight: 500;">
+            <i class="bi bi-check-lg me-2"></i>Save Changes
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Details & Quick Links -->
+  <div class="col-lg-4">
+    <!-- Account Details Card -->
+    <div class="card mb-4" style="border: 1px solid var(--border); background: var(--bg-card); backdrop-filter: var(--blur);">
+      <div class="card-header" style="background: rgba(56,189,248,0.1); border-bottom: 1px solid var(--border); color: var(--accent); font-weight: 600;">
+        <i class="bi bi-info-circle me-2"></i>Account Details
+      </div>
+      <div class="card-body p-0">
+        <div class="p-3" style="border-bottom: 1px solid var(--border);">
+          <div class="d-flex justify-content-between align-items-center">
+            <span style="color: var(--text-muted); font-size: 0.85rem;">Username</span>
+            <span style="color: var(--text-primary); font-family: 'Courier New', monospace; font-size: 0.9rem;">{{ user.username }}</span>
+          </div>
+        </div>
+        <div class="p-3" style="border-bottom: 1px solid var(--border);">
+          <div class="d-flex justify-content-between align-items-center">
+            <span style="color: var(--text-muted); font-size: 0.85rem;">Role</span>
+            <span class="badge" style="background: var(--accent); color: var(--primary); font-size: 0.8rem;">{{ user.get_role_display }}</span>
+          </div>
+        </div>
+        <div class="p-3" style="border-bottom: 1px solid var(--border);">
+          <div class="d-flex justify-content-between align-items-center">
+            <span style="color: var(--text-muted); font-size: 0.85rem;">Member Since</span>
+            <span style="color: var(--text-light); font-size: 0.85rem;">{{ user.date_joined|date:"N j, Y" }}</span>
+          </div>
+        </div>
+        <div class="p-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <span style="color: var(--text-muted); font-size: 0.85rem;">Verified</span>
+            {% if user.is_verified %}
+            <span class="badge" style="background: var(--success); color: #000; font-size: 0.8rem;"><i class="bi bi-check-circle me-1"></i>Verified</span>
+            {% else %}
+            <span class="badge" style="background: var(--warning); color: #000; font-size: 0.8rem;"><i class="bi bi-exclamation-triangle me-1"></i>Unverified</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Links Card -->
+    <div class="card" style="border: 1px solid var(--border); background: var(--bg-card); backdrop-filter: var(--blur);">
+      <div class="card-header" style="background: rgba(56,189,248,0.1); border-bottom: 1px solid var(--border); color: var(--accent); font-weight: 600;">
+        <i class="bi bi-lightning-charge me-2"></i>Quick Links
+      </div>
+      <div class="card-body p-3">
+        <div class="d-grid gap-2">
+          <a href="{% url 'record_list' %}" class="btn btn-outline-primary" style="border-color: var(--accent); color: var(--accent); border-radius: var(--radius-sm);">
+            <i class="bi bi-file-medical me-2"></i>My Records
+          </a>
+          <a href="{% url 'permission_add' %}" class="btn btn-outline-primary" style="border-color: var(--accent); color: var(--accent); border-radius: var(--radius-sm);">
+            <i class="bi bi-shield-check me-2"></i>Access Permissions
+          </a>
+          <a href="{% url 'block_list' %}" class="btn btn-outline-primary" style="border-color: var(--accent); color: var(--accent); border-radius: var(--radius-sm);">
+            <i class="bi bi-link-45deg me-2"></i>Blockchain Explorer
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

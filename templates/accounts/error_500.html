@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Server Error - MediChain{% endblock %}
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: calc(100vh - 200px);">
+  <div class="col-md-6 col-lg-5 text-center">
+    <div class="mb-4">
+      <i class="bi bi-exclamation-triangle" style="font-size: 4rem; color: var(--danger);"></i>
+      <h1 class="display-4 mt-3" style="color: var(--text-primary); font-weight: 700;">500</h1>
+      <h4 style="color: var(--text-primary);">Internal Server Error</h4>
+    </div>
+    <p style="color: var(--text-muted); font-size: 1.1rem;">
+      Something went wrong on our end. Please try again later.
+    </p>
+    <div class="mt-4">
+      <a href="{% url 'index' %}" class="btn btn-primary btn-lg" style="background: var(--accent); border: none; border-radius: var(--radius-sm); font-weight: 500;">
+        <i class="bi bi-house-door me-2"></i>Back to Dashboard
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

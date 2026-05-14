@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Verify Your Identity - MediChain{% endblock %}
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: calc(100vh - 200px);">
+  <div class="col-md-5 col-lg-4">
+    <div class="card" style="border: 1px solid var(--border); background: var(--bg-card); backdrop-filter: var(--blur);">
+      <div class="card-body p-4 text-center">
+        <div class="mb-4">
+          <i class="bi bi-shield-lock" style="font-size: 2.5rem; color: var(--accent);"></i>
+          <h4 class="mt-2" style="color: var(--text-primary); font-weight: 600;">Verify Your Identity</h4>
+        </div>
+        <p class="mb-4" style="color: var(--text-muted); font-size: 0.9rem;">Enter the 6-digit code from your authenticator app, or use a backup code.</p>
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3 text-start">
+            <label class="form-label" style="color: var(--text-light); font-size: 0.85rem; font-weight: 500;">Verification Code</label>
+            {{ form.code }}
+            {% if form.code.errors %}
+            <div class="mt-1" style="color: var(--danger); font-size: 0.8rem;">{{ form.code.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+          <div class="mb-3 text-start">
+            <label class="form-label" style="color: var(--text-light); font-size: 0.85rem; font-weight: 500;">Backup Code (Optional)</label>
+            {{ form.backup_code }}
+            {% if form.backup_code.errors %}
+            <div class="mt-1" style="color: var(--danger); font-size: 0.8rem;">{{ form.backup_code.errors|join:", " }}</div>
+            {% endif %}
+            <small class="form-text text-muted" style="color: var(--text-light);">Use this if you don't have access to your authenticator app.</small>
+          </div>
+          <button type="submit" class="btn btn-primary w-100 py-2" style="background: var(--accent); border: none; border-radius: var(--radius-sm); font-weight: 500;">
+            <i class="bi bi-check-lg me-2"></i>Verify
+          </button>
+        </form>
+
+        <p class="mt-4 mb-0" style="color: var(--text-muted); font-size: 0.9rem;">
+          <a href="{% url 'accounts:two_factor_setup' %}" style="color: var(--accent); text-decoration: none;">Set up 2FA now</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

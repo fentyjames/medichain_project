@@ -4,6 +4,9 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+from accounts import views as accounts_views  # Import for default redirect
+
+
 # Import template views
 from blockchain import views as blockchain_views
 from healthcare import views as healthcare_views
@@ -14,8 +17,17 @@ urlpatterns = [
     # Admin
     path('admin/', admin.site.urls),
 
+# ==================== PUBLIC PAGES ====================
+    path('', accounts_views.landing, name='landing'),           # Public landing page
+    path('dashboard/', accounts_views.index, name='index'),      # Authenticated dashboard
+    path('about/', accounts_views.about, name='about'),          # About/Research page
+    
+    # Accounts
+    path('accounts/', include('accounts.urls', namespace='accounts')),
+    
     # Main Dashboard
-    path('', blockchain_views.index, name='index'),
+    #path('', accounts_views.index, name='index'),
+    #path('', blockchain_views.index, name='index'),
 
     # Blockchain Template Views
     path('blockchain/', blockchain_views.blockchain_dashboard, name='blockchain_dashboard'),

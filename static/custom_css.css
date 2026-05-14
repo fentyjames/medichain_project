@@ -26,6 +26,95 @@
 
 .form-select option {
     background-color: #1e1e1e;
-    color: #212529 important;
+    color: #212529;
+}
 
+.password-input-group {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+}
+
+.password-input-group .form-control {
+    padding-right: 3rem;
+}
+
+.password-input-group .toggle-password {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-left: none;
+    background: transparent;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: color 0.2s;
+    z-index: 5;
+}
+
+.password-input-group .toggle-password:hover {
+    color: var(--accent);
+}
+
+.password-strength-bar {
+    height: 4px;
+    border-radius: 2px;
+    margin-top: 4px;
+    transition: background-color 0.3s, width 0.3s;
+    width: 0%;
+}
+
+.error-page-icon {
+    font-size: 5rem;
+    color: var(--accent);
+    margin-bottom: 1rem;
+}
+
+.verification-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .password-input-group .toggle-password {
+        width: 2rem;
+    }
+}
+
+/* Rate limit warning animation */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.rate-limited {
+    animation: shake 0.5s ease-in-out;
+    border-color: var(--danger) !important;
+}
+
+/* 2FA Setup QR-like placeholder */
+.two-factor-qr {
+    width: 200px;
+    height: 200px;
+    background: var(--bg-card);
+    border: 2px dashed var(--accent);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.two-factor-qr i {
+    font-size: 4rem;
+    color: var(--accent);
+    opacity: 0.5;
 }

@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Sign In - MediChain{% endblock %}
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: calc(100vh - 200px);">
+  <div class="col-md-5 col-lg-4">
+    <div class="card" style="border: 1px solid var(--border); background: var(--bg-card); backdrop-filter: var(--blur);">
+      <div class="card-body p-4 text-center">
+        <div class="mb-4">
+          <i class="bi bi-shield-lock-fill" style="font-size: 2.5rem; color: var(--accent);"></i>
+          <h4 class="mt-2" style="color: var(--text-primary); font-weight: 600;">Medi<strong style="color: var(--accent);">Chain</strong></h4>
+        </div>
+        <h5 class="mb-1" style="color: var(--text-primary);">Welcome back</h5>
+        <p class="mb-4" style="color: var(--text-muted); font-size: 0.9rem;">Sign in to access your healthcare blockchain</p>
+
+        <form method="post" id="loginForm">
+          {% csrf_token %}
+          <div class="mb-3 text-start">
+            <label class="form-label" style="color: var(--text-light); font-size: 0.85rem; font-weight: 500;">Username</label>
+            <input type="text" name="username" class="form-control" placeholder="Enter your username" required autocomplete="username">
+          </div>
+          <div class="mb-3 text-start">
+            <label class="form-label" style="color: var(--text-light); font-size: 0.85rem; font-weight: 500;">Password</label>
+            <input type="password" name="password" class="form-control" placeholder="Enter your password" required autocomplete="current-password">
+          </div>
+          <button type="submit" class="btn btn-primary w-100 py-2" style="background: var(--accent); border: none; border-radius: var(--radius-sm); font-weight: 500;">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+          </button>
+        </form>
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+        <p class="mt-4 mb-0" style="color: var(--text-muted); font-size: 0.9rem;">
+          No account? <a href="{% url 'accounts:register' %}" style="color: var(--accent); text-decoration: none;">Create one free</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

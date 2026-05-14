@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}Create Account - MediChain{% endblock %}
+{% block content %}
+<div class="row justify-content-center" style="min-height: calc(100vh - 200px); padding-top: 2rem; padding-bottom: 2rem;">
+  <div class="col-md-7 col-lg-6">
+    <div class="card" style="border: 1px solid var(--border); background: var(--bg-card); backdrop-filter: var(--blur);">
+      <div class="card-body p-4">
+        <div class="text-center mb-4">
+          <i class="bi bi-shield-lock-fill" style="font-size: 2rem; color: var(--accent);"></i>
+          <h4 class="mt-2" style="color: var(--text-primary); font-weight: 600;">Medi<strong style="color: var(--accent);">Chain</strong></h4>
+        </div>
+        <h5 class="text-center mb-1" style="color: var(--text-primary);">Create account</h5>
+        <p class="text-center mb-4" style="color: var(--text-muted); font-size: 0.9rem;">Join the MediChain healthcare network</p>
+
+        <form method="post" id="registerForm" autocomplete="off">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="mb-1">
+                <label class="form-label" style="color: var(--text-light); font-size: 0.85rem; font-weight: 500;">First Name</label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}
+                <div class="mt-1" style="color: var(--danger); font-size: 0.8rem;">{{ form.first_name.errors|join:", " }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-1">
+                <label class="form-label" style="color: var(--text-light); font-size: 0.85rem; font-weight: 500;">Last Name</label>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}
+                <div class="mt-1" style="color: var(--danger); font-size: 0.8rem;">{{ form.last_name.errors|join:", " }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" style="color: var(--text-light); font-size: 0.85rem; font-weight: 500;">{{ form.username.label }}</label>
+            {{ form.username }}
+            {% if form.username.errors %}
+            <div class="mt-1" style="color: var(--danger); font-size: 0.8rem;">{{ form.username.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" style="color: var(--text-light); font-size: 0.85rem; font-weight: 500;">{{ form.email.label }}</label>
+            {{ form.email }}
+            {% if form.email.errors %}
+            <div class="mt-1" style="color: var(--danger); font-size: 0.8rem;">{{ form.email.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label" style="color: var(--text-light); font-size: 0.85rem; font-weight: 500;">{{ form.role.label }}</label>
+                {{ form.role }}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label" style="color: var(--text-light); font-size: 0.85rem; font-weight: 500;">{{ form.organization.label }}</label>
+                {{ form.organization }}
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" style="color: var(--text-light); font-size: 0.85rem; font-weight: 500;">{{ form.password1.label }}</label>
+            <div class="password-input-group">
+              {{ form.password1 }}
+              <button type="button" class="btn btn-outline-secondary toggle-password" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); border-radius: 0 5px 5px 0;">
+                <i class="bi bi-eye-slash"></i>
+              </button>
+            </div>
+            {% if form.password1.errors %}
+            <div class="mt-1" style="color: var(--danger); font-size: 0.8rem;">{{ form.password1.errors|join:", " }}</div>
+            {% endif %}
+            {% if form.password1.help_text %}
+            <div class="mt-1" style="font-size: 0.78rem; color: var(--text-muted);">{{ form.password1.help_text }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" style="color: var(--text-light); font-size: 0.85rem; font-weight: 500;">{{ form.password2.label }}</label>
+            <div class="password-input-group">
+              {{ form.password2 }}
+              <button type="button" class="btn btn-outline-secondary toggle-password" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); border-radius: 0 5px 5px 0;">
+                <i class="bi bi-eye-slash"></i>
+              </button>
+            </div>
+            {% if form.password2.errors %}
+            <div class="mt-1" style="color: var(--danger); font-size: 0.8rem;">{{ form.password2.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 py-2" style="background: var(--accent); border: none; border-radius: var(--radius-sm); font-weight: 500;">
+            <i class="bi bi-person-plus me-2"></i>Create Account
+          </button>
+        </form>
+
+        <p class="text-center mt-4 mb-0" style="color: var(--text-muted); font-size: 0.9rem;">
+          Already have an account? <a href="{% url 'accounts:login' %}" style="color: var(--accent); text-decoration: none;">Sign in</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

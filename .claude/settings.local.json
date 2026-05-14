@@ -12,7 +12,15 @@
       "PowerShell(python manage.py migrate --database blockchain blockchain)",
       "PowerShell(python manage.py migrate --database blockchain contenttypes auth)",
       "PowerShell(python manage.py migrate --database blockchain contenttypes)",
-      "PowerShell(python manage.py migrate --database blockchain)"
+      "PowerShell(python manage.py migrate --database blockchain)",
+      "PowerShell(python -m py_compile E:\\\\medichain_project\\\\accounts\\\\views.py)",
+      "PowerShell(python -m py_compile \"E:\\\\medichain_project\\\\accounts\\\\forms.py\"; python -m py_compile \"E:\\\\medichain_project\\\\accounts\\\\urls.py\")",
+      "Bash(venv\\\\Scripts\\\\activate)",
+      "PowerShell(.\\\\venv\\\\Scripts\\\\Activate.ps1; python manage.py runserver)",
+      "Bash(curl -s http://127.0.0.1:8000/accounts/login/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8000/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8000/accounts/login/)",
+      "Bash(curl -s http://127.0.0.1:8000/)"
     ]
   }
 }
