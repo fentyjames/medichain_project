@@ -5,7 +5,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 style="color: var(--accent);"><i class="bi bi-file-medical-fill"></i> Medical Records</h2>
-        <p class="text-muted mb-0">{{ records|length }} record{{ records|length|pluralize }} total</p>
+        <p class="text-muted mb-0">{{ page_obj.paginator.count }} record{{ page_obj.paginator.count|pluralize }} total{% if q or selected_type %} (filtered){% endif %}</p>
     </div>
     <a href="{% url 'record_add' %}" class="btn btn-primary">
         <i class="bi bi-file-earmark-plus"></i> Create Record
@@ -16,22 +16,22 @@
 <div class="card mb-4">
     <div class="card-body py-3">
         <form method="get" class="d-flex flex-wrap gap-2 align-items-center">
-            <input type="text" name="q" value="{{ request.GET.q }}" class="form-control"
+            <input type="text" name="q" value="{{ q }}" class="form-control"
                    placeholder="Search title or description…"
                    style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;max-width:280px;">
             <select name="type" class="form-select"
                     style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;max-width:180px;">
                 <option value="">All Types</option>
-                <option value="DIAGNOSIS" {% if request.GET.type == 'DIAGNOSIS' %}selected{% endif %}>Diagnosis</option>
-                <option value="LAB_RESULT" {% if request.GET.type == 'LAB_RESULT' %}selected{% endif %}>Lab Result</option>
-                <option value="PRESCRIPTION" {% if request.GET.type == 'PRESCRIPTION' %}selected{% endif %}>Prescription</option>
-                <option value="IMAGING" {% if request.GET.type == 'IMAGING' %}selected{% endif %}>Imaging</option>
-                <option value="SURGERY" {% if request.GET.type == 'SURGERY' %}selected{% endif %}>Surgery</option>
-                <option value="DISCHARGE" {% if request.GET.type == 'DISCHARGE' %}selected{% endif %}>Discharge</option>
-                <option value="INSURANCE" {% if request.GET.type == 'INSURANCE' %}selected{% endif %}>Insurance</option>
+                <option value="DIAGNOSIS" {% if selected_type == 'DIAGNOSIS' %}selected{% endif %}>Diagnosis</option>
+                <option value="LAB_RESULT" {% if selected_type == 'LAB_RESULT' %}selected{% endif %}>Lab Result</option>
+                <option value="PRESCRIPTION" {% if selected_type == 'PRESCRIPTION' %}selected{% endif %}>Prescription</option>
+                <option value="IMAGING" {% if selected_type == 'IMAGING' %}selected{% endif %}>Imaging</option>
+                <option value="SURGERY" {% if selected_type == 'SURGERY' %}selected{% endif %}>Surgery</option>
+                <option value="DISCHARGE" {% if selected_type == 'DISCHARGE' %}selected{% endif %}>Discharge</option>
+                <option value="INSURANCE" {% if selected_type == 'INSURANCE' %}selected{% endif %}>Insurance</option>
             </select>
             <button type="submit" class="btn btn-outline-primary"><i class="bi bi-search"></i></button>
-            {% if request.GET.q or request.GET.type %}
+            {% if q or selected_type %}
             <a href="{% url 'record_list' %}" class="btn btn-outline-secondary"><i class="bi bi-x"></i> Clear</a>
             {% endif %}
         </form>
@@ -126,4 +126,6 @@
         </div>
     </div>
 </div>
+
+{% include 'partials/pagination.html' %}
 {% endblock %}

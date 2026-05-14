@@ -4,6 +4,8 @@ Template rendering + API endpoints for patient records, access control
 """
 
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -19,8 +21,20 @@ from zk_proofs.zk_service import ZKProofService
 
 from .models import AccessPermission, AuditLog, Hospital, InsuranceProvider, Laboratory, MedicalRecord, Patient
 
+
+def _paginate(request, qs, per_page=25):
+    """Return (page_obj, query_string) for a queryset."""
+    paginator = Paginator(qs, per_page)
+    page_obj = paginator.get_page(request.GET.get('page', 1))
+    params = request.GET.copy()
+    params.pop('page', None)
+    qs_str = ('?' + params.urlencode() + '&') if params.urlencode() else '?'
+    return page_obj, qs_str
+
+
 # ==================== TEMPLATE VIEWS ====================
 
+@login_required(login_url='/accounts/login/')
 def healthcare_dashboard(request):
     """Healthcare dashboard"""
     context = {
@@ -28,21 +42,39 @@ def healthcare_dashboard(request):
         'hospital_count': Hospital.objects.count(),
         'record_count': MedicalRecord.objects.filter(is_active=True).count(),
         'permission_count': AccessPermission.objects.filter(is_active=True).count(),
-        'recent_patients': Patient.objects.order_by('-created_at')[:5],
-        'recent_records': MedicalRecord.objects.order_by('-created_at')[:5],
-        'hospitals': Hospital.objects.all(),
+        'recent_patients': Patient.objects.select_related('user').order_by('-created_at')[:5],
+        'recent_records': MedicalRecord.objects.select_related('hospital', 'patient').order_by('-created_at')[:5],
+        'hospitals': Hospital.objects.all()[:6],
     }
     return render(request, 'healthcare/dashboard.html', context)
 
 
+@login_required(login_url='/accounts/login/')
 def patient_list(request):
-    """List all patients"""
-    patients = Patient.objects.order_by('-created_at')
-    return render(request, 'healthcare/patient_list.html', {'patients': patients})
+    """List all patients with search."""
+    q = request.GET.get('q', '').strip()
+    qs = Patient.objects.select_related('user').order_by('-created_at')
+    if q:
+        qs = qs.filter(
+            Q(patient_id__icontains=q) |
+            Q(blood_type__icontains=q) |
+            Q(user__first_name__icontains=q) |
+            Q(user__last_name__icontains=q) |
+            Q(user__email__icontains=q) |
+            Q(user__username__icontains=q)
+        )
+    page_obj, qs_str = _paginate(request, qs, 25)
+    return render(request, 'healthcare/patient_list.html', {
+        'patients': page_obj,
+        'page_obj': page_obj,
+        'query_string': qs_str,
+        'q': q,
+    })
 
 
+@login_required(login_url='/accounts/login/')
 def patient_add(request):
-    """Add patient form"""
+    """Add patient form."""
     if request.method == 'POST':
         patient = Patient.objects.create(
             public_key=request.POST.get('public_key'),
@@ -56,30 +88,43 @@ def patient_add(request):
     return render(request, 'healthcare/patient_add.html')
 
 
+@login_required(login_url='/accounts/login/')
 def patient_detail(request, patient_id):
-    """Patient detail page"""
-    patient = get_object_or_404(Patient, patient_id=patient_id)
-    records = MedicalRecord.objects.filter(patient=patient, is_active=True)
+    """Patient detail page."""
+    patient = get_object_or_404(Patient.objects.select_related('user'), patient_id=patient_id)
+    records = MedicalRecord.objects.filter(patient=patient, is_active=True).select_related('hospital', 'blockchain_tx')
     permissions = AccessPermission.objects.filter(grantor=patient)
     return render(request, 'healthcare/patient_detail.html', {
-        'patient': patient, 'records': records, 'permissions': permissions
+        'patient': patient, 'records': records, 'permissions': permissions,
     })
 
 
+@login_required(login_url='/accounts/login/')
 def hospital_list(request):
-    """List all hospitals"""
-    hospitals = Hospital.objects.order_by('-created_at')
-    return render(request, 'healthcare/hospital_list.html', {'hospitals': hospitals})
+    """List all hospitals with search."""
+    q = request.GET.get('q', '').strip()
+    qs = Hospital.objects.order_by('name')
+    if q:
+        qs = qs.filter(
+            Q(name__icontains=q) |
+            Q(license_number__icontains=q) |
+            Q(address__icontains=q)
+        )
+    page_obj, qs_str = _paginate(request, qs, 12)
+    return render(request, 'healthcare/hospital_list.html', {
+        'hospitals': page_obj,
+        'page_obj': page_obj,
+        'query_string': qs_str,
+        'q': q,
+    })
 
 
+@login_required(login_url='/accounts/login/')
 def hospital_add(request):
-    """Add hospital form"""
+    """Add hospital form."""
     if request.method == 'POST':
         network_id = request.POST.get('blockchain_network')
-        network = None
-        if network_id:
-            network = BlockchainNetwork.objects.filter(id=network_id).first()
-
+        network = BlockchainNetwork.objects.filter(id=network_id).first() if network_id else None
         hospital = Hospital.objects.create(
             name=request.POST.get('name'),
             address=request.POST.get('address', ''),
@@ -89,32 +134,46 @@ def hospital_add(request):
         )
         messages.success(request, f'Hospital registered: {hospital.name}')
         return redirect('hospital_list')
-
     networks = BlockchainNetwork.objects.filter(is_active=True)
     return render(request, 'healthcare/hospital_add.html', {'networks': networks})
 
 
+@login_required(login_url='/accounts/login/')
 def hospital_detail(request, hospital_id):
-    """Hospital detail page"""
+    """Hospital detail page."""
     hospital = get_object_or_404(Hospital, hospital_id=hospital_id)
-    records = MedicalRecord.objects.filter(hospital=hospital)
+    records = MedicalRecord.objects.filter(hospital=hospital).select_related('patient__user')
     return render(request, 'healthcare/hospital_detail.html', {
-        'hospital': hospital, 'records': records
+        'hospital': hospital, 'records': records,
     })
 
 
+@login_required(login_url='/accounts/login/')
 def record_list(request):
-    """List all medical records"""
-    records = MedicalRecord.objects.order_by('-created_at')
-    return render(request, 'healthcare/record_list.html', {'records': records})
+    """List all medical records with search + type filter."""
+    q = request.GET.get('q', '').strip()
+    record_type = request.GET.get('type', '').strip()
+    qs = MedicalRecord.objects.select_related('patient__user', 'hospital', 'blockchain_tx').order_by('-created_at')
+    if q:
+        qs = qs.filter(Q(title__icontains=q) | Q(description__icontains=q) | Q(record_id__icontains=q))
+    if record_type:
+        qs = qs.filter(record_type=record_type)
+    page_obj, qs_str = _paginate(request, qs, 25)
+    return render(request, 'healthcare/record_list.html', {
+        'records': page_obj,
+        'page_obj': page_obj,
+        'query_string': qs_str,
+        'q': q,
+        'selected_type': record_type,
+    })
 
 
+@login_required(login_url='/accounts/login/')
 def record_add(request):
-    """Create medical record form"""
+    """Create medical record form."""
     if request.method == 'POST':
         patient = get_object_or_404(Patient, patient_id=request.POST.get('patient_id'))
         hospital = get_object_or_404(Hospital, hospital_id=request.POST.get('hospital_id'))
-
         record = MedicalRecord.objects.create(
             patient=patient,
             hospital=hospital,
@@ -122,34 +181,29 @@ def record_add(request):
             title=request.POST.get('title'),
             description=request.POST.get('description', ''),
             ipfs_hash=request.POST.get('ipfs_hash', ''),
+            metadata_hash=request.POST.get('metadata_hash', ''),
         )
-
-        # Create blockchain transaction
         tx = Transaction.objects.create(
             tx_type='CREATE',
             sender=hospital.hospital_id,
             data_hash=record.data_hash,
             signature=request.POST.get('signature', ''),
-            status='PENDING'
+            status='PENDING',
         )
         record.blockchain_tx = tx
         record.save()
-
-        # Audit log
         AuditLog.objects.create(
             log_id=f"audit_{record.record_id}_create",
             record=record,
             actor=hospital.hospital_id,
             actor_type='HOSPITAL',
             action='CREATE',
-            details={'record_type': record.record_type, 'title': record.title}
+            details={'record_type': record.record_type, 'title': record.title},
         )
-
         messages.success(request, f'Record created: {record.record_id[:16]}...')
         return redirect('record_list')
-
     context = {
-        'patients': Patient.objects.filter(is_active=True),
+        'patients': Patient.objects.filter(is_active=True).select_related('user'),
         'hospitals': Hospital.objects.all(),
         'selected_patient': request.GET.get('patient', ''),
         'selected_hospital': request.GET.get('hospital', ''),
@@ -157,23 +211,28 @@ def record_add(request):
     return render(request, 'healthcare/record_add.html', context)
 
 
+@login_required(login_url='/accounts/login/')
 def record_detail(request, record_id):
-    """Medical record detail"""
-    record = get_object_or_404(MedicalRecord, record_id=record_id)
+    """Medical record detail."""
+    record = get_object_or_404(
+        MedicalRecord.objects.select_related('patient__user', 'hospital', 'blockchain_tx'),
+        record_id=record_id,
+    )
     permissions = AccessPermission.objects.filter(record=record)
     audit_logs = AuditLog.objects.filter(record=record).order_by('-timestamp')
     return render(request, 'healthcare/record_detail.html', {
-        'record': record, 'permissions': permissions, 'audit_logs': audit_logs
+        'record': record, 'permissions': permissions, 'audit_logs': audit_logs,
     })
 
 
+@login_required(login_url='/accounts/login/')
 def permission_add(request):
-    """Grant access permission form"""
+    """Grant access permission form."""
     if request.method == 'POST':
         record = get_object_or_404(MedicalRecord, record_id=request.POST.get('record_id'))
         patient = get_object_or_404(Patient, patient_id=request.POST.get('patient_id'))
-
         permission = AccessPermission.objects.create(
+            permission_id=f"perm_{record.record_id[:16]}_{timezone.now().timestamp()}",
             record=record,
             grantor=patient,
             grantee=request.POST.get('grantee'),
@@ -183,9 +242,8 @@ def permission_add(request):
             signature=request.POST.get('signature', ''),
             valid_until=request.POST.get('valid_until') or None,
         )
-
         AuditLog.objects.create(
-            log_id=f"audit_{record.record_id}_grant",
+            log_id=f"audit_{record.record_id}_grant_{permission.permission_id[:8]}",
             record=record,
             actor=patient.patient_id,
             actor_type='PATIENT',
@@ -194,15 +252,13 @@ def permission_add(request):
                 'grantee': permission.grantee,
                 'permission_type': permission.permission_type,
                 'purpose': permission.purpose,
-            }
+            },
         )
-
         messages.success(request, 'Access permission granted successfully')
         return redirect('healthcare_dashboard')
-
     context = {
-        'records': MedicalRecord.objects.filter(is_active=True),
-        'patients': Patient.objects.filter(is_active=True),
+        'records': MedicalRecord.objects.filter(is_active=True).select_related('patient__user'),
+        'patients': Patient.objects.filter(is_active=True).select_related('user'),
         'selected_record': request.GET.get('record', ''),
         'selected_patient': request.GET.get('patient', ''),
     }
@@ -225,19 +281,13 @@ class PatientViewSet(viewsets.ModelViewSet):
             allergies=data.get('allergies', ''),
             emergency_contact=data.get('emergency_contact', ''),
         )
-        return Response({
-            'patient_id': patient.patient_id,
-            'public_key': patient.public_key,
-            'status': 'registered'
-        }, status=201)
+        return Response({'patient_id': patient.patient_id, 'public_key': patient.public_key, 'status': 'registered'}, status=201)
 
     def retrieve(self, request, pk=None):
         patient = get_object_or_404(Patient, patient_id=pk)
         return Response({
-            'patient_id': patient.patient_id,
-            'public_key': patient.public_key,
-            'blood_type': patient.blood_type,
-            'allergies': patient.allergies,
+            'patient_id': patient.patient_id, 'public_key': patient.public_key,
+            'blood_type': patient.blood_type, 'allergies': patient.allergies,
             'created_at': patient.created_at,
         })
 
@@ -261,16 +311,10 @@ class HospitalViewSet(viewsets.ModelViewSet):
     def create(self, request):
         data = request.data
         hospital = Hospital.objects.create(
-            name=data.get('name'),
-            address=data.get('address'),
-            license_number=data.get('license_number'),
-            public_key=data.get('public_key'),
+            name=data.get('name'), address=data.get('address'),
+            license_number=data.get('license_number'), public_key=data.get('public_key'),
         )
-        return Response({
-            'hospital_id': hospital.hospital_id,
-            'name': hospital.name,
-            'status': 'registered'
-        }, status=201)
+        return Response({'hospital_id': hospital.hospital_id, 'name': hospital.name, 'status': 'registered'}, status=201)
 
 
 class MedicalRecordViewSet(viewsets.ModelViewSet):
@@ -282,83 +326,52 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
         data = request.data
         patient = get_object_or_404(Patient, patient_id=data.get('patient_id'))
         hospital = get_object_or_404(Hospital, hospital_id=data.get('hospital_id'))
-
         record = MedicalRecord.objects.create(
             patient=patient, hospital=hospital,
             record_type=data.get('record_type', 'DIAGNOSIS'),
-            title=data.get('title'),
-            description=data.get('description'),
-            ipfs_hash=data.get('ipfs_hash', ''),
-            file_size=data.get('file_size', 0),
+            title=data.get('title'), description=data.get('description'),
+            ipfs_hash=data.get('ipfs_hash', ''), file_size=data.get('file_size', 0),
         )
-
         tx = Transaction.objects.create(
             tx_type='CREATE', sender=hospital.hospital_id,
-            data_hash=record.data_hash,
-            signature=data.get('signature', ''), status='PENDING'
+            data_hash=record.data_hash, signature=data.get('signature', ''), status='PENDING',
         )
         record.blockchain_tx = tx
         record.save()
-
         AuditLog.objects.create(
-            log_id=f"audit_{record.record_id}_create",
-            record=record, actor=hospital.hospital_id,
-            actor_type='HOSPITAL', action='CREATE',
-            details={'record_type': record.record_type, 'title': record.title}
+            log_id=f"audit_{record.record_id}_create", record=record,
+            actor=hospital.hospital_id, actor_type='HOSPITAL', action='CREATE',
+            details={'record_type': record.record_type, 'title': record.title},
         )
-
-        return Response({
-            'record_id': record.record_id,
-            'data_hash': record.data_hash,
-            'tx_hash': tx.tx_hash,
-            'status': 'created'
-        }, status=201)
+        return Response({'record_id': record.record_id, 'data_hash': record.data_hash, 'tx_hash': tx.tx_hash, 'status': 'created'}, status=201)
 
     def retrieve(self, request, pk=None):
         record = get_object_or_404(MedicalRecord, record_id=pk)
         return Response({
-            'record_id': record.record_id,
-            'record_type': record.record_type,
-            'title': record.title,
-            'description': record.description,
-            'patient_id': record.patient.patient_id,
-            'hospital': record.hospital.name,
-            'data_hash': record.data_hash,
-            'ipfs_hash': record.ipfs_hash,
-            'created_at': record.created_at,
+            'record_id': record.record_id, 'record_type': record.record_type,
+            'title': record.title, 'description': record.description,
+            'patient_id': record.patient.patient_id, 'hospital': record.hospital.name,
+            'data_hash': record.data_hash, 'ipfs_hash': record.ipfs_hash, 'created_at': record.created_at,
         })
 
     @action(detail=True, methods=['post'])
     def grant_access(self, request, pk=None):
         record = get_object_or_404(MedicalRecord, record_id=pk)
         data = request.data
-        patient = record.patient
-
         permission = AccessPermission.objects.create(
-            record=record, grantor=patient,
-            grantee=data.get('grantee'),
-            grantee_type=data.get('grantee_type', 'HOSPITAL'),
+            record=record, grantor=record.patient,
+            grantee=data.get('grantee'), grantee_type=data.get('grantee_type', 'HOSPITAL'),
             permission_type=data.get('permission_type', 'READ'),
-            purpose=data.get('purpose', 'Medical treatment'),
-            signature=data.get('signature'),
+            purpose=data.get('purpose', 'Medical treatment'), signature=data.get('signature', ''),
             valid_until=data.get('valid_until'),
         )
-        return Response({
-            'permission_id': permission.permission_id,
-            'grantee': permission.grantee,
-            'permission_type': permission.permission_type,
-        })
+        return Response({'permission_id': permission.permission_id, 'grantee': permission.grantee, 'permission_type': permission.permission_type})
 
     @action(detail=True, methods=['post'])
     def verify_integrity(self, request, pk=None):
         record = get_object_or_404(MedicalRecord, record_id=pk)
         computed_hash = record.calculate_hash()
-        return Response({
-            'record_id': record.record_id,
-            'stored_hash': record.data_hash,
-            'computed_hash': computed_hash,
-            'is_valid': computed_hash == record.data_hash,
-        })
+        return Response({'record_id': record.record_id, 'stored_hash': record.data_hash, 'computed_hash': computed_hash, 'is_valid': computed_hash == record.data_hash})
 
     @action(detail=True, methods=['post'])
     def zk_verify(self, request, pk=None):
@@ -366,12 +379,7 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
         zk_service = ZKProofService()
         proof = request.data.get('proof')
         is_valid = zk_service.verify_proof(proof, record.data_hash, [record.record_id])
-        return Response({
-            'record_id': record.record_id,
-            'is_valid': is_valid,
-            'verification_type': 'zero_knowledge',
-            'data_revealed': False,
-        })
+        return Response({'record_id': record.record_id, 'is_valid': is_valid, 'verification_type': 'zero_knowledge', 'data_revealed': False})
 
 
 class AuditLogViewSet(viewsets.ViewSet):

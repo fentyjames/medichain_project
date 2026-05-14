@@ -5,7 +5,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 style="color: var(--accent);"><i class="bi bi-currency-exchange"></i> Transactions</h2>
-        <p class="text-muted mb-0">{{ transactions|length }} transaction{{ transactions|length|pluralize }} total</p>
+        <p class="text-muted mb-0">{{ page_obj.paginator.count }} transaction{{ page_obj.paginator.count|pluralize }} total{% if q or selected_type or selected_status %} (filtered){% endif %}</p>
     </div>
     <a href="{% url 'transaction_add' %}" class="btn btn-primary">
         <i class="bi bi-plus-lg"></i> New Transaction
@@ -16,28 +16,28 @@
 <div class="card mb-4">
     <div class="card-body py-3">
         <form method="get" class="d-flex flex-wrap gap-2 align-items-center">
-            <input type="text" name="q" value="{{ request.GET.q }}" class="form-control"
+            <input type="text" name="q" value="{{ q }}" class="form-control"
                    placeholder="Search sender, receiver, or TX hash…"
                    style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;max-width:280px;">
             <select name="type" class="form-select"
                     style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;max-width:160px;">
                 <option value="">All Types</option>
-                <option value="CREATE"  {% if request.GET.type == 'CREATE'  %}selected{% endif %}>Create</option>
-                <option value="UPDATE"  {% if request.GET.type == 'UPDATE'  %}selected{% endif %}>Update</option>
-                <option value="SHARE"   {% if request.GET.type == 'SHARE'   %}selected{% endif %}>Share</option>
-                <option value="VERIFY"  {% if request.GET.type == 'VERIFY'  %}selected{% endif %}>Verify</option>
-                <option value="ACCESS"  {% if request.GET.type == 'ACCESS'  %}selected{% endif %}>Access</option>
+                <option value="CREATE"  {% if selected_type == 'CREATE'  %}selected{% endif %}>Create</option>
+                <option value="UPDATE"  {% if selected_type == 'UPDATE'  %}selected{% endif %}>Update</option>
+                <option value="SHARE"   {% if selected_type == 'SHARE'   %}selected{% endif %}>Share</option>
+                <option value="VERIFY"  {% if selected_type == 'VERIFY'  %}selected{% endif %}>Verify</option>
+                <option value="ACCESS"  {% if selected_type == 'ACCESS'  %}selected{% endif %}>Access</option>
             </select>
             <select name="status" class="form-select"
                     style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;max-width:150px;">
                 <option value="">All Statuses</option>
-                <option value="PENDING"   {% if request.GET.status == 'PENDING'   %}selected{% endif %}>Pending</option>
-                <option value="BATCHED"   {% if request.GET.status == 'BATCHED'   %}selected{% endif %}>Batched</option>
-                <option value="CONFIRMED" {% if request.GET.status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
-                <option value="FAILED"    {% if request.GET.status == 'FAILED'    %}selected{% endif %}>Failed</option>
+                <option value="PENDING"   {% if selected_status == 'PENDING'   %}selected{% endif %}>Pending</option>
+                <option value="BATCHED"   {% if selected_status == 'BATCHED'   %}selected{% endif %}>Batched</option>
+                <option value="CONFIRMED" {% if selected_status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
+                <option value="FAILED"    {% if selected_status == 'FAILED'    %}selected{% endif %}>Failed</option>
             </select>
             <button type="submit" class="btn btn-outline-primary"><i class="bi bi-search"></i></button>
-            {% if request.GET.q or request.GET.type or request.GET.status %}
+            {% if q or selected_type or selected_status %}
             <a href="{% url 'transaction_list' %}" class="btn btn-outline-secondary"><i class="bi bi-x"></i> Clear</a>
             {% endif %}
         </form>
@@ -115,4 +115,6 @@
         </div>
     </div>
 </div>
+
+{% include 'partials/pagination.html' %}
 {% endblock %}
