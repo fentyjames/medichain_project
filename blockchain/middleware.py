@@ -27,16 +27,27 @@ class ZKProofMiddleware(MiddlewareMixin):
         response['X-Frame-Options'] = 'DENY'
         response['X-MediChain-Version'] = '1.0.0'
         response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
-        # style-src no longer needs 'unsafe-inline' — all CSS is in external files.
-        # script-src still needs 'unsafe-inline' for the inline JS blocks in base.html.
-        response['Content-Security-Policy'] = (
-            "default-src 'self'; "
-            "script-src 'self' cdn.jsdelivr.net 'unsafe-inline'; "
-            "style-src 'self' cdn.jsdelivr.net; "
-            "font-src cdn.jsdelivr.net; "
-            "img-src 'self' data:; "
-            "connect-src 'self';"
-        )
+        # API doc pages (Swagger/ReDoc) use JS-injected inline styles and load Google
+        # Fonts — relax CSP for those paths only.
+        if request.path.startswith(('/api/docs/', '/api/redoc/', '/api/schema/')):
+            response['Content-Security-Policy'] = (
+                "default-src 'self'; "
+                "script-src 'self' cdn.jsdelivr.net 'unsafe-inline' blob:; "
+                "worker-src blob:; "
+                "style-src 'self' cdn.jsdelivr.net fonts.googleapis.com 'unsafe-inline'; "
+                "font-src cdn.jsdelivr.net fonts.gstatic.com; "
+                "img-src 'self' data: cdn.redoc.ly; "
+                "connect-src 'self';"
+            )
+        else:
+            response['Content-Security-Policy'] = (
+                "default-src 'self'; "
+                "script-src 'self' cdn.jsdelivr.net 'unsafe-inline'; "
+                "style-src 'self' cdn.jsdelivr.net 'unsafe-inline'; "
+                "font-src cdn.jsdelivr.net; "
+                "img-src 'self' data:; "
+                "connect-src 'self';"
+            )
         return response
 
 
