@@ -22,10 +22,20 @@ class ZKProofMiddleware(MiddlewareMixin):
         return None
 
     def process_response(self, request, response):
-        # Add security headers
         response['X-Content-Type-Options'] = 'nosniff'
         response['X-Frame-Options'] = 'DENY'
         response['X-MediChain-Version'] = '1.0.0'
+        response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        # 'unsafe-inline' is required while inline <style>/<script> blocks exist in base.html.
+        # Tighten to nonces/hashes once styles are moved to external files.
+        response['Content-Security-Policy'] = (
+            "default-src 'self'; "
+            "script-src 'self' cdn.jsdelivr.net 'unsafe-inline'; "
+            "style-src 'self' cdn.jsdelivr.net 'unsafe-inline'; "
+            "font-src cdn.jsdelivr.net; "
+            "img-src 'self' data:; "
+            "connect-src 'self';"
+        )
         return response
 
 

@@ -129,6 +129,8 @@ class LoginAudit(models.Model):
         ('LOGIN_FAILED', 'Failed Login Attempt'),
         ('PASSWORD_CHANGE', 'Password Changed'),
         ('TOKEN_REFRESH', 'Token Refreshed'),
+        ('LOGIN_2FA_PENDING', '2FA Verification Pending'),
+        ('LOGIN_2FA', '2FA Login Verified'),
     ]
 
     audit_id = models.CharField(max_length=64, unique=True)

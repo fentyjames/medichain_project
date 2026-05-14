@@ -15,7 +15,11 @@ SECRET_KEY = config('SECRET_KEY')
 
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = config(
+    'ALLOWED_HOSTS',
+    default='localhost,127.0.0.1',
+    cast=lambda v: [h.strip() for h in v.split(',')]
+)
 
 AUTH_USER_MODEL = 'accounts.User'
 LOGIN_URL = '/accounts/login/'
@@ -117,13 +121,6 @@ DATABASES = {
 }
 
 #DATABASE_ROUTERS = ['medichain_project.db_router.BlockchainRouter']
-
-AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
-]
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'

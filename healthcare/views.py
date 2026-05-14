@@ -19,6 +19,7 @@ from .models import (
 )
 from blockchain.models import Transaction, BlockchainNetwork
 from zk_proofs.zk_service import ZKProofService
+from api.serializers import PatientSerializer, HospitalSerializer, MedicalRecordSerializer
 
 
 # ==================== TEMPLATE VIEWS ====================
@@ -215,6 +216,7 @@ def permission_add(request):
 
 class PatientViewSet(viewsets.ModelViewSet):
     queryset = Patient.objects.all()
+    serializer_class = PatientSerializer
     permission_classes = [IsAuthenticated]
 
     def create(self, request):
@@ -255,7 +257,8 @@ class PatientViewSet(viewsets.ModelViewSet):
 
 
 class HospitalViewSet(viewsets.ModelViewSet):
-    queryset = Hospital.objects.all()
+    queryset = Hospital.objects.order_by('-created_at')
+    serializer_class = HospitalSerializer
     permission_classes = [IsAuthenticated]
 
     def create(self, request):
@@ -275,6 +278,7 @@ class HospitalViewSet(viewsets.ModelViewSet):
 
 class MedicalRecordViewSet(viewsets.ModelViewSet):
     queryset = MedicalRecord.objects.all()
+    serializer_class = MedicalRecordSerializer
     permission_classes = [IsAuthenticated]
 
     def create(self, request):

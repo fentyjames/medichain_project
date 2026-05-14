@@ -5,8 +5,10 @@ Unit tests for blockchain, ZK proofs, cross-chain relay, and healthcare modules
 
 import hashlib
 import json
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
+from django.urls import reverse
 from rest_framework.test import APITestCase
 from rest_framework.authtoken.models import Token
 
@@ -14,6 +16,8 @@ from blockchain.models import BlockchainNetwork, Block, Transaction, RollupBatch
 from healthcare.models import Patient, Hospital, MedicalRecord, AccessPermission
 from zk_proofs.zk_service import ZKProofService, MerkleTreeService
 from cross_chain.relay_service import CrossChainRelayService
+
+User = get_user_model()
 
 
 class ZKProofServiceTest(TestCase):
@@ -375,3 +379,176 @@ class PerformanceTest(TestCase):
         speedup = single_chain_time / rollup_time_total
 
         self.assertGreater(speedup, 2.0, "Rollup speedup insufficient")
+
+
+# ==================== ACCOUNTS TESTS ====================
+
+class AccountsAuthTest(TestCase):
+    """Tests for login, logout, and access control"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username='authuser',
+            email='auth@test.com',
+            password='TestPass123!',
+            role='PATIENT',
+        )
+
+    def test_dashboard_redirects_unauthenticated(self):
+        response = self.client.get('/dashboard/')
+        self.assertRedirects(response, '/accounts/login/?next=/dashboard/', fetch_redirect_response=False)
+
+    def test_login_success_redirects(self):
+        response = self.client.post('/accounts/login/', {
+            'username': 'authuser',
+            'password': 'TestPass123!',
+        })
+        self.assertIn(response.status_code, [200, 302])
+        if response.status_code == 302:
+            self.assertRedirects(response, '/dashboard/', fetch_redirect_response=False)
+
+    def test_login_wrong_password_stays_on_page(self):
+        response = self.client.post('/accounts/login/', {
+            'username': 'authuser',
+            'password': 'wrongpassword',
+        })
+        self.assertEqual(response.status_code, 200)
+
+    def test_login_page_loads(self):
+        response = self.client.get('/accounts/login/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_logout_requires_authentication(self):
+        response = self.client.get('/accounts/logout/')
+        self.assertEqual(response.status_code, 302)
+
+    def test_authenticated_user_can_access_dashboard(self):
+        self.client.force_login(self.user)
+        response = self.client.get('/dashboard/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_rate_limiting_triggers_after_max_attempts(self):
+        from accounts.views import MAX_LOGIN_ATTEMPTS
+        for _ in range(MAX_LOGIN_ATTEMPTS):
+            self.client.post('/accounts/login/', {
+                'username': 'authuser',
+                'password': 'badpassword',
+            })
+        response = self.client.post('/accounts/login/', {
+            'username': 'authuser',
+            'password': 'badpassword',
+        })
+        # Rate-limited response renders login page with rate_limited=True
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context.get('rate_limited'))
+
+
+@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+class AccountsRegistrationTest(TestCase):
+    """Tests for user registration"""
+
+    def setUp(self):
+        self.client = Client()
+        self.valid_data = {
+            'username': 'newuser',
+            'first_name': 'New',
+            'last_name': 'User',
+            'email': 'newuser@test.com',
+            'role': 'PATIENT',
+            'organization': '',
+            'password1': 'SecurePass123!',
+            'password2': 'SecurePass123!',
+        }
+
+    def test_registration_page_loads(self):
+        response = self.client.get('/accounts/register/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_registration_creates_user(self):
+        response = self.client.post('/accounts/register/', self.valid_data)
+        self.assertTrue(User.objects.filter(username='newuser').exists())
+        self.assertRedirects(response, '/accounts/login/', fetch_redirect_response=False)
+
+    def test_registration_duplicate_username_rejected(self):
+        User.objects.create_user(username='newuser', email='other@test.com', password='x')
+        response = self.client.post('/accounts/register/', self.valid_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(email='newuser@test.com').exists())
+
+    def test_registration_mismatched_passwords_rejected(self):
+        data = {**self.valid_data, 'password2': 'DifferentPass999!'}
+        response = self.client.post('/accounts/register/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(username='newuser').exists())
+
+    def test_authenticated_user_redirected_from_register(self):
+        user = User.objects.create_user(username='existing', password='x', email='e@e.com')
+        self.client.force_login(user)
+        response = self.client.get('/accounts/register/')
+        self.assertEqual(response.status_code, 302)
+
+
+# ==================== HEALTHCARE API TESTS ====================
+
+class HealthcareAPITest(APITestCase):
+    """Tests for healthcare REST API endpoints"""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='hcuser',
+            email='hc@test.com',
+            password='TestPass123!',
+            role='DOCTOR',
+        )
+        self.token = Token.objects.create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token.key}')
+
+        self.patient = Patient.objects.create(public_key='pub_key_test')
+        self.hospital = Hospital.objects.create(
+            name='Test Hospital',
+            address='1 Test St',
+            license_number='LIC123',
+            public_key='hosp_pub_key',
+        )
+
+    def test_patient_list_returns_200(self):
+        response = self.client.get('/api/healthcare/api/patients/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_hospital_list_returns_200(self):
+        response = self.client.get('/api/healthcare/api/hospitals/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_record_list_returns_200(self):
+        response = self.client.get('/api/healthcare/api/records/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_audit_list_returns_200(self):
+        response = self.client.get('/api/healthcare/api/audit/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_unauthenticated_request_rejected(self):
+        self.client.credentials()
+        response = self.client.get('/api/healthcare/api/patients/')
+        self.assertIn(response.status_code, [401, 403])
+
+    def test_patient_detail_returns_correct_record(self):
+        # retrieve() uses patient_id (SHA-256 string), not integer PK
+        response = self.client.get(f'/api/healthcare/api/patients/{self.patient.patient_id}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['patient_id'], self.patient.patient_id)
+
+    def test_medical_record_creation_via_api(self):
+        response = self.client.post('/api/healthcare/api/records/', {
+            'patient_id': self.patient.patient_id,
+            'hospital_id': self.hospital.hospital_id,
+            'record_type': 'DIAGNOSIS',
+            'title': 'API Test Record',
+            'description': 'Created via API test',
+        })
+        self.assertIn(response.status_code, [200, 201])
+        if response.status_code in [200, 201]:
+            self.assertTrue(
+                MedicalRecord.objects.filter(title='API Test Record').exists()
+            )

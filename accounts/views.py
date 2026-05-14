@@ -5,6 +5,7 @@ Authentication, registration, profile management, and session handling
 
 import secrets
 import hashlib
+import pyotp
 from datetime import timedelta
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -40,10 +41,6 @@ MAX_LOGIN_ATTEMPTS = 5
 LOCKOUT_DURATION = 300  # 5 minutes in seconds
 
 
-
-from django.shortcuts import render, redirect
-
-# ... existing index view ...
 
 def landing(request):
     """Public landing page for unauthenticated visitors"""
@@ -106,6 +103,7 @@ def record_login_attempt(ip_address, username, successful):
 
 
 # ==================== TEMPLATE VIEWS ====================
+@login_required
 def index(request):
     """Main dashboard view - renders index.html with system stats"""
     from healthcare.models import Patient, Hospital, MedicalRecord, AuditLog
@@ -288,7 +286,7 @@ def resend_verification(request):
                 return redirect('accounts:login')
 
             token = generate_verification_token(user, 'EMAIL')
-            send_verification_email(user, token)
+            send_verification_email(request, user, token)
             messages.success(request, 'Verification email sent! Please check your inbox.')
         except User.DoesNotExist:
             messages.error(request, 'No account found with this email address.')
@@ -387,8 +385,8 @@ def two_factor_setup(request):
         form = TwoFactorForm(request.POST)
         if form.is_valid():
             if form.cleaned_data.get('enable_2fa'):
-                # Generate secret key and backup codes
-                secret = secrets.token_hex(16)
+                # Generate TOTP secret and backup codes
+                secret = pyotp.random_base32()
                 backup_codes = [secrets.token_hex(4) for _ in range(6)]
 
                 two_factor.is_enabled = True
@@ -451,8 +449,9 @@ def two_factor_verify(request):
                         next_url = request.session.get('2fa_next_url', 'index')
                         return redirect(next_url)
 
-                # For TOTP, we simulate verification (in production, integrate pyotp)
-                if len(code) == 6 and code.isdigit():
+                # Verify TOTP code using pyotp
+                totp = pyotp.TOTP(two_factor.secret_key)
+                if totp.verify(code, valid_window=1):
                     user = User.objects.get(id=user_id)
                     login(request, user)
 

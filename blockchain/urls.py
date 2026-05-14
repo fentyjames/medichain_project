@@ -10,7 +10,18 @@ router.register(r'transactions', views.TransactionViewSet, basename='transaction
 router.register(r'rollup', views.RollupViewSet, basename='rollup')
 router.register(r'consensus', views.ConsensusViewSet, basename='consensus')
 
+# API patterns — included at /api/blockchain/
 urlpatterns = [
     path('api/', include(router.urls)),
     path('api/dashboard/', views.DashboardView.as_view(), name='api_dashboard'),
+]
+
+# Template patterns — included at /blockchain/
+template_urlpatterns = [
+    path('', views.blockchain_dashboard, name='blockchain_dashboard'),
+    path('blocks/', views.block_list, name='block_list'),
+    path('transactions/', views.transaction_list, name='transaction_list'),
+    path('transactions/add/', views.transaction_add, name='transaction_add'),
+    path('rollups/', views.rollup_list, name='rollup_list'),
+    path('rollups/create/', views.rollup_create, name='rollup_create'),
 ]

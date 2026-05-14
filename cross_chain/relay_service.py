@@ -178,12 +178,11 @@ class CrossChainRelayService:
 
     def _is_nonce_used(self, nonce: str) -> bool:
         """Check if nonce has been used (replay protection)"""
-        # In production, check against database
-        return False
+        from blockchain.models import CrossChainMessage
+        return CrossChainMessage.objects.filter(nonce=nonce).exists()
 
     def _mark_nonce_used(self, nonce: str):
-        """Mark nonce as used"""
-        # In production, store in database
+        """No-op: the nonce is persisted when CrossChainMessage is saved by the caller."""
         pass
 
 

@@ -5,16 +5,22 @@ Implements zk-SNARK and zk-STARK proof generation and verification
 
 import hashlib
 import json
+import logging
 import time
 from typing import List, Dict, Any
+
+from django.core.cache import cache
+
+logger = logging.getLogger(__name__)
 
 
 class ZKProofService:
     """Service for generating and verifying Zero-Knowledge Proofs"""
 
+    PROOF_CACHE_TTL = 3600  # seconds
+
     def __init__(self, proof_type='zk_snark'):
         self.proof_type = proof_type
-        self.proof_cache = {}
 
     def generate_proof(self, inputs: List[str], public_output: str) -> str:
         """
@@ -45,7 +51,7 @@ class ZKProofService:
         proof_json = json.dumps(proof_data, sort_keys=True)
         proof_hash = hashlib.sha256(proof_json.encode()).hexdigest()
 
-        self.proof_cache[proof_hash] = proof_data
+        cache.set(f'zk_proof_{proof_hash}', proof_data, timeout=self.PROOF_CACHE_TTL)
 
         return proof_json
 
@@ -88,7 +94,7 @@ class ZKProofService:
             return True
 
         except (json.JSONDecodeError, KeyError) as e:
-            print(f"Proof verification error: {e}")
+            logger.warning("Proof verification error: %s", e)
             return False
 
     def _hash_inputs(self, inputs: List[str]) -> str:
