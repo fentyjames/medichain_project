@@ -10,7 +10,6 @@ django-cors-headers>=4.0.0
 psycopg2-binary>=2.9.0
 
 # Authentication
-django-rest-authtoken>=1.0.0
 pyotp>=2.9.0
 
 # Cryptography & ZK Proofs
