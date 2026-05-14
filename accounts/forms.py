@@ -315,6 +315,10 @@ class TwoFactorForm(forms.Form):
 class AdminRegistrationForm(CustomUserCreationForm):
     """Registration form for system administrators — requires a secret access code."""
 
+    # Remove the role field — it is always ADMIN, set explicitly in the view.
+    # Setting an inherited declared field to None drops it from the form entirely.
+    role = None
+
     admin_code = forms.CharField(
         label="Admin Access Code",
         widget=forms.PasswordInput(attrs={
