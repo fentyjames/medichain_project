@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% block title %}{{ record.title }} - MediChain{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}">Healthcare</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'record_list' %}">Records</a></li>
+        <li class="breadcrumb-item active">{{ record.title|truncatechars:40 }}</li>
+    </ol>
+</nav>
+
+<!-- Header -->
+{% with rt=record.record_type %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge"
+                  style="font-size:0.85rem;padding:5px 12px;background:{% if rt == 'DIAGNOSIS' %}#38bdf8{% elif rt == 'LAB_RESULT' %}#a78bfa{% elif rt == 'PRESCRIPTION' %}#22c55e{% elif rt == 'IMAGING' %}#fb923c{% elif rt == 'SURGERY' %}#f87171{% elif rt == 'DISCHARGE' %}#facc15{% elif rt == 'INSURANCE' %}#c084fc{% else %}#94a3b8{% endif %};color:{% if rt == 'DISCHARGE' or rt == 'IMAGING' %}#000{% else %}#fff{% endif %};">
+                {{ record.get_record_type_display }}
+            </span>
+            {% if record.is_active %}
+                <span class="badge" style="background:#22c55e;font-size:0.8rem;">Active</span>
+            {% else %}
+                <span class="badge" style="background:#64748b;color:#fff;font-size:0.8rem;">Archived</span>
+            {% endif %}
+            {% if record.blockchain_tx %}
+                <span class="badge" style="background:var(--accent);color:#000;font-size:0.8rem;">
+                    <i class="bi bi-link-45deg"></i> On-Chain
+                </span>
+            {% endif %}
+        </div>
+        <h2 style="color:var(--accent);">{{ record.title }}</h2>
+        <small class="text-muted">
+            <i class="bi bi-building"></i> {{ record.hospital.name }}
+            &nbsp;&middot;&nbsp;
+            <i class="bi bi-calendar3"></i> {{ record.created_at|date:"d M Y, H:i" }}
+        </small>
+    </div>
+    <a href="{% url 'permission_add' %}?record={{ record.record_id }}" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-key"></i> Grant Access
+    </a>
+</div>
+{% endwith %}
+
+<div class="row g-4">
+    <!-- Clinical Content -->
+    <div class="col-md-8">
+        <!-- Description -->
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-file-text"></i> Clinical Notes</div>
+            <div class="card-body">
+                <p style="white-space:pre-wrap;line-height:1.7;">{{ record.description }}</p>
+            </div>
+        </div>
+
+        <!-- Audit Trail -->
+        <div class="card">
+            <div class="card-header"><i class="bi bi-clock-history"></i> Audit Trail ({{ audit_logs|length }})</div>
+            <div class="card-body p-0">
+                {% for log in audit_logs %}
+                <div class="p-3 {% if not forloop.last %}border-bottom{% endif %}" style="border-color:var(--border)!important;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <span class="badge me-2"
+                                  style="background:{% if log.action == 'CREATE' %}#22c55e{% elif log.action == 'READ' %}#38bdf8{% elif log.action == 'UPDATE' %}#facc15;color:#000{% elif log.action == 'SHARE' %}#a78bfa{% elif log.action == 'DELETE' %}#f87171{% else %}#ef4444{% endif %};">
+                                {{ log.get_action_display }}
+                            </span>
+                            <strong>{{ log.actor }}</strong>
+                            <span class="text-muted ms-1 small">({{ log.actor_type }})</span>
+                        </div>
+                        <small class="text-muted">{{ log.timestamp|date:"d M Y, H:i" }}</small>
+                    </div>
+                    {% if log.details %}
+                    <div class="mt-1">
+                        <small class="text-muted">
+                            {% for k, v in log.details.items %}
+                                <span class="me-3"><strong>{{ k }}:</strong> {{ v }}</span>
+                            {% endfor %}
+                        </small>
+                    </div>
+                    {% endif %}
+                    {% if log.ip_address %}
+                    <small class="text-muted"><i class="bi bi-globe"></i> {{ log.ip_address }}</small>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-clock-history" style="font-size:1.5rem;"></i>
+                    <p class="mt-1 mb-0 small">No audit entries yet.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Metadata Sidebar -->
+    <div class="col-md-4">
+        <!-- Blockchain Info -->
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-shield-lock"></i> Cryptographic Integrity</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label text-muted small mb-1">Data Hash (SHA-256)</label>
+                    <div class="p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);">
+                        <code class="hash-text small" onclick="copyToClipboard('{{ record.data_hash }}')"
+                              style="cursor:pointer;word-break:break-all;" title="Click to copy">
+                            {{ record.data_hash }}
+                        </code>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-muted small mb-1">Metadata Hash</label>
+                    <div class="p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);">
+                        <code class="hash-text small" onclick="copyToClipboard('{{ record.metadata_hash }}')"
+                              style="cursor:pointer;word-break:break-all;" title="Click to copy">
+                            {{ record.metadata_hash }}
+                        </code>
+                    </div>
+                </div>
+
+                {% if record.ipfs_hash %}
+                <div class="mb-3">
+                    <label class="form-label text-muted small mb-1">IPFS Hash</label>
+                    <div class="p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);">
+                        <code class="hash-text small" style="word-break:break-all;">{{ record.ipfs_hash }}</code>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if record.blockchain_tx %}
+                <div class="mb-3">
+                    <label class="form-label text-muted small mb-1">Blockchain TX</label>
+                    <div class="p-2 rounded" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);">
+                        <code class="hash-text small" onclick="copyToClipboard('{{ record.blockchain_tx.tx_hash }}')"
+                              style="cursor:pointer;word-break:break-all;">
+                            {{ record.blockchain_tx.tx_hash|slice:":32" }}…
+                        </code>
+                        <br>
+                        <span class="badge mt-1"
+                              style="background:{% if record.blockchain_tx.status == 'CONFIRMED' %}#22c55e{% elif record.blockchain_tx.status == 'PENDING' %}#facc15;color:#000{% else %}#f87171{% endif %};">
+                            {{ record.blockchain_tx.status }}
+                        </span>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="text-muted small">
+                    <i class="bi bi-hdd-fill"></i> {{ record.file_size|filesizeformat }}
+                    &nbsp;&middot;&nbsp;
+                    Updated {{ record.updated_at|date:"d M Y" }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Patient Info -->
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-person"></i> Patient</div>
+            <div class="card-body">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:36px;height:36px;background:var(--accent);color:#000;font-weight:700;flex-shrink:0;">
+                        {% if record.patient.user %}{{ record.patient.user.first_name|slice:":1"|default:"?" }}{% else %}?{% endif %}
+                    </div>
+                    <div>
+                        {% if record.patient.user %}
+                            <strong>{{ record.patient.user.get_full_name|default:record.patient.user.username }}</strong>
+                            <br><small class="text-muted">{{ record.patient.user.email }}</small>
+                        {% else %}
+                            <span class="text-muted">Anonymous Patient</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if record.patient.blood_type %}
+                <span class="badge" style="background:#38bdf8;color:#000;">{{ record.patient.blood_type }}</span>
+                {% endif %}
+                <div class="mt-2">
+                    <a href="{% url 'patient_detail' record.patient.patient_id %}" class="btn btn-sm btn-outline-primary w-100">
+                        <i class="bi bi-person-lines-fill"></i> View Patient
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Access Permissions -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-key"></i> Permissions</span>
+                <a href="{% url 'permission_add' %}?record={{ record.record_id }}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-plus"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% for perm in permissions %}
+                <div class="p-3 {% if not forloop.last %}border-bottom{% endif %}" style="border-color:var(--border)!important;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <small class="fw-bold">{{ perm.grantee|truncatechars:20 }}</small>
+                            <br>
+                            <span class="badge me-1"
+                                  style="font-size:0.7rem;background:{% if perm.grantee_type == 'HOSPITAL' %}#38bdf8{% elif perm.grantee_type == 'LAB' %}#a78bfa{% elif perm.grantee_type == 'INSURANCE' %}#fb923c{% else %}#22c55e{% endif %};color:{% if perm.grantee_type == 'HOSPITAL' %}#000{% else %}#fff{% endif %};">
+                                {{ perm.grantee_type }}
+                            </span>
+                            <span class="badge"
+                                  style="font-size:0.7rem;background:{% if perm.permission_type == 'READ' %}#22c55e{% elif perm.permission_type == 'WRITE' %}#facc15;color:#000{% else %}#f87171{% endif %};">
+                                {{ perm.permission_type }}
+                            </span>
+                        </div>
+                        {% if perm.is_active %}
+                            <span class="badge" style="background:#22c55e;font-size:0.65rem;">Active</span>
+                        {% else %}
+                            <span class="badge" style="background:#64748b;font-size:0.65rem;color:#fff;">Revoked</span>
+                        {% endif %}
+                    </div>
+                    {% if perm.valid_until %}
+                    <small class="text-muted">Expires {{ perm.valid_until|date:"d M Y" }}</small>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-3">
+                    <small>No access granted yet</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

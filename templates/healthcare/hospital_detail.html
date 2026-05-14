@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% block title %}{{ hospital.name }} - MediChain{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}">Healthcare</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'hospital_list' %}">Hospitals</a></li>
+        <li class="breadcrumb-item active">{{ hospital.name }}</li>
+    </ol>
+</nav>
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <div class="rounded d-flex align-items-center justify-content-center"
+             style="width:56px;height:56px;background:rgba(255,255,255,0.08);flex-shrink:0;">
+            <i class="bi bi-hospital-fill" style="font-size:1.6rem;color:var(--accent);"></i>
+        </div>
+        <div>
+            <h2 style="color:var(--accent);margin-bottom:0.1rem;">{{ hospital.name }}</h2>
+            <small class="text-muted">{{ hospital.license_number }}</small>
+        </div>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+        {% if hospital.is_verified %}
+            <span class="badge" style="background:#22c55e;font-size:0.9rem;padding:6px 14px;">
+                <i class="bi bi-check-circle"></i> Verified
+            </span>
+        {% else %}
+            <span class="badge" style="background:#facc15;color:#000;font-size:0.9rem;padding:6px 14px;">
+                Pending Verification
+            </span>
+        {% endif %}
+        <a href="{% url 'record_add' %}?hospital={{ hospital.hospital_id }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-file-earmark-plus"></i> New Record
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Hospital Info -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-info-circle"></i> Hospital Details</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-5 text-muted">Hospital ID</dt>
+                    <dd class="col-7">
+                        <code class="hash-text" onclick="copyToClipboard('{{ hospital.hospital_id }}')" style="cursor:pointer;"
+                              title="Click to copy">{{ hospital.hospital_id|slice:":16" }}…</code>
+                    </dd>
+
+                    <dt class="col-5 text-muted">License</dt>
+                    <dd class="col-7">{{ hospital.license_number }}</dd>
+
+                    {% if hospital.address %}
+                    <dt class="col-5 text-muted">Address</dt>
+                    <dd class="col-7"><small>{{ hospital.address }}</small></dd>
+                    {% endif %}
+
+                    {% if hospital.blockchain_network %}
+                    <dt class="col-5 text-muted">Network</dt>
+                    <dd class="col-7" style="color:var(--accent);">
+                        <i class="bi bi-link-45deg"></i> {{ hospital.blockchain_network.name }}
+                    </dd>
+                    {% endif %}
+
+                    <dt class="col-5 text-muted">Registered</dt>
+                    <dd class="col-7"><small>{{ hospital.created_at|date:"d M Y" }}</small></dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Records Table -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-file-medical"></i> Medical Records ({{ records|length }})</span>
+                <a href="{% url 'record_add' %}?hospital={{ hospital.hospital_id }}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-file-earmark-plus"></i> Add Record
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Patient</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in records %}
+                            {% with rt=record.record_type %}
+                            <tr>
+                                <td>
+                                    <strong>{{ record.title|truncatechars:32 }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge"
+                                          style="background:{% if rt == 'DIAGNOSIS' %}#38bdf8{% elif rt == 'LAB_RESULT' %}#a78bfa{% elif rt == 'PRESCRIPTION' %}#22c55e{% elif rt == 'IMAGING' %}#fb923c{% elif rt == 'SURGERY' %}#f87171{% elif rt == 'DISCHARGE' %}#facc15{% elif rt == 'INSURANCE' %}#c084fc{% else %}#94a3b8{% endif %};color:{% if rt == 'DISCHARGE' or rt == 'IMAGING' %}#000{% else %}#fff{% endif %};">
+                                        {{ record.get_record_type_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if record.patient.user %}
+                                        <a href="{% url 'patient_detail' record.patient.patient_id %}">
+                                            {{ record.patient.user.get_full_name|default:record.patient.user.username }}
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">Anonymous</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if record.is_active %}
+                                        <span class="badge" style="background:#22c55e;">Active</span>
+                                    {% else %}
+                                        <span class="badge" style="background:#64748b;color:#fff;">Archived</span>
+                                    {% endif %}
+                                </td>
+                                <td><small>{{ record.created_at|date:"d M Y" }}</small></td>
+                                <td>
+                                    <a href="{% url 'record_detail' record.record_id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endwith %}
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">No records from this hospital yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

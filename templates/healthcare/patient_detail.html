@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% block title %}{{ patient.user.get_full_name|default:"Patient" }} - MediChain{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}">Healthcare</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'patient_list' %}">Patients</a></li>
+        <li class="breadcrumb-item active">
+            {% if patient.user %}{{ patient.user.get_full_name|default:patient.user.username }}{% else %}Patient{% endif %}
+        </li>
+    </ol>
+</nav>
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <div class="rounded-circle d-flex align-items-center justify-content-center"
+             style="width:56px;height:56px;background:var(--accent);color:#000;font-weight:700;font-size:1.4rem;flex-shrink:0;">
+            {% if patient.user %}{{ patient.user.first_name|slice:":1"|default:"?" }}{% else %}?{% endif %}
+        </div>
+        <div>
+            <h2 style="color:var(--accent);margin-bottom:0.1rem;">
+                {% if patient.user %}
+                    {{ patient.user.get_full_name|default:patient.user.username }}
+                {% else %}
+                    Anonymous Patient
+                {% endif %}
+            </h2>
+            {% if patient.user %}<small class="text-muted">{{ patient.user.email }}</small>{% endif %}
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        {% if patient.is_active %}
+            <span class="badge align-self-center" style="background:#22c55e;font-size:0.9rem;padding:6px 14px;">Active</span>
+        {% else %}
+            <span class="badge align-self-center" style="background:#f87171;color:#fff;font-size:0.9rem;padding:6px 14px;">Inactive</span>
+        {% endif %}
+        <a href="{% url 'record_add' %}?patient={{ patient.patient_id }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-file-earmark-plus"></i> New Record
+        </a>
+        <a href="{% url 'permission_add' %}?patient={{ patient.patient_id }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-key"></i> Grant Access
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Patient Info -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-person-badge"></i> Patient Information</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-5 text-muted">Patient ID</dt>
+                    <dd class="col-7">
+                        <code class="hash-text" onclick="copyToClipboard('{{ patient.patient_id }}')" style="cursor:pointer;"
+                              title="Click to copy full ID">{{ patient.patient_id|slice:":16" }}…</code>
+                    </dd>
+
+                    <dt class="col-5 text-muted">Blood Type</dt>
+                    <dd class="col-7">
+                        {% if patient.blood_type %}
+                            <span class="badge" style="background:#38bdf8;color:#000;">{{ patient.blood_type }}</span>
+                        {% else %}-{% endif %}
+                    </dd>
+
+                    <dt class="col-5 text-muted">Date of Birth</dt>
+                    <dd class="col-7">{{ patient.date_of_birth|date:"d M Y"|default:"-" }}</dd>
+
+                    <dt class="col-5 text-muted">Allergies</dt>
+                    <dd class="col-7">{{ patient.allergies|default:"None reported" }}</dd>
+
+                    <dt class="col-5 text-muted">Emergency</dt>
+                    <dd class="col-7"><small>{{ patient.emergency_contact|default:"-" }}</small></dd>
+
+                    <dt class="col-5 text-muted">Registered</dt>
+                    <dd class="col-7"><small>{{ patient.created_at|date:"d M Y, H:i" }}</small></dd>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Access Permissions -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-key"></i> Access Permissions</span>
+                <a href="{% url 'permission_add' %}?patient={{ patient.patient_id }}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-plus"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% for perm in permissions %}
+                <div class="p-3 {% if not forloop.last %}border-bottom{% endif %}" style="border-color:var(--border)!important;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong style="font-size:0.85rem;">{{ perm.grantee|truncatechars:24 }}</strong>
+                            <br>
+                            <span class="badge me-1"
+                                  style="font-size:0.7rem;background:{% if perm.grantee_type == 'HOSPITAL' %}#38bdf8{% elif perm.grantee_type == 'LAB' %}#a78bfa{% elif perm.grantee_type == 'INSURANCE' %}#fb923c{% else %}#22c55e{% endif %};color:{% if perm.grantee_type == 'HOSPITAL' %}#000{% else %}#fff{% endif %};">
+                                {{ perm.grantee_type }}
+                            </span>
+                            <span class="badge"
+                                  style="font-size:0.7rem;background:{% if perm.permission_type == 'READ' %}#22c55e{% elif perm.permission_type == 'WRITE' %}#facc15;color:#000{% else %}#f87171{% endif %};">
+                                {{ perm.permission_type }}
+                            </span>
+                        </div>
+                        {% if perm.is_active %}
+                            <span class="badge" style="background:#22c55e;font-size:0.7rem;">Active</span>
+                        {% else %}
+                            <span class="badge" style="background:#64748b;font-size:0.7rem;color:#fff;">Revoked</span>
+                        {% endif %}
+                    </div>
+                    {% if perm.valid_until %}
+                    <small class="text-muted">Expires {{ perm.valid_until|date:"d M Y" }}</small>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-3">
+                    <i class="bi bi-key" style="font-size:1.4rem;"></i>
+                    <p class="mt-1 mb-0 small">No permissions granted</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Medical Records -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-file-medical"></i> Medical Records ({{ records|length }})</span>
+                <a href="{% url 'record_add' %}?patient={{ patient.patient_id }}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-file-earmark-plus"></i> Add Record
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% for record in records %}
+                {% with rt=record.record_type %}
+                <div class="p-3 {% if not forloop.last %}border-bottom{% endif %}" style="border-color:var(--border)!important;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="badge"
+                                      style="background:{% if rt == 'DIAGNOSIS' %}#38bdf8{% elif rt == 'LAB_RESULT' %}#a78bfa{% elif rt == 'PRESCRIPTION' %}#22c55e{% elif rt == 'IMAGING' %}#fb923c{% elif rt == 'SURGERY' %}#f87171{% elif rt == 'DISCHARGE' %}#facc15{% elif rt == 'INSURANCE' %}#c084fc{% else %}#94a3b8{% endif %};color:{% if rt == 'DISCHARGE' or rt == 'IMAGING' %}#000{% else %}#fff{% endif %};">
+                                    {{ record.get_record_type_display }}
+                                </span>
+                                <strong>{{ record.title }}</strong>
+                            </div>
+                            <p class="text-muted mb-1 small">{{ record.description|truncatechars:120 }}</p>
+                            <div class="d-flex gap-3">
+                                <small class="text-muted">
+                                    <i class="bi bi-building"></i> {{ record.hospital.name }}
+                                </small>
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar3"></i> {{ record.created_at|date:"d M Y" }}
+                                </small>
+                                {% if record.blockchain_tx %}
+                                <small style="color:var(--accent);">
+                                    <i class="bi bi-link-45deg"></i> On-chain
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <a href="{% url 'record_detail' record.record_id %}" class="btn btn-sm btn-outline-primary ms-2">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endwith %}
+                {% empty %}
+                <div class="text-center py-5">
+                    <i class="bi bi-file-medical" style="font-size:2rem;color:var(--text-light);"></i>
+                    <p class="text-muted mt-2">No medical records yet.</p>
+                    <a href="{% url 'record_add' %}?patient={{ patient.patient_id }}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-file-earmark-plus"></i> Create First Record
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

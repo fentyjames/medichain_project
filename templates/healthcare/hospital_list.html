@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}Hospitals - MediChain{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 style="color: var(--accent);"><i class="bi bi-building"></i> Hospitals</h2>
+        <p class="text-muted mb-0">{{ hospitals|length }} registered hospital{{ hospitals|length|pluralize }}</p>
+    </div>
+    <a href="{% url 'hospital_add' %}" class="btn btn-primary">
+        <i class="bi bi-building-add"></i> Add Hospital
+    </a>
+</div>
+
+<div class="row g-4">
+    {% for hospital in hospitals %}
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="rounded d-flex align-items-center justify-content-center me-3"
+                         style="width:44px;height:44px;background:rgba(var(--accent-rgb,99,179,237),0.15);flex-shrink:0;">
+                        <i class="bi bi-hospital-fill" style="font-size:1.3rem;color:var(--accent);"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-0">{{ hospital.name }}</h6>
+                        <small class="text-muted">{{ hospital.license_number }}</small>
+                    </div>
+                    {% if hospital.is_verified %}
+                        <span class="badge" style="background:#22c55e;flex-shrink:0;">Verified</span>
+                    {% else %}
+                        <span class="badge" style="background:#facc15;color:#000;flex-shrink:0;">Pending</span>
+                    {% endif %}
+                </div>
+
+                {% if hospital.address %}
+                <p class="text-muted small mb-2">
+                    <i class="bi bi-geo-alt"></i>
+                    {{ hospital.address|truncatechars:70 }}
+                </p>
+                {% endif %}
+
+                {% if hospital.blockchain_network %}
+                <p class="small mb-3" style="color:var(--accent);">
+                    <i class="bi bi-link-45deg"></i> {{ hospital.blockchain_network.name }}
+                </p>
+                {% endif %}
+
+                <div class="d-flex gap-2 mt-auto">
+                    <a href="{% url 'hospital_detail' hospital.hospital_id %}" class="btn btn-sm btn-outline-primary flex-grow-1">
+                        <i class="bi bi-eye"></i> View Details
+                    </a>
+                    <a href="{% url 'record_add' %}?hospital={{ hospital.hospital_id }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-file-earmark-plus"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <i class="bi bi-building" style="font-size:3rem;color:var(--text-light);"></i>
+        <p class="text-muted mt-3">No hospitals registered yet.</p>
+        <a href="{% url 'hospital_add' %}" class="btn btn-outline-primary">
+            <i class="bi bi-building-add"></i> Add First Hospital
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

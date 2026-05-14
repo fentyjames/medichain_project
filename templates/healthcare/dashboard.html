@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% block title %}Healthcare Dashboard - MediChain{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 style="color: var(--accent);"><i class="bi bi-hospital-fill"></i> Healthcare Dashboard</h2>
+        <p class="text-muted mb-0">Patient records, hospital management, and access control</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'patient_add' %}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-person-plus"></i> Add Patient
+        </a>
+        <a href="{% url 'record_add' %}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-file-earmark-plus"></i> New Record
+        </a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row mb-4 g-3">
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ patient_count }}</div>
+            <div class="stat-label"><i class="bi bi-people-fill"></i> Active Patients</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ hospital_count }}</div>
+            <div class="stat-label"><i class="bi bi-building"></i> Hospitals</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ record_count }}</div>
+            <div class="stat-label"><i class="bi bi-file-medical-fill"></i> Records</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ permission_count }}</div>
+            <div class="stat-label"><i class="bi bi-key-fill"></i> Active Permissions</div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card mb-4">
+    <div class="card-header"><i class="bi bi-lightning-charge"></i> Quick Actions</div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-6 col-md-3">
+                <a href="{% url 'patient_add' %}" class="btn btn-outline-primary w-100 py-3">
+                    <i class="bi bi-person-plus fs-3 d-block mb-1"></i>Add Patient
+                </a>
+            </div>
+            <div class="col-6 col-md-3">
+                <a href="{% url 'hospital_add' %}" class="btn btn-outline-primary w-100 py-3">
+                    <i class="bi bi-building-add fs-3 d-block mb-1"></i>Add Hospital
+                </a>
+            </div>
+            <div class="col-6 col-md-3">
+                <a href="{% url 'record_add' %}" class="btn btn-outline-primary w-100 py-3">
+                    <i class="bi bi-file-earmark-plus fs-3 d-block mb-1"></i>Create Record
+                </a>
+            </div>
+            <div class="col-6 col-md-3">
+                <a href="{% url 'permission_add' %}" class="btn btn-outline-primary w-100 py-3">
+                    <i class="bi bi-key fs-3 d-block mb-1"></i>Grant Access
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Recent Patients -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-people"></i> Recent Patients</span>
+                <a href="{% url 'patient_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Blood Type</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for patient in recent_patients %}
+                            <tr>
+                                <td>
+                                    {% if patient.user %}
+                                        <strong>{{ patient.user.get_full_name|default:patient.user.username }}</strong>
+                                    {% else %}
+                                        <span class="text-muted">Anonymous</span>
+                                    {% endif %}
+                                    <br><small class="hash-text">{{ patient.patient_id|slice:":16" }}…</small>
+                                </td>
+                                <td>
+                                    {% if patient.blood_type %}
+                                        <span class="badge" style="background:#38bdf8;color:#000;">{{ patient.blood_type }}</span>
+                                    {% else %}-{% endif %}
+                                </td>
+                                <td>
+                                    {% if patient.is_active %}
+                                        <span class="badge" style="background:#22c55e;">Active</span>
+                                    {% else %}
+                                        <span class="badge" style="background:#f87171;color:#fff;">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'patient_detail' patient.patient_id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center text-muted py-4">No patients yet</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Records -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-file-medical"></i> Recent Records</span>
+                <a href="{% url 'record_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Date</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in recent_records %}
+                            {% with rt=record.record_type %}
+                            <tr>
+                                <td>
+                                    <strong>{{ record.title|truncatechars:30 }}</strong>
+                                    <br><small class="text-muted">{{ record.hospital.name|truncatechars:24 }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge"
+                                        style="background:{% if rt == 'DIAGNOSIS' %}#38bdf8{% elif rt == 'LAB_RESULT' %}#a78bfa{% elif rt == 'PRESCRIPTION' %}#22c55e{% elif rt == 'IMAGING' %}#fb923c{% elif rt == 'SURGERY' %}#f87171{% elif rt == 'DISCHARGE' %}#facc15{% elif rt == 'INSURANCE' %}#c084fc{% else %}#94a3b8{% endif %};color:{% if rt == 'DISCHARGE' or rt == 'IMAGING' %}#000{% else %}#fff{% endif %};">
+                                        {{ record.get_record_type_display }}
+                                    </span>
+                                </td>
+                                <td><small>{{ record.created_at|date:"d M Y" }}</small></td>
+                                <td>
+                                    <a href="{% url 'record_detail' record.record_id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endwith %}
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center text-muted py-4">No records yet</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hospitals -->
+{% if hospitals %}
+<div class="card mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-building"></i> Registered Hospitals</span>
+        <a href="{% url 'hospital_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            {% for h in hospitals %}
+            <div class="col-md-4">
+                <div class="p-3" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>{{ h.name }}</strong>
+                            <br><small class="text-muted">{{ h.license_number }}</small>
+                        </div>
+                        {% if h.is_verified %}
+                            <span class="badge" style="background:#22c55e;">Verified</span>
+                        {% else %}
+                            <span class="badge" style="background:#facc15;color:#000;">Pending</span>
+                        {% endif %}
+                    </div>
+                    <div class="mt-2">
+                        <a href="{% url 'hospital_detail' h.hospital_id %}" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="bi bi-eye"></i> View
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

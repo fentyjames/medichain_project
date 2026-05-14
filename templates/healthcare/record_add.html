@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Create Medical Record - MediChain{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}">Healthcare</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'record_list' %}">Records</a></li>
+        <li class="breadcrumb-item active">Create Record</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-md-9 col-lg-8">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-file-earmark-plus"></i> Create Medical Record</div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Patient <span class="text-danger">*</span></label>
+                            <select name="patient_id" class="form-select" required
+                                    style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+                                <option value="">-- Select Patient --</option>
+                                {% for patient in patients %}
+                                <option value="{{ patient.patient_id }}"
+                                    {% if selected_patient == patient.patient_id %}selected{% endif %}>
+                                    {% if patient.user %}
+                                        {{ patient.user.get_full_name|default:patient.user.username }}
+                                    {% else %}
+                                        Anonymous ({{ patient.patient_id|slice:":12" }}…)
+                                    {% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Hospital <span class="text-danger">*</span></label>
+                            <select name="hospital_id" class="form-select" required
+                                    style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+                                <option value="">-- Select Hospital --</option>
+                                {% for hospital in hospitals %}
+                                <option value="{{ hospital.hospital_id }}"
+                                    {% if selected_hospital == hospital.hospital_id %}selected{% endif %}>
+                                    {{ hospital.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Record Type <span class="text-danger">*</span></label>
+                            <select name="record_type" class="form-select" required
+                                    style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+                                <option value="DIAGNOSIS">Diagnosis</option>
+                                <option value="LAB_RESULT">Laboratory Result</option>
+                                <option value="PRESCRIPTION">Prescription</option>
+                                <option value="IMAGING">Medical Imaging</option>
+                                <option value="SURGERY">Surgery Report</option>
+                                <option value="DISCHARGE">Discharge Summary</option>
+                                <option value="INSURANCE">Insurance Claim</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">IPFS Hash</label>
+                            <input type="text" name="ipfs_hash" class="form-control"
+                                   placeholder="QmXxx… (optional)"
+                                   style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;font-family:monospace;font-size:0.85rem;">
+                            <div class="form-text">Leave blank for off-chain only storage.</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" name="title" class="form-control" required
+                               placeholder="Brief, descriptive title for this record"
+                               style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description / Clinical Notes <span class="text-danger">*</span></label>
+                        <textarea name="description" class="form-control" rows="5" required
+                                  placeholder="Enter clinical findings, notes, or details…"
+                                  style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;"></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Digital Signature</label>
+                        <input type="text" name="signature" class="form-control"
+                               placeholder="Cryptographic signature (optional)"
+                               style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;font-family:monospace;font-size:0.85rem;">
+                        <div class="form-text">If provided, a blockchain transaction will be created to anchor this record.</div>
+                    </div>
+
+                    <div class="p-3 mb-4 rounded" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);">
+                        <small style="color:#93c5fd;">
+                            <i class="bi bi-shield-lock"></i>
+                            A SHA-256 hash of this record's metadata will be computed and stored on the blockchain.
+                            The raw clinical data remains off-chain and encrypted.
+                        </small>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-file-earmark-check"></i> Create Record
+                        </button>
+                        <a href="{% url 'record_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

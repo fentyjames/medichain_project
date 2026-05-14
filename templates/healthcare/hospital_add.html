@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Add Hospital - MediChain{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}">Healthcare</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'hospital_list' %}">Hospitals</a></li>
+        <li class="breadcrumb-item active">Add Hospital</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-building-add"></i> Register New Hospital
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Hospital Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" required
+                               placeholder="e.g. Connaught Hospital"
+                               style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">License Number <span class="text-danger">*</span></label>
+                        <input type="text" name="license_number" class="form-control" required
+                               placeholder="e.g. SL-HOSP-001"
+                               style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Address</label>
+                        <textarea name="address" class="form-control" rows="2"
+                                  placeholder="Full hospital address"
+                                  style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Blockchain Network</label>
+                        <select name="blockchain_network" class="form-select"
+                                style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+                            <option value="">-- None --</option>
+                            {% for network in networks %}
+                            <option value="{{ network.id }}">{{ network.name }} (Chain {{ network.chain_id }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Public Key <span class="text-danger">*</span></label>
+                        <textarea name="public_key" class="form-control" rows="3" required
+                                  placeholder="Hospital's cryptographic public key"
+                                  style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;font-family:monospace;font-size:0.8rem;"></textarea>
+                        <div class="form-text">Used to sign and verify records from this hospital.</div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-building-check"></i> Register Hospital
+                        </button>
+                        <a href="{% url 'hospital_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

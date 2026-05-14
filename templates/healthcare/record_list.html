@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}Medical Records - MediChain{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 style="color: var(--accent);"><i class="bi bi-file-medical-fill"></i> Medical Records</h2>
+        <p class="text-muted mb-0">{{ records|length }} record{{ records|length|pluralize }} total</p>
+    </div>
+    <a href="{% url 'record_add' %}" class="btn btn-primary">
+        <i class="bi bi-file-earmark-plus"></i> Create Record
+    </a>
+</div>
+
+<!-- Filter Bar -->
+<div class="card mb-4">
+    <div class="card-body py-3">
+        <form method="get" class="d-flex flex-wrap gap-2 align-items-center">
+            <input type="text" name="q" value="{{ request.GET.q }}" class="form-control"
+                   placeholder="Search title or description…"
+                   style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;max-width:280px;">
+            <select name="type" class="form-select"
+                    style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;max-width:180px;">
+                <option value="">All Types</option>
+                <option value="DIAGNOSIS" {% if request.GET.type == 'DIAGNOSIS' %}selected{% endif %}>Diagnosis</option>
+                <option value="LAB_RESULT" {% if request.GET.type == 'LAB_RESULT' %}selected{% endif %}>Lab Result</option>
+                <option value="PRESCRIPTION" {% if request.GET.type == 'PRESCRIPTION' %}selected{% endif %}>Prescription</option>
+                <option value="IMAGING" {% if request.GET.type == 'IMAGING' %}selected{% endif %}>Imaging</option>
+                <option value="SURGERY" {% if request.GET.type == 'SURGERY' %}selected{% endif %}>Surgery</option>
+                <option value="DISCHARGE" {% if request.GET.type == 'DISCHARGE' %}selected{% endif %}>Discharge</option>
+                <option value="INSURANCE" {% if request.GET.type == 'INSURANCE' %}selected{% endif %}>Insurance</option>
+            </select>
+            <button type="submit" class="btn btn-outline-primary"><i class="bi bi-search"></i></button>
+            {% if request.GET.q or request.GET.type %}
+            <a href="{% url 'record_list' %}" class="btn btn-outline-secondary"><i class="bi bi-x"></i> Clear</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Patient</th>
+                        <th>Hospital</th>
+                        <th>On-Chain</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    {% with rt=record.record_type %}
+                    <tr>
+                        <td>
+                            <strong>{{ record.title|truncatechars:36 }}</strong>
+                            <br>
+                            <code class="hash-text" title="{{ record.record_id }}"
+                                  onclick="copyToClipboard('{{ record.record_id }}')" style="cursor:pointer;">
+                                {{ record.record_id|slice:":16" }}…
+                            </code>
+                        </td>
+                        <td>
+                            <span class="badge"
+                                  style="background:{% if rt == 'DIAGNOSIS' %}#38bdf8{% elif rt == 'LAB_RESULT' %}#a78bfa{% elif rt == 'PRESCRIPTION' %}#22c55e{% elif rt == 'IMAGING' %}#fb923c{% elif rt == 'SURGERY' %}#f87171{% elif rt == 'DISCHARGE' %}#facc15{% elif rt == 'INSURANCE' %}#c084fc{% else %}#94a3b8{% endif %};color:{% if rt == 'DISCHARGE' or rt == 'IMAGING' %}#000{% else %}#fff{% endif %};">
+                                {{ record.get_record_type_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if record.patient.user %}
+                            <a href="{% url 'patient_detail' record.patient.patient_id %}">
+                                {{ record.patient.user.get_full_name|default:record.patient.user.username }}
+                            </a>
+                            {% else %}
+                            <span class="text-muted">Anonymous</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'hospital_detail' record.hospital.hospital_id %}">
+                                {{ record.hospital.name|truncatechars:22 }}
+                            </a>
+                        </td>
+                        <td>
+                            {% if record.blockchain_tx %}
+                                <span class="badge" style="background:var(--accent);color:#000;">
+                                    <i class="bi bi-link-45deg"></i> Yes
+                                </span>
+                            {% else %}
+                                <span class="text-muted small">Off-chain</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if record.is_active %}
+                                <span class="badge" style="background:#22c55e;">Active</span>
+                            {% else %}
+                                <span class="badge" style="background:#64748b;color:#fff;">Archived</span>
+                            {% endif %}
+                        </td>
+                        <td><small class="text-muted">{{ record.created_at|date:"d M Y" }}</small></td>
+                        <td>
+                            <a href="{% url 'record_detail' record.record_id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endwith %}
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <i class="bi bi-file-medical" style="font-size:2rem;color:var(--text-light);"></i>
+                            <p class="text-muted mt-2">No medical records found.</p>
+                            <a href="{% url 'record_add' %}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-file-earmark-plus"></i> Create First Record
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

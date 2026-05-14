@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Add Patient - MediChain{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}">Healthcare</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'patient_list' %}">Patients</a></li>
+        <li class="breadcrumb-item active">Add Patient</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-person-plus"></i> Register New Patient
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Public Key <span class="text-danger">*</span></label>
+                        <textarea name="public_key" class="form-control" rows="3" required
+                                  placeholder="Patient's cryptographic public key"
+                                  style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;font-family:monospace;font-size:0.8rem;"></textarea>
+                        <div class="form-text">Used to encrypt and verify patient records on the blockchain.</div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Date of Birth</label>
+                            <input type="date" name="date_of_birth" class="form-control"
+                                   style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Blood Type</label>
+                            <select name="blood_type" class="form-select"
+                                    style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+                                <option value="">-- Select --</option>
+                                {% for bt in "A+,A-,B+,B-,AB+,AB-,O+,O-"|split:"," %}
+                                <option value="{{ bt }}">{{ bt }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Known Allergies</label>
+                        <input type="text" name="allergies" class="form-control"
+                               placeholder="e.g. Penicillin, Sulfa drugs (leave blank if none)"
+                               style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Emergency Contact</label>
+                        <input type="text" name="emergency_contact" class="form-control"
+                               placeholder="Name and phone number"
+                               style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-person-check"></i> Register Patient
+                        </button>
+                        <a href="{% url 'patient_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+// Populate blood type select from hard-coded list (Django can't split in template)
+document.addEventListener('DOMContentLoaded', function() {
+    const sel = document.querySelector('select[name="blood_type"]');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">-- Select --</option>';
+    ['A+','A-','B+','B-','AB+','AB-','O+','O-'].forEach(function(bt) {
+        const opt = document.createElement('option');
+        opt.value = bt; opt.textContent = bt;
+        sel.appendChild(opt);
+    });
+});
+{% endblock %}

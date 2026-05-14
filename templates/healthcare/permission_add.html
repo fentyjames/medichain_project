@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% block title %}Grant Access - MediChain{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'healthcare_dashboard' %}">Healthcare</a></li>
+        <li class="breadcrumb-item active">Grant Access Permission</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-key"></i> Grant Access Permission
+            </div>
+            <div class="card-body">
+                <div class="p-3 mb-4 rounded" style="background:rgba(250,204,21,0.08);border:1px solid rgba(250,204,21,0.3);">
+                    <small style="color:#fde68a;">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>HIPAA Notice:</strong> Granting access to medical records is a legally significant action.
+                        Ensure the purpose is documented and the patient has consented.
+                    </small>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Medical Record <span class="text-danger">*</span></label>
+                            <select name="record_id" class="form-select" required
+                                    style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+                                <option value="">-- Select Record --</option>
+                                {% for record in records %}
+                                <option value="{{ record.record_id }}"
+                                    {% if selected_record == record.record_id %}selected{% endif %}>
+                                    {{ record.title|truncatechars:36 }}
+                                    ({{ record.get_record_type_display }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Granting Patient <span class="text-danger">*</span></label>
+                            <select name="patient_id" class="form-select" required
+                                    style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+                                <option value="">-- Select Patient --</option>
+                                {% for patient in patients %}
+                                <option value="{{ patient.patient_id }}"
+                                    {% if selected_patient == patient.patient_id %}selected{% endif %}>
+                                    {% if patient.user %}
+                                        {{ patient.user.get_full_name|default:patient.user.username }}
+                                    {% else %}
+                                        Anonymous ({{ patient.patient_id|slice:":12" }}…)
+                                    {% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Grantee (Who Receives Access) <span class="text-danger">*</span></label>
+                        <input type="text" name="grantee" class="form-control" required
+                               placeholder="e.g. National Reference Laboratory, Dr. Amara Koroma"
+                               style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Grantee Type <span class="text-danger">*</span></label>
+                            <select name="grantee_type" class="form-select"
+                                    style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+                                <option value="HOSPITAL">Hospital</option>
+                                <option value="LAB">Laboratory</option>
+                                <option value="INSURANCE">Insurance Provider</option>
+                                <option value="DOCTOR">Doctor</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Permission Level <span class="text-danger">*</span></label>
+                            <select name="permission_type" class="form-select"
+                                    style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+                                <option value="READ">Read Only</option>
+                                <option value="WRITE">Read &amp; Write</option>
+                                <option value="SHARE">Share with Others</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Purpose <span class="text-danger">*</span></label>
+                        <textarea name="purpose" class="form-control" rows="2" required
+                                  placeholder="State the medical or administrative purpose for this access…"
+                                  style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;"></textarea>
+                        <div class="form-text">Required for HIPAA compliance. Be specific and accurate.</div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Valid Until</label>
+                            <input type="datetime-local" name="valid_until" class="form-control"
+                                   style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;">
+                            <div class="form-text">Leave blank for indefinite access.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Digital Signature</label>
+                            <input type="text" name="signature" class="form-control"
+                                   placeholder="Patient's cryptographic signature"
+                                   style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:10px;font-family:monospace;font-size:0.85rem;">
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-key-fill"></i> Grant Permission
+                        </button>
+                        <a href="{% url 'healthcare_dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
