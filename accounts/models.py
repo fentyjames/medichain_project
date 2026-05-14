@@ -5,10 +5,11 @@ Custom User authentication with role-based access control
 
 import hashlib
 import uuid
-from django.db import models
+
 from django.contrib.auth.models import AbstractUser
-from django.utils import timezone
 from django.core.validators import MinLengthValidator
+from django.db import models
+from django.utils import timezone
 
 
 class User(AbstractUser):
@@ -26,13 +27,13 @@ class User(AbstractUser):
     ]
 
     role = models.CharField(
-        max_length=20, 
-        choices=ROLE_CHOICES, 
+        max_length=20,
+        choices=ROLE_CHOICES,
         default='PATIENT',
         help_text="User role in the healthcare system"
     )
     organization = models.CharField(
-        max_length=200, 
+        max_length=200,
         blank=True,
         help_text="Hospital, lab, or institution affiliation"
     )
@@ -45,7 +46,7 @@ class User(AbstractUser):
         help_text="Identity verification status"
     )
     wallet_address = models.CharField(
-        max_length=64, 
+        max_length=64,
         blank=True,
         help_text="Ethereum/Blockchain wallet address"
     )
@@ -81,19 +82,19 @@ class User(AbstractUser):
 class UserProfile(models.Model):
     """Extended profile information for MediChain users"""
     user = models.OneToOneField(
-        User, 
+        User,
         on_delete=models.CASCADE,
         related_name='profile'
     )
     bio = models.TextField(blank=True)
     avatar = models.ImageField(
-        upload_to='avatars/', 
+        upload_to='avatars/',
         blank=True,
         null=True
     )
     department = models.CharField(max_length=100, blank=True)
     license_number = models.CharField(
-        max_length=100, 
+        max_length=100,
         blank=True,
         help_text="Medical license or professional certification number"
     )
@@ -102,7 +103,7 @@ class UserProfile(models.Model):
 
     # Blockchain identity
     identity_hash = models.CharField(
-        max_length=64, 
+        max_length=64,
         blank=True,
         help_text="SHA-256 hash of verified identity documents"
     )
@@ -135,9 +136,9 @@ class LoginAudit(models.Model):
 
     audit_id = models.CharField(max_length=64, unique=True)
     user = models.ForeignKey(
-        User, 
+        User,
         on_delete=models.CASCADE,
-        null=True, 
+        null=True,
         blank=True,
         related_name='login_audits'
     )

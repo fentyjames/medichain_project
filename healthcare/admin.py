@@ -1,9 +1,8 @@
 """Healthcare admin configuration"""
 from django.contrib import admin
-from .models import (
-    Patient, Hospital, Laboratory, InsuranceProvider,
-    MedicalRecord, AccessPermission, AuditLog
-)
+
+from .models import AccessPermission, AuditLog, Hospital, InsuranceProvider, Laboratory, MedicalRecord, Patient
+
 
 @admin.register(Patient)
 class PatientAdmin(admin.ModelAdmin):

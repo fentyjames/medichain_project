@@ -3,13 +3,13 @@ MediChain ZK Proof Views
 Template rendering + API for ZK operations
 """
 
-from django.shortcuts import render, redirect
 from django.contrib import messages
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from django.shortcuts import redirect, render
 from rest_framework.permissions import IsAuthenticated
-from .zk_service import ZKProofService, MerkleTreeService
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
+from .zk_service import MerkleTreeService, ZKProofService
 
 # ==================== TEMPLATE VIEWS ====================
 

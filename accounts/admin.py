@@ -6,7 +6,8 @@ Django admin configuration for custom User model and related models
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.html import format_html
-from .models import User, UserProfile, LoginAudit, VerificationToken, TwoFactorAuth, LoginAttempt
+
+from .models import LoginAttempt, LoginAudit, TwoFactorAuth, User, UserProfile, VerificationToken
 
 
 class UserProfileInline(admin.StackedInline):

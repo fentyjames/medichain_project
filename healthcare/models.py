@@ -5,12 +5,14 @@ Patient records, access control, and medical data management
 
 import hashlib
 import json
-from django.db import models
-from django.conf import settings
-from django.utils import timezone
 import uuid
+
 from django.apps import apps  # Add this at top
+from django.conf import settings
 from django.core.validators import MinLengthValidator
+from django.db import models
+from django.utils import timezone
+
 
 class Patient(models.Model):
     """Patient entity in MediChain"""
@@ -53,12 +55,12 @@ class Hospital(models.Model):
     blockchain_network = models.ForeignKey(
         'blockchain.BlockchainNetwork',  # String reference: 'app_name.ModelName'
         on_delete=models.CASCADE,
-        null=True, 
+        null=True,
         blank=True
     )
     # blockchain_network_id = models.CharField(
-    #     max_length=100, 
-    #     null=True, 
+    #     max_length=100,
+    #     null=True,
     #     blank=True,
     #     help_text="ID of the network in the blockchain database"
     # )
@@ -67,7 +69,7 @@ class Hospital(models.Model):
 
     class Meta:
         db_table = 'hospitals'
-        
+
     def save(self, *args, **kwargs):
         if not self.hospital_id:
             self.hospital_id = hashlib.sha256(
@@ -144,7 +146,7 @@ class MedicalRecord(models.Model):
     )
     # blockchain_tx_hash = models.CharField(
     # max_length=64,
-    # null=True, 
+    # null=True,
     # blank=True,
     # db_index=True,
     # help_text="Transaction hash from blockchain database"
@@ -160,6 +162,8 @@ class MedicalRecord(models.Model):
 
     def calculate_hash(self):
         """Calculate hash of record metadata"""
+        # created_at is excluded: it's auto_now_add and is None before the first
+        # super().save(), so including it makes the hash non-idempotent.
         record_data = {
             'record_id': self.record_id,
             'patient': self.patient.patient_id,
@@ -167,7 +171,6 @@ class MedicalRecord(models.Model):
             'record_type': self.record_type,
             'title': self.title,
             'description': self.description,
-            'created_at': str(self.created_at),
         }
         return hashlib.sha256(
             json.dumps(record_data, sort_keys=True).encode()
@@ -197,7 +200,7 @@ class AccessPermission(models.Model):
     permission_id = models.CharField(max_length=64, unique=True)
     record = models.ForeignKey(MedicalRecord, on_delete=models.CASCADE)
     grantor = models.ForeignKey(
-        Patient, 
+        Patient,
         on_delete=models.CASCADE,
         related_name='granted_permissions'
     )

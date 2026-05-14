@@ -6,10 +6,11 @@ Core blockchain data structures for Layer-2 rollup, cross-chain relay, and conse
 import hashlib
 import json
 import time
-from django.db import models
-from django.conf import settings
-from django.utils import timezone
 import uuid
+
+from django.conf import settings
+from django.db import models
+from django.utils import timezone
 
 
 def generate_uuid():
@@ -164,13 +165,13 @@ class CrossChainMessage(models.Model):
     """Cross-chain relay messages"""
     message_id = models.CharField(max_length=64, unique=True)
     source_chain = models.ForeignKey(
-        BlockchainNetwork, 
-        on_delete=models.CASCADE, 
+        BlockchainNetwork,
+        on_delete=models.CASCADE,
         related_name='source_messages'
     )
     target_chain = models.ForeignKey(
-        BlockchainNetwork, 
-        on_delete=models.CASCADE, 
+        BlockchainNetwork,
+        on_delete=models.CASCADE,
         related_name='target_messages'
     )
     data_hash = models.CharField(max_length=64)

@@ -3,10 +3,11 @@ MediChain Project Root URL Configuration
 Add to your project's urls.py
 """
 
-from django.contrib import admin
-from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import include, path
+
 from accounts.views import login_view  # Import for default redirect
 
 urlpatterns = [

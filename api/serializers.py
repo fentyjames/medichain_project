@@ -4,13 +4,9 @@ Data serialization for REST API endpoints
 """
 
 from rest_framework import serializers
-from blockchain.models import (
-    BlockchainNetwork, Block, Transaction, RollupBatch,
-    CrossChainMessage, ValidatorNode
-)
-from healthcare.models import (
-    Patient, Hospital, MedicalRecord, AccessPermission, AuditLog
-)
+
+from blockchain.models import Block, BlockchainNetwork, CrossChainMessage, RollupBatch, Transaction, ValidatorNode
+from healthcare.models import AccessPermission, AuditLog, Hospital, MedicalRecord, Patient
 
 
 class BlockchainNetworkSerializer(serializers.ModelSerializer):
@@ -24,14 +20,14 @@ class BlockSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Block
-        fields = ['block_number', 'hash', 'previous_hash', 'merkle_root', 
+        fields = ['block_number', 'hash', 'previous_hash', 'merkle_root',
                    'transaction_count', 'network_name', 'timestamp']
 
 
 class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
-        fields = ['tx_hash', 'tx_type', 'sender', 'receiver', 
+        fields = ['tx_hash', 'tx_type', 'sender', 'receiver',
                  'data_hash', 'status', 'timestamp']
 
 
@@ -71,7 +67,7 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
 class AccessPermissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccessPermission
-        fields = ['permission_id', 'grantee', 'grantee_type', 
+        fields = ['permission_id', 'grantee', 'grantee_type',
                  'permission_type', 'purpose', 'valid_from', 'valid_until']
 
 

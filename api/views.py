@@ -3,28 +3,29 @@ MediChain API Views
 Consolidated API endpoints for the MediChain framework
 """
 
-from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from django.db.models import Count, Q
+from rest_framework import status
+from rest_framework.authtoken.models import Token
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from blockchain.models import (
-    BlockchainNetwork, Block, Transaction, RollupBatch,
-    CrossChainMessage, ValidatorNode
-)
-from healthcare.models import (
-    Patient, Hospital, MedicalRecord, AccessPermission, AuditLog
-)
-from .serializers import (
-    BlockchainNetworkSerializer, BlockSerializer, TransactionSerializer,
-    RollupBatchSerializer, PatientSerializer, HospitalSerializer,
-    MedicalRecordSerializer, DashboardStatsSerializer
-)
-from zk_proofs.zk_service import ZKProofService, MerkleTreeService
+from blockchain.models import Block, BlockchainNetwork, CrossChainMessage, RollupBatch, Transaction, ValidatorNode
 from cross_chain.relay_service import CrossChainRelayService
+from healthcare.models import AccessPermission, AuditLog, Hospital, MedicalRecord, Patient
+from zk_proofs.zk_service import MerkleTreeService, ZKProofService
+
+from .serializers import (
+    BlockchainNetworkSerializer,
+    BlockSerializer,
+    DashboardStatsSerializer,
+    HospitalSerializer,
+    MedicalRecordSerializer,
+    PatientSerializer,
+    RollupBatchSerializer,
+    TransactionSerializer,
+)
 
 
 class AuthView(APIView):
@@ -44,7 +45,7 @@ class AuthView(APIView):
                 'username': user.username,
             })
         return Response(
-            {'error': 'Invalid credentials'}, 
+            {'error': 'Invalid credentials'},
             status=status.HTTP_401_UNAUTHORIZED
         )
 
@@ -69,7 +70,6 @@ class DashboardView(APIView):
             'medical_records': MedicalRecord.objects.filter(is_active=True).count(),
             'active_permissions': AccessPermission.objects.filter(is_active=True).count(),
         }
-        serializer = DashboardStatsSerializer(data=stats)
         return Response(stats)
 
 
@@ -110,21 +110,23 @@ class CreateRollupView(APIView):
             network = BlockchainNetwork.objects.get(network_id=network_id)
         except BlockchainNetwork.DoesNotExist:
             return Response(
-                {'error': 'Network not found'}, 
+                {'error': 'Network not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Get pending transactions
-        pending_txs = Transaction.objects.filter(
-            status='PENDING',
-            block__isnull=True
-        )[:50]
+        # Get pending transactions — evaluate into a list before slicing so we
+        # can call .update() later (sliced querysets don't support .update()).
+        pending_txs = list(
+            Transaction.objects.filter(status='PENDING', block__isnull=True)[:50]
+        )
 
         if not pending_txs:
             return Response({
                 'message': 'No pending transactions to batch',
                 'batch_created': False
             })
+
+        tx_ids = [tx.pk for tx in pending_txs]
 
         # Create batch
         batch = RollupBatch.objects.create(
@@ -140,7 +142,7 @@ class CreateRollupView(APIView):
         batch.zk_proof = zk_service.generate_proof(tx_hashes, batch.merkle_root)
         batch.save()
 
-        pending_txs.update(status='BATCHED')
+        Transaction.objects.filter(pk__in=tx_ids).update(status='BATCHED')
 
         return Response({
             'batch_id': batch.batch_id,
@@ -163,13 +165,13 @@ class SubmitRollupView(APIView):
             batch = RollupBatch.objects.get(batch_id=batch_id)
         except RollupBatch.DoesNotExist:
             return Response(
-                {'error': 'Batch not found'}, 
+                {'error': 'Batch not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
 
         if batch.status != 'BATCHED':
             return Response(
-                {'error': f'Batch status is {batch.status}, expected BATCHED'}, 
+                {'error': f'Batch status is {batch.status}, expected BATCHED'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -224,7 +226,7 @@ class CrossChainTransferView(APIView):
             target = BlockchainNetwork.objects.get(network_id=target_id)
         except BlockchainNetwork.DoesNotExist:
             return Response(
-                {'error': 'Source or target network not found'}, 
+                {'error': 'Source or target network not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
 
@@ -304,7 +306,7 @@ class MerkleTreeView(APIView):
             return Response({'is_valid': is_valid})
 
         return Response(
-            {'error': 'Invalid action'}, 
+            {'error': 'Invalid action'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -318,7 +320,7 @@ class PatientRecordsView(APIView):
             patient = Patient.objects.get(patient_id=patient_id)
         except Patient.DoesNotExist:
             return Response(
-                {'error': 'Patient not found'}, 
+                {'error': 'Patient not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
 
@@ -355,7 +357,7 @@ class GrantAccessView(APIView):
             record = MedicalRecord.objects.get(record_id=record_id)
         except MedicalRecord.DoesNotExist:
             return Response(
-                {'error': 'Record not found'}, 
+                {'error': 'Record not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
 

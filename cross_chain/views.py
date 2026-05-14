@@ -3,15 +3,15 @@ MediChain Cross-Chain Views
 Template rendering + API for cross-chain relay
 """
 
-from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from django.shortcuts import get_object_or_404, redirect, render
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from blockchain.models import BlockchainNetwork, CrossChainMessage
-from .relay_service import CrossChainRelayService
 
+from .relay_service import CrossChainRelayService
 
 # ==================== TEMPLATE VIEWS ====================
 

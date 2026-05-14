@@ -7,7 +7,8 @@ import hashlib
 import json
 import time
 import uuid
-from typing import Dict, List, Optional
+from typing import Optional
+
 from django.utils import timezone
 
 from blockchain.models import BlockchainNetwork, CrossChainMessage, Transaction
@@ -21,12 +22,12 @@ class CrossChainRelayService:
         self.zk_service = ZKProofService()
         self.relay_history = {}
 
-    def create_message(self, 
-                      source_chain_id: str, 
+    def create_message(self,
+                      source_chain_id: str,
                       target_chain_id: str,
                       data_hash: str,
                       proof: str,
-                      sender: str) -> Dict:
+                      sender: str) -> dict:
         """
         Create a cross-chain message
 
@@ -73,7 +74,7 @@ class CrossChainRelayService:
         self.relay_history[message['message_id']] = message
         return message
 
-    def verify_message(self, message: Dict) -> bool:
+    def verify_message(self, message: dict) -> bool:
         """
         Verify cross-chain message integrity
 
@@ -84,7 +85,7 @@ class CrossChainRelayService:
             True if message is valid
         """
         # Check required fields
-        required_fields = ['message_id', 'source_chain', 'target_chain', 
+        required_fields = ['message_id', 'source_chain', 'target_chain',
                           'data_hash', 'proof', 'signature', 'nonce']
         if not all(field in message for field in required_fields):
             return False
@@ -126,7 +127,7 @@ class CrossChainRelayService:
 
         return True
 
-    def relay_message(self, message: Dict) -> Dict:
+    def relay_message(self, message: dict) -> dict:
         """
         Relay message to target chain
 
@@ -162,11 +163,11 @@ class CrossChainRelayService:
 
         return relay_result
 
-    def get_relay_status(self, message_id: str) -> Optional[Dict]:
+    def get_relay_status(self, message_id: str) -> dict | None:
         """Get status of a relayed message"""
         return self.relay_history.get(message_id)
 
-    def get_bridge_stats(self) -> Dict:
+    def get_bridge_stats(self) -> dict:
         """Get cross-chain bridge statistics"""
         messages = list(self.relay_history.values())
         return {
@@ -178,7 +179,6 @@ class CrossChainRelayService:
 
     def _is_nonce_used(self, nonce: str) -> bool:
         """Check if nonce has been used (replay protection)"""
-        from blockchain.models import CrossChainMessage
         return CrossChainMessage.objects.filter(nonce=nonce).exists()
 
     def _mark_nonce_used(self, nonce: str):
@@ -209,7 +209,7 @@ class BridgeContract:
 
         return lock_id
 
-    def mint_asset(self, target_chain_id: str, asset_id: str, 
+    def mint_asset(self, target_chain_id: str, asset_id: str,
                    amount: float, recipient: str, lock_proof: str) -> str:
         """Mint wrapped asset on target chain"""
         mint_id = hashlib.sha256(

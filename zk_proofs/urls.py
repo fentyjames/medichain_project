@@ -1,5 +1,6 @@
 """ZK Proofs URL configuration"""
 from django.urls import path
+
 from . import views
 
 # API patterns — included at /api/zk-proofs/

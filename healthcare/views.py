@@ -3,24 +3,21 @@ MediChain Healthcare Views
 Template rendering + API endpoints for patient records, access control
 """
 
-from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-from django.utils import timezone
 from django.db.models import Q
-from rest_framework import viewsets, status
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import (
-    Patient, Hospital, Laboratory, InsuranceProvider,
-    MedicalRecord, AccessPermission, AuditLog
-)
-from blockchain.models import Transaction, BlockchainNetwork
+from api.serializers import HospitalSerializer, MedicalRecordSerializer, PatientSerializer
+from blockchain.models import BlockchainNetwork, Transaction
 from zk_proofs.zk_service import ZKProofService
-from api.serializers import PatientSerializer, HospitalSerializer, MedicalRecordSerializer
 
+from .models import AccessPermission, AuditLog, Hospital, InsuranceProvider, Laboratory, MedicalRecord, Patient
 
 # ==================== TEMPLATE VIEWS ====================
 
@@ -390,8 +387,8 @@ class AuditLogViewSet(viewsets.ViewSet):
             logs = logs.filter(actor=actor)
         logs = logs[:100]
         data = [{
-            'log_id': l.log_id, 'record_id': l.record.record_id,
-            'actor': l.actor, 'action': l.action,
-            'details': l.details, 'timestamp': l.timestamp,
-        } for l in logs]
+            'log_id': log.log_id, 'record_id': log.record.record_id,
+            'actor': log.actor, 'action': log.action,
+            'details': log.details, 'timestamp': log.timestamp,
+        } for log in logs]
         return Response(data)

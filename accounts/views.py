@@ -3,39 +3,31 @@ MediChain Accounts Views
 Authentication, registration, profile management, and session handling
 """
 
-import secrets
 import hashlib
-import pyotp
+import secrets
 from datetime import timedelta
 
-from django.shortcuts import render, redirect, get_object_or_404
+import pyotp
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
-from django.utils import timezone
+from django.core.cache import cache
 from django.db.models import Q
 from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.conf import settings
-from django.core.cache import cache
-
-from rest_framework import viewsets, status
-from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from django.utils import timezone
+from django.views.decorators.http import require_http_methods
+from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
-from .models import User, UserProfile, LoginAudit, VerificationToken, TwoFactorAuth, LoginAttempt
-from .forms import (
-    CustomUserCreationForm,
-    UserProfileForm,
-    UserUpdateForm,
-    PasswordResetRequestForm,
-    TwoFactorForm
-)
-
+from .forms import CustomUserCreationForm, PasswordResetRequestForm, TwoFactorForm, UserProfileForm, UserUpdateForm
+from .models import LoginAttempt, LoginAudit, TwoFactorAuth, User, UserProfile, VerificationToken
 
 # ==================== RATE LIMITING ====================
 MAX_LOGIN_ATTEMPTS = 5
@@ -76,8 +68,9 @@ def about(request):
 
 def check_rate_limit(ip_address, username=None):
     """Check if IP or username is rate limited"""
-    from django.utils import timezone
     from datetime import timedelta
+
+    from django.utils import timezone
 
     cutoff = timezone.now() - timedelta(seconds=LOCKOUT_DURATION)
 
@@ -107,8 +100,8 @@ def record_login_attempt(ip_address, username, successful):
 @login_required
 def index(request):
     """Main dashboard view - renders index.html with system stats"""
-    from healthcare.models import Patient, Hospital, MedicalRecord, AuditLog
-    from blockchain.models import Block, Transaction, BlockchainNetwork
+    from blockchain.models import Block, BlockchainNetwork, Transaction
+    from healthcare.models import AuditLog, Hospital, MedicalRecord, Patient
 
     stats = cache.get('dashboard_stats')
     if stats is None:
@@ -503,7 +496,6 @@ def generate_verification_token(user, token_type, expiry_hours=24):
 def send_verification_email(request, user, token):
     """Send email verification link"""
     from django.core.mail import send_mail
-    from django.conf import settings
 
     verification_url = request.build_absolute_uri(
         reverse('accounts:email_verification', args=[token])
@@ -665,14 +657,14 @@ class LoginAuditViewSet(viewsets.ViewSet):
 
         logs = logs[:100]
         data = [{
-            'audit_id': l.audit_id,
-            'username': l.user.username if l.user else 'anonymous',
-            'action': l.action,
-            'action_display': l.get_action_display(),
-            'ip_address': l.ip_address,
-            'timestamp': l.timestamp,
-            'details': l.details,
-        } for l in logs]
+            'audit_id': log.audit_id,
+            'username': log.user.username if log.user else 'anonymous',
+            'action': log.action,
+            'action_display': log.get_action_display(),
+            'ip_address': log.ip_address,
+            'timestamp': log.timestamp,
+            'details': log.details,
+        } for log in logs]
         return Response(data)
 
 

@@ -3,11 +3,12 @@ MediChain Encryption Utilities
 AES-256-GCM encryption for off-chain medical data storage
 """
 
-import os
 import base64
 import hashlib
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+import os
+
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 
@@ -89,7 +90,7 @@ class EncryptionService:
 
     def sign_data(self, data: bytes, private_key_pem: str) -> str:
         """Sign data with private key"""
-        from cryptography.hazmat.primitives import serialization, hashes
+        from cryptography.hazmat.primitives import hashes, serialization
         from cryptography.hazmat.primitives.asymmetric import ec
 
         private_key = serialization.load_pem_private_key(
@@ -101,7 +102,7 @@ class EncryptionService:
 
     def verify_signature(self, data: bytes, signature: str, public_key_pem: str) -> bool:
         """Verify signature with public key"""
-        from cryptography.hazmat.primitives import serialization, hashes
+        from cryptography.hazmat.primitives import hashes, serialization
         from cryptography.hazmat.primitives.asymmetric import ec
 
         public_key = serialization.load_pem_public_key(public_key_pem.encode())
@@ -130,7 +131,7 @@ class IPFSService:
             client = ipfshttpclient.connect(self.local_api)
             result = client.add_bytes(file_data)
             return result
-        except Exception as e:
+        except Exception:
             # Fallback: compute hash as simulated CID
             return f"Qm{hashlib.sha256(file_data).hexdigest()[:44]}"
 

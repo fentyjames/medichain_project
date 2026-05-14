@@ -5,17 +5,18 @@ Unit tests for blockchain, ZK proofs, cross-chain relay, and healthcare modules
 
 import hashlib
 import json
-from django.test import TestCase, Client, override_settings
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
-from rest_framework.test import APITestCase
 from rest_framework.authtoken.models import Token
+from rest_framework.test import APITestCase
 
-from blockchain.models import BlockchainNetwork, Block, Transaction, RollupBatch
-from healthcare.models import Patient, Hospital, MedicalRecord, AccessPermission
-from zk_proofs.zk_service import ZKProofService, MerkleTreeService
+from blockchain.models import Block, BlockchainNetwork, RollupBatch, Transaction
 from cross_chain.relay_service import CrossChainRelayService
+from healthcare.models import AccessPermission, Hospital, MedicalRecord, Patient
+from zk_proofs.zk_service import MerkleTreeService, ZKProofService
 
 User = get_user_model()
 
@@ -107,7 +108,7 @@ class CrossChainRelayTest(TestCase):
     def test_create_message(self):
         """Test cross-chain message creation"""
         message = self.relay_service.create_message(
-            self.source_chain, self.target_chain, 
+            self.source_chain, self.target_chain,
             self.data_hash, self.proof, 'sender_1'
         )
 
@@ -281,7 +282,7 @@ class APIIntegrationTest(APITestCase):
             'public_output': output,
             'expected_inputs': inputs,
             'proof_type': 'zk_snark'
-        })
+        }, format='json')
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.data.get('is_valid'))
@@ -291,7 +292,7 @@ class APIIntegrationTest(APITestCase):
         response = self.client.post('/api/v1/merkle/', {
             'action': 'build',
             'leaves': ['a', 'b', 'c', 'd']
-        })
+        }, format='json')
 
         self.assertEqual(response.status_code, 200)
         self.assertIn('root', response.data)
@@ -299,7 +300,7 @@ class APIIntegrationTest(APITestCase):
 
     def test_cross_chain_transfer_api(self):
         """Test cross-chain transfer endpoint"""
-        target_network = BlockchainNetwork.objects.create(
+        BlockchainNetwork.objects.create(
             network_id='target_net',
             name='Target Network',
             chain_id=137,

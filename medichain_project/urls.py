@@ -1,14 +1,13 @@
 """MediChain URL Configuration"""
-from django.contrib import admin
-from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import include, path
 
 from accounts import views as accounts_views
-
 from blockchain.urls import template_urlpatterns as blockchain_templates
-from healthcare.urls import template_urlpatterns as healthcare_templates
 from cross_chain.urls import template_urlpatterns as cross_chain_templates
+from healthcare.urls import template_urlpatterns as healthcare_templates
 from zk_proofs.urls import template_urlpatterns as zk_templates
 
 urlpatterns = [

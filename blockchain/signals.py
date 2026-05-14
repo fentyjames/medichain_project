@@ -5,7 +5,8 @@ Django signals for blockchain events
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from .models import Transaction, RollupBatch
+
+from .models import RollupBatch, Transaction
 
 
 @receiver(post_save, sender=Transaction)

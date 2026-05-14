@@ -1,9 +1,8 @@
 """Blockchain admin configuration"""
 from django.contrib import admin
-from .models import (
-    BlockchainNetwork, Block, Transaction, RollupBatch,
-    CrossChainMessage, ValidatorNode, SmartContract
-)
+
+from .models import Block, BlockchainNetwork, CrossChainMessage, RollupBatch, SmartContract, Transaction, ValidatorNode
+
 
 @admin.register(BlockchainNetwork)
 class BlockchainNetworkAdmin(admin.ModelAdmin):

@@ -5,30 +5,28 @@ API endpoints + Template rendering for blockchain operations
 
 import hashlib
 import json
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.utils import timezone
+
 from django.contrib import messages
-from rest_framework import viewsets, status
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import (
-    BlockchainNetwork, Block, Transaction, RollupBatch,
-    CrossChainMessage, ValidatorNode, SmartContract
-)
-from zk_proofs.zk_service import ZKProofService
 from cross_chain.relay_service import CrossChainRelayService
+from zk_proofs.zk_service import ZKProofService
 
+from .models import Block, BlockchainNetwork, CrossChainMessage, RollupBatch, SmartContract, Transaction, ValidatorNode
 
 # ==================== TEMPLATE VIEWS ====================
 
 def index(request):
     """Main dashboard page"""
-    from healthcare.models import Patient, Hospital, MedicalRecord, AuditLog
+    from healthcare.models import AuditLog, Hospital, MedicalRecord, Patient
     stats = {
         'networks': BlockchainNetwork.objects.filter(is_active=True).count(),
         'total_blocks': Block.objects.count(),
@@ -208,7 +206,7 @@ class DashboardView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        from healthcare.models import Patient, Hospital, MedicalRecord
+        from healthcare.models import Hospital, MedicalRecord, Patient
         stats = {
             'networks': BlockchainNetwork.objects.filter(is_active=True).count(),
             'total_blocks': Block.objects.count(),

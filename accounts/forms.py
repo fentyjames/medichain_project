@@ -3,13 +3,15 @@ MediChain Accounts Forms
 Custom forms for user registration, profile updates, and authentication
 """
 
+import re
+
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.core.validators import MinLengthValidator, RegexValidator
 from django.utils.translation import gettext_lazy as _
+
 from .models import User, UserProfile
 
-import re
 
 # Custom password validators
 def validate_password_strength(value):

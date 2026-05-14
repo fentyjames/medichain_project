@@ -7,7 +7,7 @@ import hashlib
 import json
 import logging
 import time
-from typing import List, Dict, Any
+from typing import Any
 
 from django.core.cache import cache
 
@@ -22,7 +22,7 @@ class ZKProofService:
     def __init__(self, proof_type='zk_snark'):
         self.proof_type = proof_type
 
-    def generate_proof(self, inputs: List[str], public_output: str) -> str:
+    def generate_proof(self, inputs: list[str], public_output: str) -> str:
         """
         Generate a Zero-Knowledge Proof
 
@@ -55,7 +55,7 @@ class ZKProofService:
 
         return proof_json
 
-    def verify_proof(self, proof: str, public_output: str, expected_inputs: List[str]) -> bool:
+    def verify_proof(self, proof: str, public_output: str, expected_inputs: list[str]) -> bool:
         """
         Verify a Zero-Knowledge Proof
 
@@ -97,12 +97,12 @@ class ZKProofService:
             logger.warning("Proof verification error: %s", e)
             return False
 
-    def _hash_inputs(self, inputs: List[str]) -> str:
+    def _hash_inputs(self, inputs: list[str]) -> str:
         """Hash a list of inputs"""
         combined = ''.join(sorted(inputs))
         return hashlib.sha256(combined.encode()).hexdigest()
 
-    def _simulate_proof(self, inputs: List[str], output: str) -> Dict[str, Any]:
+    def _simulate_proof(self, inputs: list[str], output: str) -> dict[str, Any]:
         """Simulate ZK proof generation"""
         # This is a simulation - real implementation would use cryptographic libraries
         proof = {
@@ -116,7 +116,7 @@ class ZKProofService:
         """Generate verification key"""
         return hashlib.sha256(f"vk_{self.proof_type}_{time.time()}".encode()).hexdigest()
 
-    def _verify_proof_structure(self, proof_data: Dict) -> bool:
+    def _verify_proof_structure(self, proof_data: dict) -> bool:
         """Verify the structure of a proof"""
         required_keys = ['proof_type', 'public_inputs', 'proof', 'verification_key']
         return all(key in proof_data for key in required_keys)
@@ -151,10 +151,10 @@ class MerkleTreeService:
     """Service for Merkle tree operations"""
 
     @staticmethod
-    def build_merkle_tree(leaves: List[str]) -> Dict[str, Any]:
+    def build_merkle_tree(leaves: list[str]) -> dict[str, Any]:
         """Build a Merkle tree from leaf nodes"""
         if not leaves:
-            return {'root': hashlib.sha256(b'empty').hexdigest(), 'levels': []}
+            return {'root': hashlib.sha256(b'empty').hexdigest(), 'levels': [], 'leaf_count': 0}
 
         levels = [leaves]
         current_level = leaves
@@ -178,7 +178,7 @@ class MerkleTreeService:
         }
 
     @staticmethod
-    def get_proof_path(tree: Dict, leaf_index: int) -> List[Dict]:
+    def get_proof_path(tree: dict, leaf_index: int) -> list[dict]:
         """Get Merkle proof path for a leaf"""
         path = []
         current_index = leaf_index
@@ -195,7 +195,7 @@ class MerkleTreeService:
         return path
 
     @staticmethod
-    def verify_merkle_proof(root: str, leaf: str, proof_path: List[Dict]) -> bool:
+    def verify_merkle_proof(root: str, leaf: str, proof_path: list[dict]) -> bool:
         """Verify a Merkle proof"""
         current_hash = leaf
 

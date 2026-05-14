@@ -1,0 +1,19 @@
+target-version = "py312"
+line-length = 120
+
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes (undefined names, unused imports)
+    "I",   # isort
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long — handled by line-length above
+    "F401",  # unused imports — too noisy on __init__ re-exports
+]
+
+[lint.per-file-ignores]
+"*/migrations/*.py" = ["E", "W", "F", "I", "UP"]
+"tests/*.py" = ["F811"]  # allow re-assignment of User = get_user_model()
