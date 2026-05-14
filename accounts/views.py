@@ -19,6 +19,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.urls import reverse
 from django.conf import settings
+from django.core.cache import cache
 
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
@@ -109,16 +110,19 @@ def index(request):
     from healthcare.models import Patient, Hospital, MedicalRecord, AuditLog
     from blockchain.models import Block, Transaction, BlockchainNetwork
 
-    stats = {
-        'networks': BlockchainNetwork.objects.filter(is_active=True).count(),
-        'total_blocks': Block.objects.count(),
-        'total_transactions': Transaction.objects.count(),
-        'patients': Patient.objects.filter(is_active=True).count(),
-        'hospitals': Hospital.objects.count(),
-        'medical_records': MedicalRecord.objects.filter(is_active=True).count(),
-    }
+    stats = cache.get('dashboard_stats')
+    if stats is None:
+        stats = {
+            'networks': BlockchainNetwork.objects.filter(is_active=True).count(),
+            'total_blocks': Block.objects.count(),
+            'total_transactions': Transaction.objects.count(),
+            'patients': Patient.objects.filter(is_active=True).count(),
+            'hospitals': Hospital.objects.count(),
+            'medical_records': MedicalRecord.objects.filter(is_active=True).count(),
+        }
+        cache.set('dashboard_stats', stats, timeout=60)
 
-    recent_logs = AuditLog.objects.select_related('record').order_by('-timestamp')[:10]
+    recent_logs = AuditLog.objects.select_related('record', 'record__patient').order_by('-timestamp')[:10]
 
     return render(request, 'index.html', {
         'stats': stats,

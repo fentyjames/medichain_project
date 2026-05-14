@@ -10,395 +10,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
           integrity="sha384-l4UPAMHGzl7zwogLW4nOwaU2XTk6oiM1jhCRQstZEndoIiA2I5bg6fST3wzBSRBD" crossorigin="anonymous">
     <link rel="stylesheet" href="{% static 'custom_css.css' %}">
-    <style>
-    
-
-
-:root {
-
-    /* ===============================
-       MODERN DARK THEME (Eye-Friendly)
-       =============================== */
-
-    --primary: #0f172a;              /* Main background */
-    --secondary: #111827;            /* Secondary panels */
-    --tertiary: #1e293b;             /* Elevated surfaces */
-
-    --bg-card: rgba(255,255,255,0.04);
-    --bg-card-hover: rgba(255,255,255,0.07);
-
-    --border: rgba(148,163,184,0.15);
-    --border-light: rgba(255,255,255,0.08);
-
-    /* Accent Colors */
-    --accent: #38bdf8;               /* Soft cyan */
-    --accent-light: #7dd3fc;
-    --accent-dark: #0284c7;
-
-    --success: #22c55e;
-    --warning: #facc15;
-    --danger: #f87171;
-
-    /* Text Colors */
-    --text-primary: #f8fafc;
-    --text-secondary: #cbd5e1;
-    --text-light: #94a3b8;
-    --text-muted: #64748b;
-
-    /* Effects */
-    --shadow-sm: 0 2px 8px rgba(0,0,0,0.15);
-    --shadow-md: 0 8px 24px rgba(0,0,0,0.25);
-    --shadow-lg: 0 15px 35px rgba(0,0,0,0.35);
-
-    --blur: blur(14px);
-
-    /* UI */
-    --radius-sm: 10px;
-    --radius-md: 16px;
-    --radius-lg: 24px;
-
-    --transition: all 0.25s ease;
-}
-
-
-/* ==================================
-   LIGHT THEME (Modern Clean)
-   ================================== */
-
-.light-theme {
-
-    --primary: #f8fafc;
-    --secondary: #ffffff;
-    --tertiary: #e2e8f0;
-
-    --bg-card: rgba(255,255,255,0.85);
-    --bg-card-hover: rgba(255,255,255,0.95);
-
-    --border: rgba(15,23,42,0.08);
-    --border-light: rgba(15,23,42,0.05);
-
-    --accent: #0ea5e9;
-    --accent-light: #38bdf8;
-    --accent-dark: #0284c7;
-
-    --success: #16a34a;
-    --warning: #eab308;
-    --danger: #dc2626;
-
-    --text-primary: #0f172a;
-    --text-secondary: #334155;
-    --text-light: #64748b;
-    --text-muted: #94a3b8;
-
-    --shadow-sm: 0 2px 8px rgba(0,0,0,0.05);
-    --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
-    --shadow-lg: 0 15px 35px rgba(0,0,0,0.12);
-
-    --blur: blur(10px);
-
-    --radius-sm: 10px;
-    --radius-md: 16px;
-    --radius-lg: 24px;
-
-    --transition: all 0.25s ease;
-}
-
-
-/* ==================================
-   CYBER BLUE-BLACK THEME
-   ================================== */
-
-.blue-black-theme {
-
-    --primary: #050816;
-    --secondary: #0b1120;
-    --tertiary: #111827;
-
-    --bg-card: rgba(15,23,42,0.75);
-    --bg-card-hover: rgba(30,41,59,0.9);
-
-    --border: rgba(56,189,248,0.15);
-    --border-light: rgba(125,211,252,0.08);
-
-    --accent: #38bdf8;
-    --accent-light: #7dd3fc;
-    --accent-dark: #0ea5e9;
-
-    --success: #22c55e;
-    --warning: #facc15;
-    --danger: #fb7185;
-
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-light: #94a3b8;
-    --text-muted: #64748b;
-
-    --shadow-sm: 0 2px 10px rgba(0,0,0,0.3);
-    --shadow-md: 0 10px 30px rgba(0,0,0,0.45);
-    --shadow-lg: 0 20px 45px rgba(0,0,0,0.55);
-
-    --blur: blur(16px);
-
-    --radius-sm: 10px;
-    --radius-md: 16px;
-    --radius-lg: 24px;
-
-    --transition: all 0.25s ease;
-}
-
-/* ==================================
-    WARM-DARK THEME
-   ================================== */
-.warm-dark-theme {
-
-    /* Backgrounds */
-    --bg-primary: #161310;
-    --bg-secondary: #1f1a16;
-    --bg-tertiary: #2a241f;
-
-    /* Glass/Card */
-    --bg-card: rgba(255, 245, 230, 0.05);
-    --bg-card-hover: rgba(255, 245, 230, 0.08);
-
-    /* Text */
-    --text-primary: #f5ede3;
-    --text-secondary: #d6c5b0;
-    --text-muted: #a89278;
-
-    /* Accent */
-    --accent: #ff8a65;
-    --accent-light: #ffb199;
-    --accent-dark: #e76f51;
-
-    /* Status Colors */
-    --success: #4ade80;
-    --warning: #facc15;
-    --danger: #fb7185;
-    --info: #38bdf8;
-
-    /* Borders */
-    --border: rgba(255, 138, 101, 0.14);
-    --border-light: rgba(255, 255, 255, 0.06);
-
-    /* Shadows */
-    --shadow-sm: 0 2px 8px rgba(0,0,0,0.18);
-    --shadow-md: 0 8px 24px rgba(0,0,0,0.28);
-    --shadow-lg: 0 18px 40px rgba(0,0,0,0.38);
-
-    /* Radius */
-    --radius-sm: 10px;
-    --radius-md: 16px;
-    --radius-lg: 24px;
-
-    /* Effects */
-    --blur: blur(14px);
-    --transition: all 0.25s ease;
-}
-
-
-
-        body {
-            transition: background-color 0.5s ease, color 0.5s ease;
-        }
-
-        body.dark-theme {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: #fff;
-            min-height: 100vh;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-        }
-
-        body.light-theme {
-            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
-            color: #333;
-            min-height: 100vh;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-        }
-
-        body.blue-black-theme {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: #e0e0e0;
-            min-height: 100vh;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-        }
-        .navbar {
-            background: rgba(26,26,46,0.95) !important;
-            border-bottom: 2px solid var(--border);
-            backdrop-filter: blur(10px);
-        }
-        .navbar-brand {
-            color: var(--accent) !important;
-            font-weight: 700;
-            font-size: 1.5rem;
-        }
-        .nav-link {
-            color: var(--text-light) !important;
-            transition: color 0.3s;
-        }
-        .nav-link:hover, .nav-link.active {
-            color: var(--accent) !important;
-        }
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-        }
-        .card-header {
-            background: rgba(233,69,96,0.1);
-            border-bottom: 1px solid var(--border);
-            color: var(--accent);
-            font-weight: 600;
-        }
-        .btn-primary {
-            background: var(--accent);
-            border: none;
-            border-radius: 10px;
-        }
-        .btn-primary:hover {
-            background: var(--accent-light);
-        }
-        .btn-outline-primary {
-            border-color: var(--accent);
-            color: var(--accent);
-            border-radius: 10px;
-        }
-        .btn-outline-primary:hover {
-            background: var(--accent);
-            color: #fff;
-        }
-        .form-control, .form-select {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border);
-            color: #fff;
-            border-radius: 10px;
-        }
-        .form-control:focus, .form-select:focus {
-            background: rgba(255,255,255,0.08);
-            border-color: var(--accent);
-            color: #fff;
-            box-shadow: 0 0 0 0.2rem rgba(233,69,96,0.25);
-        }
-        .form-select option {
-                background-color: #1a1a2e;
-                color: #fff;
-        }
-        .form-control::placeholder { color: var(--text-light); }
-        .form-label { color: var(--text-light); font-weight: 500; }
-        .table {
-            color: #fff;
-        }
-        .table thead th {
-            background: rgba(15,52,96,0.5);
-            color: var(--accent);
-            border-bottom: 2px solid var(--border);
-        }
-        .table tbody td {
-            border-bottom: 1px solid var(--border);
-        }
-        .table-hover tbody tr:hover {
-            background: rgba(255,255,255,0.03);
-        }
-        .badge {
-            border-radius: 8px;
-            padding: 0.5em 0.8em;
-        }
-        .badge-pending { background: var(--warning); color: #000; }
-        .badge-confirmed { background: var(--success); color: #000; }
-        .badge-rejected { background: var(--accent); color: #fff; }
-        .alert {
-            border-radius: 12px;
-            border: none;
-        }
-        .modal-content {
-            background: var(--primary);
-            border: 1px solid var(--border);
-            border-radius: 15px;
-        }
-        .modal-header { border-bottom: 1px solid var(--border); }
-        .modal-footer { border-top: 1px solid var(--border); }
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 8px;
-        }
-        .status-active { background: var(--success); box-shadow: 0 0 8px var(--success); }
-        .status-inactive { background: var(--text-light); }
-        .hash-text {
-            font-family: 'Courier New', monospace;
-            font-size: 0.85em;
-            color: var(--success);
-        }
-        .sidebar {
-            background: rgba(22,33,62,0.8);
-            border-right: 1px solid var(--border);
-            min-height: calc(100vh - 60px);
-        }
-        .sidebar .nav-link {
-            padding: 12px 20px;
-            border-radius: 10px;
-            margin: 4px 8px;
-        }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active {
-            background: rgba(233,69,96,0.15);
-        }
-        .sidebar .nav-link i {
-            margin-right: 10px;
-            width: 20px;
-            text-align: center;
-        }
-        .stat-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-            transition: transform 0.3s;
-        }
-        .stat-card:hover { transform: translateY(-3px); }
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--accent);
-        }
-        .stat-label {
-            color: var(--text-light);
-            font-size: 0.9rem;
-        }
-        .timeline-item {
-            border-left: 2px solid var(--border);
-            padding-left: 20px;
-            margin-left: 10px;
-            padding-bottom: 20px;
-            position: relative;
-        }
-        .timeline-item::before {
-            content: '';
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: var(--accent);
-            position: absolute;
-            left: -7px;
-            top: 0;
-        }
-        .toast-container {
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            z-index: 1050;
-        }
-        .toast {
-            background: var(--secondary);
-            border: 1px solid var(--border);
-            color: #fff;
-        }
-        {% block extra_css %}{% endblock %}
-    </style>
+    {% block extra_css %}{% endblock %}
 </head>
 <body class="dark-theme">
+    <a href="#mainContent" class="visually-hidden-focusable">Skip to main content</a>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container-fluid">
@@ -608,11 +223,28 @@
             setTimeout(() => toast.remove(), 5000);
         }
 
-        // Copy to clipboard
+        // Copy to clipboard with HTTP fallback
         function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                showToast('Copied to clipboard!', 'success');
-            });
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('Copied to clipboard!', 'success');
+                }).catch(() => {
+                    showToast('Copy failed. Please copy manually.', 'warning');
+                });
+            } else {
+                const el = document.createElement('textarea');
+                el.value = text;
+                el.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
+                document.body.appendChild(el);
+                el.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('Copied to clipboard!', 'success');
+                } catch (_) {
+                    showToast('Copy failed. Please copy manually.', 'warning');
+                }
+                document.body.removeChild(el);
+            }
         }
 
         // Format timestamps
@@ -798,18 +430,22 @@
 
                 input.addEventListener('input', function() {
                     const val = this.value;
-                    let strength = 0;
-                    if (val.length >= 8) strength++;
-                    if (val.length >= 12) strength++;
-                    if (/[A-Z]/.test(val)) strength++;
-                    if (/[a-z]/.test(val)) strength++;
-                    if (/\d/.test(val)) strength++;
-                    if (/[!@#$%^&*(),.?\":{}|<>]/.test(val)) strength++;
-
-                    const width = Math.min(100, (strength / 6) * 100);
-                    const color = strengthColors[Math.min(strength, strengthColors.length - 1)] || '#ff4d4d';
+                    // Mirrors server-side validate_password_strength exactly
+                    const checks = [
+                        val.length >= 12,
+                        /[A-Z]/.test(val),
+                        /[a-z]/.test(val),
+                        /\d/.test(val),
+                        /[!@#$%^&*(),.?":{}|<>]/.test(val),
+                    ];
+                    const passed = checks.filter(Boolean).length;
+                    const width = (passed / checks.length) * 100;
+                    const color = strengthColors[Math.min(passed - 1, strengthColors.length - 1)] || '#ff4d4d';
                     strengthBar.style.width = width + '%';
                     strengthBar.style.backgroundColor = color;
+                    strengthBar.title = passed === checks.length
+                        ? 'Password meets all requirements'
+                        : passed + '/' + checks.length + ' requirements met';
                 });
             });
         });

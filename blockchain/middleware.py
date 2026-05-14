@@ -26,12 +26,12 @@ class ZKProofMiddleware(MiddlewareMixin):
         response['X-Frame-Options'] = 'DENY'
         response['X-MediChain-Version'] = '1.0.0'
         response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
-        # 'unsafe-inline' is required while inline <style>/<script> blocks exist in base.html.
-        # Tighten to nonces/hashes once styles are moved to external files.
+        # style-src no longer needs 'unsafe-inline' — all CSS is in external files.
+        # script-src still needs 'unsafe-inline' for the inline JS blocks in base.html.
         response['Content-Security-Policy'] = (
             "default-src 'self'; "
             "script-src 'self' cdn.jsdelivr.net 'unsafe-inline'; "
-            "style-src 'self' cdn.jsdelivr.net 'unsafe-inline'; "
+            "style-src 'self' cdn.jsdelivr.net; "
             "font-src cdn.jsdelivr.net; "
             "img-src 'self' data:; "
             "connect-src 'self';"
