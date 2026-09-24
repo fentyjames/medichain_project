@@ -3,8 +3,7 @@
 ## Scalable Cross-Chain Layer-2 Blockchain Framework for Privacy-Preserving and Interoperable Healthcare Data Exchange Using Zero-Knowledge Proofs
 
 **Author:** Fenty James Conteh  
-**Institution:** Department of Artificial Intelligence Technologies, Ankara University, Ankara, Türkiye  
-**Course:** BTaSC — Blockchain Technology and Smart Contracts (2025-2026 Fall Semester)
+
 
 ---
 
@@ -461,8 +460,7 @@ medichain_project/          ← project root, manage.py lives here
 ## Support & Contact
 
 - **Author:** Fenty James Conteh
-- **Institution:** Ankara University, Department of Artificial Intelligence Technologies
-- **Course:** BTaSC — Blockchain Technology and Smart Contracts
+
 
 ---
 
